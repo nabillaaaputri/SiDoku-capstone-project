@@ -1,0 +1,25 @@
+{
+  "name": "sidoku-backend",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "build": "echo \"No build required for Node.js backend\"",
+    "start": "node src/app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.x.x",
+    "pg": "^8.x.x",
+    "jsonwebtoken": "^9.x.x",
+    "bcryptjs": "^2.4.x",
+    "dotenv": "^16.x.x",
+    "cors": "^2.8.x",
+    "axios": "^1.6.x"
+  },
+  "devDependencies": {
+    "nodemon": "^3.x.x",
+    "jest": "^29.x.x"
+  }
+}
