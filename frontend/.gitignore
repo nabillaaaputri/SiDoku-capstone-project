@@ -23,22 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Build
-build/
-out/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
+.config/
+!.env

@@ -1,64 +1,56 @@
-import React from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { TooltipProvider } from "@/ui/tooltip";
+import { Toaster } from "@/ui/toaster";
+import { Toaster as Sonner } from "@/ui/sonner";
+import { BusinessProvider } from "@/context";
+import Landing from "./pages/Landing";
+import Introduction from "./pages/Introduction";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import StockIn from "./pages/StockIn";
+import StockOut from "./pages/StockOut";
+import Products from "./pages/Products";
+import Reports from "./pages/Reports";
+import SalesRecap from "./pages/SalesRecap";
+import Assistant from "./pages/Assistant";
+import Account from "./pages/Account";
+import Expenses from "./pages/Expenses";
+import NotFound from "./pages/NotFound";
 
-// Auth
-import ProtectedRoute from './components/Auth/ProtectedRoute'
+const queryClient = new QueryClient();
 
-// Pages
-import IntroPage from './pages/IntroPage'
-import CaraPakaiPage from './pages/CaraPakaiPage'
-import DashboardPage from './pages/DashboardPage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
-import ProductsPage from './pages/ProductsPage'
-import StockInPage from './pages/StockInPage'
-
-function App() {
+export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-
-        {/* PUBLIC */}
-        <Route path="/" element={<IntroPage />} />
-        <Route path="/cara-pakai" element={<CaraPakaiPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* PROTECTED */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/products"
-          element={
-            <ProtectedRoute>
-              <ProductsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ✅ TAMBAHAN STOK MASUK */}
-        <Route
-          path="/stock-in"
-          element={
-            <ProtectedRoute>
-              <StockInPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* REDIRECT */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-
-      </Routes>
-    </BrowserRouter>
-  )
+    <BusinessProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/intro" element={<Introduction />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/stok-masuk" element={<StockIn />} />
+              <Route path="/stok-keluar" element={<StockOut />} />
+              <Route path="/stock-in" element={<StockIn />} />
+              <Route path="/stock-out" element={<StockOut />} />
+              <Route path="/rekap-penjualan" element={<SalesRecap />} />
+              <Route path="/sales-recap" element={<SalesRecap />} />
+              <Route path="/expenses" element={<Expenses />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/ai-assistant" element={<Assistant />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BusinessProvider>
+  );
 }
-
-export default App
