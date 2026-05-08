@@ -1,25 +1,28 @@
 {
   "name": "sidoku-backend",
   "version": "1.0.0",
-  "main": "src/app.js",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/app.js",
-    "build": "echo \"No build required for Node.js backend\"",
-    "start": "node src/app.js",
-    "test": "jest"
+    "start": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-config-dicodingacademy": "^0.9.5",
+    "globals": "^17.6.0",
+    "nodemon": "^3.1.14"
   },
   "dependencies": {
-    "express": "^4.x.x",
-    "pg": "^8.x.x",
-    "jsonwebtoken": "^9.x.x",
-    "bcryptjs": "^2.4.x",
-    "dotenv": "^16.x.x",
-    "cors": "^2.8.x",
-    "axios": "^1.6.x"
-  },
-  "devDependencies": {
-    "nodemon": "^3.x.x",
-    "jest": "^29.x.x"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "nanoid": "^3.3.12"
   }
 }

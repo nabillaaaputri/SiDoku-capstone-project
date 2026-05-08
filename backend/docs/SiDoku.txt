@@ -1,0 +1,1093 @@
+API PLANNING SiDoku
+
+TEMPLATE: root.api/version/grouping/endpoint
+SAMPLE: http://sidoku.com/v1/auth/login
+
+Standart Status Response
+200 - OK                    --> Call API Success
+201 - CREATED               --> Post Success
+400 - BAD REQUEST           --> Error on Client side (salah input, dll)
+401 - UNAUTHORIZED          --> User no authorized to the req.
+403 - FORBIDDEN             --> User not allowed to access.
+404 - NOT FOUND             --> Req Endpoint Not Found.
+500 - INTERNAL SERVER ERROR --> Error on Server Side.
+502 - BAD GATEWAY           --> Invalid Response From Another Req.
+
+GROUP: Authentication
+BASE URL: http://sidoku.com/v1/auth
+
+[1] - Register
+POST http://sidoku.com/v1/auth/register
+
+req: {
+    "storeName" : "Testing",
+    "email" : "testing@mail.com",
+    "password" : "12345",
+    "confirmPassword" : "12345"
+}
+
+res: {
+    "status": "success",
+    "message": "Register Success",
+    "data": {
+        "id": 1,
+        "storeName" : "Testing",
+        "email" : "testing@mail.com",
+    }
+}
+
+err-response:
+400 -> Input yang anda masukkan tidak valid.
+400 -> Password dan konfirmasi password tidak sama.
+409 -> Email sudah terdaftar.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Login
+POST http://sidoku.com/v1/auth/login
+
+req: {
+    "email" : "testing@mail.com",
+    "password" : "12345",
+}
+
+res: {
+    "status": "success",
+    "message": "Login Success",
+    "data": {
+        "accessToken": "jwt_token_here"
+    }
+}
+
+err-response:
+"status": "fail",
+400 -> Input yang anda masukkan tidak valid.
+401 -> Email atau password salah.
+404 -> Akun tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+
+GROUP: Dashboard
+BASE URL: http://sidoku.com/v1/dashboard
+
+[1] - Ringkasan
+GET http://sidoku.com/v1/dashboard/summary
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Dashboard summary retrieved successfully",
+    "data": {
+        "income": 2400000,
+        "expense": 750000,
+        "profit": 1650000,
+        "roi": 220
+    }
+}
+
+err-response: 
+401 -> Token tidak valid atau sesi login telah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Insight
+GET http://sidoku.com/v1/dashboard/insights
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Dashboard insights retrieved successfully",
+    "data": [
+        {
+            "title": "Penjualan Stabil",
+            "description": "Penjualan bulan ini sama seperti bulan lalu. Pertahankan konsistensinya!"
+        },
+        {
+            "title": "Biaya Terkontrol",
+            "description": "Biaya operasional bulan ini lebih hemat dari bulan lalu. Bagus!"
+        },
+        {
+            "title": "Produk Hampir Habis",
+            "description": "1 produk stoknya sudah tinggal sedikit. Buruan pesan ulang sebelum terlambat!"
+        },
+        {
+            "title": "Apa yang bisa kamu lakukan?",
+            "description": "Mulai input data penjualan dan pengeluaran untuk melihat saran untuk kamu."
+        }
+    ]
+} 
+
+
+res jika data kosong:
+{
+    "message": "No dashboard insights available",
+    "data": []
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+502 -> Gagal mendapatkan response dari layanan AI.
+
+[3] - Stok Menipis
+GET http://sidoku.com/v1/dashboard/low-stocks
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Low stock products retrieved successfully",
+    "data": [
+        {
+            "id": 1,
+            "productName": "Handuk",
+            "currentStock": 5,
+            "minimumStock": 10,
+            "unit": "pcs",
+            "stockNeeded": 5
+        },
+        {
+            "id": 2,
+            "productName": "Minyak Goreng",
+            "currentStock": 5,
+            "minimumStock": 7,
+            "unit": "liter",
+            "stockNeeded": 2
+        }
+    ]
+}
+
+res jika data kosong:
+{
+    "message": "No low stock products found",
+    "data": []
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[4] - Tren
+GET http://sidoku.com/v1/dashboard/trends
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Dashboard trends retrieved successfully",
+    "data": {
+        "period": "7 days",
+        "items": [
+            {
+                "day": "Senin",
+                "income": 2400000,
+                "expense": 800000
+            },
+            {
+                "day": "Selasa",
+                "income": 2800000,
+                "expense": 600000
+            },
+            {
+                "day": "Rabu",
+                "income": 2000000,
+                "expense": 700000
+            },
+            {
+                "day": "Kamis",
+                "income": 2900000,
+                "expense": 850000
+            },
+            {
+                "day": "Jumat",
+                "income": 2300000,
+                "expense": 700000
+            },
+            {
+                "day": "Sabtu",
+                "income": 3200000,
+                "expense": 900000
+            },
+            {
+                "day": "Minggu",
+                "income": 2600000,
+                "expense": 800000
+            }
+        ],
+        "totalIncome": 18200000,
+        "totalExpense": 5350000
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+
+GROUP: Settings
+BASE URL: http://sidoku.com/v1/settings
+
+[1.1] - Get Profil Akun
+GET http://sidoku.com/v1/settings/profile
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Profile retrieved successfully",
+    "data": {
+        "id": 1,
+        "ownerName": "Pirak",
+        "email": "pearastore@gmail.com",
+        "phoneNumber": "+62 812 3456 7890",
+        "profileImage": "https://example.com/profile.png"
+    }
+}
+
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Data profil tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[1.2] - Update Profil Akun
+PUT http://sidoku.com/v1/settings/profile
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "ownerName": "Pirak",
+    "email": "pearastore@gmail.com",
+    "phoneNumber": "+62 812 3456 7890",
+    "profileImage": "https://example.com/profile.png"
+}
+
+res: {
+    "message": "Profile updated successfully",
+    "data": {
+        "id": 1,
+        "ownerName": "Pirak",
+        "email": "pearastore@gmail.com",
+        "phoneNumber": "+62 812 3456 7890",
+        "profileImage": "https://example.com/profile.png"
+    }
+}
+
+err-response:
+400 -> Input yang anda masukkan tidak valid.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+409 -> Email sudah digunakan oleh akun lain.
+500 -> Terjadi kesalahan pada server.
+
+[2.1] - Get Data Toko
+GET http://sidoku.com/v1/settings/store-account
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Store account retrieved successfully",
+    "data": {
+        "id": 1,
+        "storeName": "Peara Store",
+        "storeCategory": "Grosir",
+        "storeAddress": "Jl. Danau Cikur 17, No. 15",
+        "storeDescription": "Toko online yang menjual berbagai produk berkualitas dan original."
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login telah berakhir.
+404 -> Data toko tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[2.2] - Update Data Toko
+PUT http://sidoku.com/v1/settings/store-account
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "storeName": "Peara Store",
+    "storeCategory": "Grosir",
+    "storeAddress": "Jl. Danau Cikur 17, No. 15",
+    "storeDescription": "Toko online yang menjual berbagai produk berkualitas dan original."
+}
+
+res: {
+    "message": "Store account updated successfully",
+    "data": {
+        "id": 1,
+        "storeName": "Peara Store",
+        "storeCategory": "Grosir",
+        "storeAddress": "Jl. Danau Cikur 17, No. 15",
+        "storeDescription": "Toko online yang menjual berbagai produk berkualitas dan original."
+    }
+}
+
+err-response:
+400 -> Input yang anda masukkan tidak valid.
+401 -> Token tidak valid atau sesi login telah berakhir.
+404 -> Data toko tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[3] - Update Keamanan Akun
+PUT http://sidoku.com/v1/settings/password
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "currentPassword": "passwordLama",
+    "newPassword": "passwordBaru",
+    "confirmNewPassword": "passwordBaru"
+}
+
+
+res:
+{
+    "message": "Password berhasil diubah!"
+}
+
+err-response:
+400 -> Input yang anda masukkan tidak valid.
+400 -> Password baru dan konfirmasi password tidak sama.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+403 -> Password saat ini salah.
+500 -> Terjadi kesalahan pada server.
+
+GROUP: DAFTAR BARANG
+BASE URL: http://sidoku.com/v1/products
+
+[1] - Daftar Barang
+GET http://sidoku.com/v1/products
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Query Params:
+?status=active
+?status=archived
+?category=Bahan%20Baku
+
+res: {
+    "message": "Products retrieved successfully",
+    "data": [
+        {
+            "id": 1,
+            "productName": "Sabun",
+            "category": "Barang",
+            "unit": "pcs",
+            "purchasePrice": 2000,
+            "sellingPrice": 5000,
+            "margin": 150,
+            "stock": 20,
+            "minimumStock": 10,
+            "status": "safe",
+            "isArchived": false
+        },
+        {
+            "id": 2,
+            "productName": "Minyak Goreng",
+            "category": "Bahan Baku",
+            "unit": "liter",
+            "purchasePrice": 10000,
+            "sellingPrice": 16000,
+            "margin": 60,
+            "stock": 15,
+            "minimumStock": 10,
+            "status": "safe",
+            "isArchived": false
+        }
+    ]
+}
+
+res jika data kosong:
+{
+    "message": "No products found",
+    "data": []
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login telah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Tambah Barang
+POST http://sidoku.com/v1/products
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "productName": "Kecap Asin",
+    "purchasePrice": 5000,
+    "sellingPrice": 9999,
+    "minimumStock": 10,
+    "category": "Bahan Baku",
+    "unit": "botol",
+    "initialStock": 15
+}
+
+res: {
+    "message": "Product created successfully",
+    "data": {
+        "id": 3,
+        "productName": "Kecap Asin",
+        "purchasePrice": 5000,
+        "sellingPrice": 9999,
+        "margin": 99.98,
+        "minimumStock": 10,
+        "category": "Bahan Baku",
+        "unit": "botol",
+        "stock": 15,
+        "status": "safe",
+        "isArchived": false
+    }
+}
+
+err-response:
+400 -> Input produk tidak valid.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+409 -> Produk dengan nama tersebut sudah ada.
+500 -> Terjadi kesalahan pada server.
+
+[3] - Update Data Barang
+PUT http://sidoku.com/v1/products/:id
+ex: PUT http://sidoku.com/v1/products/3
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Params:
+id = 3
+
+Body:
+{
+    "productName": "Kecap Asin Premium",
+    "category": "Bahan Baku",
+    "unit": "botol",
+    "purchasePrice": 5000,
+    "sellingPrice": 10000,
+    "minimumStock": 10
+}
+
+res: {
+    "message": "Product updated successfully",
+    "data": {
+        "id": 3,
+        "productName": "Kecap Asin Premium",
+        "category": "Bahan Baku",
+        "unit": "botol",
+        "purchasePrice": 5000,
+        "sellingPrice": 10000,
+        "margin": 100,
+        "stock": 15,
+        "minimumStock": 10,
+        "status": "safe",
+        "isArchived": false
+    }
+}
+
+err-response:
+400 -> Input produk tidak valid.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Produk tidak ditemukan.
+409 -> Produk dengan nama tersebut sudah ada.
+500 -> Terjadi kesalahan pada server.
+
+[4] - Arsip Barang
+PATCH http://sidoku.com/v1/products/:id/archive
+ex: PATCH http://sidoku.com/v1/products/3/archive
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Product archived successfully",
+    "data": {
+        "id": 3,
+        "productName": "Kecap Asin Premium",
+        "isArchived": true
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Produk tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[5] - Daftar Produk Arsip
+GET http://sidoku.com/v1/products?status=archived
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Archived products retrieved successfully",
+    "data": [
+        {
+            "id": 3,
+            "productName": "Kecap Asin Premium",
+            "category": "Bahan Baku",
+            "unit": "botol",
+            "purchasePrice": 5000,
+            "sellingPrice": 9999,
+            "margin": 100,
+            "stock": 15,
+            "minimumStock": 10,
+            "status": "safe",
+            "isArchived": true
+        }
+    ]
+}
+
+res jika data akun kosong:
+{
+    "message": "No archived products found",
+    "data": []
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[6] - Pulihkan Barang Arsip
+PATCH http://sidoku.com/v1/products/:id/restore
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Product restored successfully",
+    "data": {
+        "id": 3,
+        "productName": "Kecap Asin Premium",
+        "isArchived": false
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Produk tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+GROUP: Stok Masuk
+http://sidoku.com/v1/stocks-in
+
+[1] - Daftar Stok Masuk
+GET http://sidoku.com/v1/stocks-in
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+Query Params:
+?startDate=2026-05-01&endDate=2026-05-31
+?productId=1
+
+res: {
+    "message": "Stock in records retrieved successfully",
+    "data": [
+        {
+            "id": 1,
+            "productId": 1,
+            "productName": "Sabun",
+            "quantity": 10,
+            "unit": "pcs",
+            "date": "2026-05-01",
+            "note": "Restock awal bulan"
+        },
+        {
+            "id": 2,
+            "productId": 2,
+            "productName": "Minyak Goreng",
+            "quantity": 5,
+            "unit": "liter",
+            "date": "2026-05-01",
+            "note": "Restock dari supplier"
+        }
+    ]
+}
+
+res jika data kosong:
+{
+    "message": "No stock in records found",
+    "data": []
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Tambah Stok Masuk
+POST http://sidoku.com/v1/stocks-in
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "productId": 1,
+    "quantity": 10,
+    "date": "2026-05-01",
+    "note": "Restock awal bulan"
+}
+
+res: {
+    "message": "Stock in record created successfully",
+    "data": {
+        "id": 1,
+        "productId": 1,
+        "productName": "Sabun",
+        "quantity": 10,
+        "unit": "pcs",
+        "date": "2026-05-01",
+        "note": "Restock awal bulan",
+        "currentStock": 30
+    }
+}
+
+err-response:
+400 -> Input stok masuk tidak valid.
+401 -> Token tidak valid atau sesi login telah berakhir.
+404 -> Produk tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[3] - Hapus Riwayat Stok Masuk
+DELETE http://sidoku.com/v1/stocks-in/:id
+ex: DELETE http://sidoku.com/v1/stocks-in/1
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Stock in record deleted successfully",
+    "data": {
+        "id": 1,
+        "productName": "Minyak Goreng",
+        "quantity": 4,
+        "unit": "liter"
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Riwayat stok masuk tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+GROUP: Stok Keluar
+http://sidoku.com/v1/stocks-out
+
+[1] - Daftar Riwayat Stok Keluar
+GET http://sidoku.com/v1/stocks-out
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+Query Params:
+?productId=1
+?date=2026-05-01
+
+res: {
+    "message": "Stock out records retrieved successfully",
+    "data": {
+        "totalStockOut": 18,
+        "records": [
+            {
+                "id": 1,
+                "date": "2026-05-01",
+                "time": "15:03",
+                "productId": 2,
+                "productName": "Minyak Goreng",
+                "quantity": 8,
+                "unit": "liter",
+                "note": "bungkus bocor"
+            },
+            {
+                "id": 2,
+                "date": "2026-05-01",
+                "time": "11:58",
+                "productId": 3,
+                "productName": "Handuk",
+                "quantity": 10,
+                "unit": "pcs",
+                "note": "-"
+            }
+        ]
+    }
+}
+
+res jika data kosong:
+{
+    "message": "No stock out records found",
+    "data": {
+        "totalStockOut": 0,
+        "records": []
+    }
+}
+
+err-response: 
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Catat Stok Keluar
+POST http://sidoku.com/v1/stocks-out
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "productId": 2,
+    "quantity": 8,
+    "date": "2026-05-01",
+    "note": "bungkus bocor"
+}
+
+res: {
+    "message": "Stock out record created successfully",
+    "data": {
+        "id": 1,
+        "productId": 2,
+        "productName": "Minyak Goreng",
+        "quantity": 8,
+        "unit": "liter",
+        "date": "2026-05-01",
+        "time": "15:03",
+        "note": "bungkus bocor",
+        "currentStock": 7
+    }
+}
+
+err-response: 
+400 -> Input stok keluar tidak valid.
+400 -> Jumlah stok keluar melebihi stok tersedia.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Produk tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+[3] - Hapus Riwayat Stok Keluar
+DELETE http://sidoku.com/v1/stocks-out/:id
+ex: DELETE http://sidoku.com/v1/stocks-out/1
+
+req:
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Stock out record deleted successfully",
+    "data": {
+        "id": 1,
+        "productName": "Minyak Goreng",
+        "quantity": 8,
+        "unit": "liter"
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Riwayat stok keluar tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+GROUP: Pengeluaran
+http://sidoku.com/v1/expenses
+
+[1] - Daftar Riwayat Pengeluaran
+GET http://sidoku.com/v1/expenses
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+Query Params:
+?category=restock
+?date=2026-05-01
+
+res: {
+    "message": "Expenses retrieved successfully",
+    "data": {
+        "summary": {
+            "totalExpense": 499999,
+            "totalCount": 2,
+            "categories": {
+                "restock": {
+                    "total": 450000,
+                    "percentage": 90
+                },
+                "operational": {
+                    "total": 49999,
+                    "percentage": 10
+                },
+                "others": {
+                    "total": 0,
+                    "percentage": 0
+                }
+            }
+        },
+        "records": [
+            {
+                "id": 1,
+                "date": "2026-05-01",
+                "expenseName": "Beli bensin",
+                "category": "operational",
+                "categoryLabel": "Biaya Operasional",
+                "amount": 49999,
+                "description": "-"
+            },
+            {
+                "id": 2,
+                "date": "2026-05-01",
+                "expenseName": "Modal Restok Minyak Goreng",
+                "category": "restock",
+                "categoryLabel": "Restock Barang",
+                "amount": 450000,
+                "description": "Beli di grosir"
+            }
+        ]
+    }
+}
+
+res jika data kosong:
+{
+    "message": "No expenses found",
+    "data": {
+        "summary": {
+            "totalExpense": 0,
+            "totalCount": 0,
+            "categories": {
+                "restock": {
+                    "total": 0,
+                    "percentage": 0
+                },
+                "operational": {
+                    "total": 0,
+                    "percentage": 0
+                },
+                "others": {
+                    "total": 0,
+                    "percentage": 0
+                }
+            }
+        },
+        "records": []
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Catat Pengeluaran
+POST http://sidoku.com/v1/expenses
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "expenseName": "Modal Restok Minyak Goreng",
+    "category": "restock",
+    "amount": 450000,
+    "date": "2026-05-01",
+    "description": "Beli di grosir"
+}
+
+res: {
+    "message": "Expense created successfully",
+    "data": {
+        "id": 2,
+        "expenseName": "Modal Restok Minyak Goreng",
+        "category": "restock",
+        "categoryLabel": "Restock Barang",
+        "amount": 450000,
+        "date": "2026-05-01",
+        "description": "Beli di grosir"
+    }
+}
+
+err-response: 
+400 -> Input pengeluaran tidak valid.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[3] - Hapus Pengeluaran
+DELETE http://sidoku.com/v1/expenses/:id
+ex: DELETE http://sidoku.com/v1/expenses/1
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+res: {
+    "message": "Expense deleted successfully",
+    "data": {
+        "id": 1,
+        "expenseName": "Beli bensin",
+        "amount": 49999
+    }
+}
+
+err-response:
+401 -> Token tidak valid atau sesi login sudah berakhir.
+404 -> Data pengeluaran tidak ditemukan.
+500 -> Terjadi kesalahan pada server.
+
+GROUP: Rekap Penjualan
+http://sidoku.com/v1/selling-recap
+
+[1] - Get Rekap Penjualan
+GET http://sidoku.com/v1/selling-recap
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+
+Query Params:
+?date=2026-05-01
+
+ex: GET http://sidoku.com/v1/selling-recap?date=2026-05-01
+
+res: {
+    "message": "Selling recap retrieved successfully",
+    "data": {
+        "date": "2026-05-01",
+        "summary": {
+            "totalIncome": 0,
+            "totalHpp": 250000,
+            "totalProfit": -744999,
+            "totalExpense": 494999
+        },
+        "products": [
+            {
+                "productId": 1,
+                "productName": "Handuk",
+                "initialStock": 15,
+                "stockIn": 0,
+                "finalStock": 5,
+                "sold": 10,
+                "hpp": 250000,
+                "salesValue": 349990,
+                "profit": 99990
+            },
+            {
+                "productId": 2,
+                "productName": "Minyak Goreng",
+                "initialStock": 15,
+                "stockIn": 4,
+                "finalStock": 19,
+                "sold": 0,
+                "hpp": 0,
+                "salesValue": 0,
+                "profit": 0
+            },
+            {
+                "productId": 3,
+                "productName": "Sabun",
+                "initialStock": 15,
+                "stockIn": 5,
+                "finalStock": 20,
+                "sold": 0,
+                "hpp": 0,
+                "salesValue": 0,
+                "profit": 0
+            }
+        ]
+    }
+}
+
+res jika data kosong:
+{ 
+    "message": "No selling recap data found",
+    "data": {
+        "date": "2026-05-01",
+        "summary": {
+            "totalIncome": 0,
+            "totalHpp": 0,
+            "totalProfit": 0,
+            "totalExpense": 0
+        },
+        "products": []
+    }
+}
+
+err-response:
+400 -> Format tanggal tidak valid.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+
+[2] - Export Rekap Penjualan
+dilakukan dari sisi FE menggunakan data endpoint Get Rekap Penjualan
+
+GROUP: Chatbot AI
+http://sidoku.com/v1/ai-chatbot
+
+[1] - Tanya ke Asisten AI
+POST http://sidoku.com/v1/ai-chatbot/ask
+
+req: 
+Headers:
+Authorization: Bearer jwt_token_here
+Content-Type: application/json
+
+Body:
+{
+    "question": "Berapa keuntungan hari ini?"
+}
+
+res: {
+    "message": "AI response generated successfully",
+    "data": {
+        "question": "Berapa keuntungan hari ini?",
+        "answer": "Keuntungan hari ini adalah Rp 1.650.000. Angka ini didapat dari total uang masuk Rp 2.400.000 dikurangi total uang keluar Rp 750.000.",
+        "suggestions": [
+            "Lihat tren keuntungan 7 hari terakhir",
+            "Cek produk dengan stok menipis",
+            "Lihat rekap penjualan hari ini"
+        ]
+    }
+}
+
+err-response:
+400 -> Pertanyaan tidak boleh kosong.
+401 -> Token tidak valid atau sesi login sudah berakhir.
+500 -> Terjadi kesalahan pada server.
+502 -> Gagal mendapatkan response dari layanan AI.
+
+Catatan:
+Endpoint ini digunakan sebagai perantara antara frontend
+dan layanan Generative AI eksternal. 
+Frontend tidak memanggil API Generative AI secara langsung 
+agar API key tetap aman. Backend akan menerima pertanyaan user, 
+mengambil data usaha yang relevan, 
+mengirim prompt ke layanan Generative AI, 
+lalu mengembalikan jawaban ke frontend.
