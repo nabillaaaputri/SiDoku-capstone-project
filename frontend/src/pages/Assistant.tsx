@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  SendHorizonal,
+  Sparkles,
+  TrendingUp,
+  Package,
+  Wallet,
+} from "lucide-react";
 
 interface Message {
   id: number;
@@ -13,136 +21,301 @@ export default function Assistant() {
     {
       id: 1,
       sender: "assistant",
-      text: "Halo! Saya Asisten AI SiDoku. Siap membantu Anda dengan pertanyaan seputar keuangan, stok, dan ringkasan usaha. Apa yang bisa saya bantu?",
+      text: "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
     },
   ]);
+
   const [input, setInput] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // FIX AUTO SCROLL
+  const isFirstRender = useRef(true);
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   };
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = () => {
-    if (input.trim()) {
-      const userMessage: Message = {
-        id: messages.length + 1,
-        sender: "user",
-        text: input,
-      };
+    if (!input.trim()) return;
 
-      const assistantResponse: Message = {
-        id: messages.length + 2,
-        sender: "assistant",
-        text: "Berdasarkan data bisnis Anda, berikut adalah insight dan rekomendasi yang bisa membantu meningkatkan penjualan dan manajemen stok Anda.",
-      };
+    const userMessage: Message = {
+      id: Date.now(),
+      sender: "user",
+      text: input,
+    };
 
-      setMessages([...messages, userMessage, assistantResponse]);
-      setInput("");
-    }
+    const assistantResponse: Message = {
+      id: Date.now() + 1,
+      sender: "assistant",
+      text: "Berdasarkan data bisnis Anda, penjualan terlihat stabil minggu ini. Produk kategori minuman menjadi yang paling laku, sementara beberapa stok mulai menipis dan perlu segera restock.",
+    };
+
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      assistantResponse,
+    ]);
+
+    setInput("");
   };
 
   return (
-    <div className="min-h-screen md:min-h-[100vh] bg-white flex flex-col md:flex-row">
-      {/* ========== DESKTOP SIDEBAR / INTRO PANEL ========== */}
-      <div className="hidden md:flex md:w-80 md:flex-col md:border-r-2 md:border-black md:bg-gray-50 md:p-8 md:justify-between">
-        <div>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-sm border-2 border-black px-3 py-2 font-bold hover:bg-gray-200 transition mb-8"
-          >
-            ← Kembali
-          </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col">
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition"
+            >
+              <ArrowLeft size={18} />
+              Kembali
+            </Link>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold">Asisten AI</h1>
-            <p className="text-lg font-bold text-gray-700">Siap membantu bisnis Anda</p>
-            <p className="text-sm text-gray-600">
-              Tanya soal keuangan, stok, dan ringkasan usaha kamu. Saya akan membantu memberikan insight untuk bisnis yang lebih baik.
+            <div className="hidden md:block w-px h-6 bg-slate-300" />
+
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white shadow-lg">
+                <Bot size={22} />
+              </div>
+
+              <div>
+                <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
+                  Asisten AI SiDoku
+                </h1>
+
+                <p className="text-xs md:text-sm text-slate-500">
+                  Analisis bisnis otomatis & insight usaha
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-full text-xs font-semibold">
+            <Sparkles size={14} />
+            AI Active
+          </div>
+        </div>
+      </header>
+
+      {/* CONTENT */}
+      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 md:px-6 py-6 gap-6">
+        {/* SIDEBAR */}
+        <aside className="lg:w-80 space-y-5">
+          {/* INTRO */}
+          <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
+              <Bot className="text-blue-600" size={28} />
+            </div>
+
+            <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">
+              Tanya Apa Saja Tentang Bisnis Kamu
+            </h2>
+
+            <p className="text-sm text-slate-600 mt-3 leading-relaxed">
+              Dapatkan insight cepat mengenai stok, penjualan,
+              keuntungan, hingga rekomendasi bisnis otomatis.
             </p>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-gray-500">TIPS BERTANYA:</p>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>• "Berapa keuntungan hari ini?"</li>
-            <li>• "Produk apa yang paling laku?"</li>
-            <li>• "Gimana cara kelola stok?"</li>
-          </ul>
-        </div>
-      </div>
+          {/* QUICK QUESTIONS */}
+          <div className="rounded-3xl bg-white border border-slate-200 p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-900 mb-4">
+              Contoh Pertanyaan
+            </p>
 
-      {/* ========== MOBILE HEADER ========== */}
-      <div className="md:hidden sticky top-0 z-40 border-b-2 border-black bg-white">
-        <div className="p-4 flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Asisten AI</h1>
-            <p className="text-xs text-gray-600">Siap membantu bisnis Anda</p>
-          </div>
-          <Link to="/dashboard" className="p-2 hover:bg-gray-100 rounded transition">
-            <X size={24} />
-          </Link>
-        </div>
-      </div>
+            <div className="space-y-3">
+              <button
+                onClick={() =>
+                  setInput("Produk apa yang paling laku minggu ini?")
+                }
+                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+              >
+                <div className="flex items-start gap-3">
+                  <TrendingUp
+                    size={18}
+                    className="text-blue-500 mt-0.5"
+                  />
 
-      {/* ========== CHAT AREA ========== */}
-      <div className="flex-1 flex flex-col md:p-0">
-        {/* Desktop Info Banner */}
-        <div className="hidden md:block border-b-2 border-gray-200 bg-gray-50 p-6">
-          <p className="text-sm text-gray-700">
-            Tanya soal keuangan, stok, dan ringkasan usaha kamu.
-          </p>
-        </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Penjualan Terbaik
+                    </p>
 
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-white">
-          {messages.map((message) => (
-            <div key={message.id}>
-              {message.sender === "user" ? (
-                <div className="flex justify-end">
-                  <div className="bg-black text-white p-3 md:p-4 rounded-lg max-w-xs md:max-w-sm">
-                    <p className="text-sm md:text-base">{message.text}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      “Produk apa yang paling laku minggu ini?”
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 text-gray-900 p-3 md:p-4 rounded-lg max-w-xs md:max-w-sm border border-gray-300">
-                    <p className="text-sm md:text-base">{message.text}</p>
+              </button>
+
+              <button
+                onClick={() =>
+                  setInput("Stok mana yang harus segera restock?")
+                }
+                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+              >
+                <div className="flex items-start gap-3">
+                  <Package
+                    size={18}
+                    className="text-emerald-500 mt-0.5"
+                  />
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Kelola Stok
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      “Stok mana yang harus segera restock?”
+                    </p>
                   </div>
                 </div>
-              )}
+              </button>
+
+              <button
+                onClick={() =>
+                  setInput("Berapa estimasi keuntungan bulan ini?")
+                }
+                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+              >
+                <div className="flex items-start gap-3">
+                  <Wallet
+                    size={18}
+                    className="text-orange-500 mt-0.5"
+                  />
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Analisis Keuntungan
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      “Berapa estimasi keuntungan bulan ini?”
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        </aside>
 
-        {/* Input Area - Pinned Bottom */}
-        <div className="border-t-2 border-black bg-white p-4 md:p-6 space-y-3">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            className="w-full border-2 border-gray-300 p-3 md:p-4 font-sans text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-black focus:border-black rounded resize-none"
-            placeholder="Tulis pertanyaan Anda di sini... (Enter untuk kirim)"
-            rows={3}
-          />
-          <button
-            onClick={handleSendMessage}
-            className="w-full border-2 border-black bg-black text-white px-4 py-3 md:py-4 font-bold hover:bg-gray-800 rounded transition text-sm md:text-base"
-          >
-            Tanya Asisten
-          </button>
-        </div>
+        {/* CHAT AREA */}
+        <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[700px]">
+          {/* CHAT HEADER */}
+          <div className="border-b border-slate-200 px-5 py-4 bg-slate-50">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
+                  <Bot size={22} />
+                </div>
+
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+              </div>
+
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  AI Assistant
+                </h3>
+
+                <p className="text-xs text-slate-500">
+                  Online • Membantu bisnis Anda
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* MESSAGES */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-5 bg-gradient-to-b from-slate-50 to-white">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.sender === "user"
+                    ? "justify-end"
+                    : "justify-start"
+                }`}
+              >
+                {message.sender === "assistant" ? (
+                  <div className="flex gap-3 max-w-[90%] md:max-w-[75%]">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Bot
+                        size={18}
+                        className="text-blue-600"
+                      />
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                      <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
+                        {message.text}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-4 py-3 shadow-lg">
+                    <p className="text-sm md:text-[15px] leading-relaxed">
+                      {message.text}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* INPUT */}
+          <div className="border-t border-slate-200 bg-white p-4 md:p-5">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey
+                    ) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Tulis pertanyaan Anda..."
+                  rows={2}
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+                />
+              </div>
+
+              <button
+                onClick={handleSendMessage}
+                className="h-[52px] px-5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2"
+              >
+                <SendHorizonal size={18} />
+
+                <span className="hidden sm:inline">
+                  Kirim
+                </span>
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              AI dapat membuat kesalahan. Pastikan cek kembali data penting.
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );

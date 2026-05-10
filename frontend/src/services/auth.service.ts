@@ -6,45 +6,73 @@ interface LoginCredentials {
 }
 
 interface RegisterCredentials extends LoginCredentials {
-  name: string;
+  storeName: string;
 }
 
 interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
+  status: string;
+  message: string;
+  data: {
+    accessToken?: string;
+    id?: string;
+    email?: string;
+    storeName?: string;
   };
 }
 
 export const authService = {
-  // Login user
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
+  // LOGIN
+  login: async (
+    credentials: LoginCredentials
+  ): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>(
+      '/auth/login',
+      credentials
+    );
+
+    const token = response.data.data.accessToken;
+
+    if (token) {
+      localStorage.setItem('authToken', token);
     }
+
     return response.data;
   },
 
-  // Register new user
-  register: async (credentials: RegisterCredentials): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/register', credentials);
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-    }
+  // REGISTER
+  register: async (
+    credentials: RegisterCredentials
+  ): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>(
+      '/auth/register',
+      credentials
+    );
+
     return response.data;
   },
 
-  // Logout user
+  // LOGOUT
   logout: (): void => {
-    localStorage.removeItem('authToken');
+    // hapus semua data local storage
+    localStorage.clear();
+
+    // redirect ke login
+    window.location.href = '/login';
   },
 
-  // Get current user
+  // GET CURRENT USER
   getCurrentUser: async () => {
-    const response = await apiClient.get('/auth/me');
-    return response.data;
+    try {
+      const response = await apiClient.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return null;
+    }
+  },
+
+  // CHECK AUTH
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('authToken');
   },
 };
