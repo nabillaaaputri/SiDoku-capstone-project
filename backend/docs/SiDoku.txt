@@ -15,6 +15,7 @@ Standart Status Response
 
 GROUP: Authentication
 BASE URL: http://sidoku.com/v1/auth
+jan lupa buat logout juga dibuat
 
 [1] - Register
 POST http://sidoku.com/v1/auth/register

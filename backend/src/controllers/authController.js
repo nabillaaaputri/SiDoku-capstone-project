@@ -105,3 +105,18 @@ export const login = (req, res) => {
     });
   }
 };
+
+export const logout = (req, res) => {
+  try {
+    return res.status(200).json({
+      status: 'success',
+      message: 'Logout successful',
+      data: null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+    });
+  }
+};

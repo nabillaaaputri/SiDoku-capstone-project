@@ -1,3 +1,8 @@
+const users = [];
+
+export default users;
+
+/*
 const users = [
   {
     id: 1,
@@ -8,3 +13,4 @@ const users = [
 ];
 
 export default users;
+*/
