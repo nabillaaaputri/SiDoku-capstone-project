@@ -110,10 +110,9 @@ export default function SalesChart() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-3 border-b border-slate-100 bg-[linear-gradient(135deg,_rgba(29,78,216,0.05),_rgba(56,189,248,0.025))] p-4 sm:p-4.5 lg:p-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">Analytic trend</p>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900">Tren 7 Hari</h2>
-          <p className="text-sm text-slate-500">Ringkasan performa uang masuk dan uang keluar dalam satu tampilan.</p>
+        <div className="space-y-1">
+          <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Performa Keuangan</h3>
+          <p className="text-sm text-slate-500 font-medium">Ringkasan performa uang masuk dan uang keluar dalam satu tampilan.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:gap-2.5 min-w-0">
@@ -129,18 +128,18 @@ export default function SalesChart() {
       </div>
 
       <div className="space-y-3 p-4 sm:p-4.5 lg:p-5 w-full overflow-x-hidden">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs sm:text-sm">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-3 py-1.5 font-semibold text-blue-700 shadow-sm">
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+        <div className="flex flex-wrap items-center gap-5 text-[13px] font-semibold text-slate-600 px-1">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#3b82f6] shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
             Uang Masuk
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1.5 font-semibold text-orange-700 shadow-sm">
-            <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f97316] shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
             Uang Keluar
           </div>
         </div>
 
-        <div className="relative overflow-x-auto w-full rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fbff)] p-2.5 sm:p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+        <div className="relative overflow-x-auto w-full rounded-[24px] border border-slate-200/60 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_4px_24px_rgba(15,23,42,0.04)]">
           <svg
             viewBox={`0 0 ${width} ${height}`}
             className="block w-full rounded-xl"
@@ -151,19 +150,19 @@ export default function SalesChart() {
           >
             <defs>
               <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.24" />
-                <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
               </linearGradient>
               <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f97316" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#f97316" stopOpacity="0.02" />
+                <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#f97316" stopOpacity="0.0" />
               </linearGradient>
               <filter id="hoverGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feGaussianBlur stdDeviation="5" result="blur" />
                 <feColorMatrix
                   in="blur"
                   type="matrix"
-                  values="0 0 0 0 0.145 0 0 0 0 0.388 0 0 0 0 0.902 0 0 0 0.2 0"
+                  values="0 0 0 0 0.231 0 0 0 0 0.510 0 0 0 0 0.965 0 0 0 0.35 0"
                 />
               </filter>
             </defs>
@@ -237,8 +236,8 @@ export default function SalesChart() {
             <path d={incomeAreaPathD} fill="url(#incomeFill)" stroke="none" />
             <path d={expenseAreaPathD} fill="url(#expenseFill)" stroke="none" />
 
-            <path d={smoothIncomePathD} stroke="#2563eb" strokeWidth={isSmallMobile ? 1.9 : isMobile ? 2.3 : 3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d={smoothExpensePathD} stroke="#f97316" strokeWidth={isSmallMobile ? 1.9 : isMobile ? 2.3 : 3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d={smoothIncomePathD} stroke="#3b82f6" strokeWidth={isSmallMobile ? 2 : isMobile ? 2.5 : 3.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d={smoothExpensePathD} stroke="#f97316" strokeWidth={isSmallMobile ? 2 : isMobile ? 2.5 : 3.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
 
             {hoverState && (
               <line
@@ -267,11 +266,12 @@ export default function SalesChart() {
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={isSmallMobile ? 2.5 : isMobile ? 3.5 : 5}
-                  fill="#2563eb"
+                  r={isSmallMobile ? 3 : isMobile ? 4 : 5.5}
+                  fill="#3b82f6"
                   stroke="white"
-                  strokeWidth={isSmallMobile ? 1 : isMobile ? 1.5 : 2}
+                  strokeWidth={isSmallMobile ? 1.5 : isMobile ? 2 : 2.5}
                   opacity={hoverState?.index === idx ? 1 : 0.9}
+                  className="transition-all duration-200"
                 />
                 <title>{`${chartData[idx].day}: uang masuk ${(chartData[idx].income / 1000).toFixed(1)}rb`}</title>
               </g>
@@ -292,11 +292,12 @@ export default function SalesChart() {
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={isSmallMobile ? 2.5 : isMobile ? 3.5 : 5}
+                  r={isSmallMobile ? 3 : isMobile ? 4 : 5.5}
                   fill="#f97316"
                   stroke="white"
-                  strokeWidth={isSmallMobile ? 1 : isMobile ? 1.5 : 2}
+                  strokeWidth={isSmallMobile ? 1.5 : isMobile ? 2 : 2.5}
                   opacity={hoverState?.index === idx ? 1 : 0.9}
+                  className="transition-all duration-200"
                 />
                 <title>{`${chartData[idx].day}: uang keluar ${(chartData[idx].expense / 1000).toFixed(1)}rb`}</title>
               </g>
@@ -334,14 +335,14 @@ export default function SalesChart() {
 
           {hoverState && (
             <div
-              className="pointer-events-none absolute z-10 min-w-[180px] rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur-sm"
+              className="pointer-events-none absolute z-10 min-w-[200px] rounded-2xl border border-white/60 bg-white/80 px-3.5 py-3 shadow-[0_8px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-200"
               style={{
                 left: `${hoverState.left}px`,
-                top: `${hoverState.below ? hoverState.top + 18 : Math.max(12, hoverState.top - 18)}px`,
+                top: `${hoverState.below ? hoverState.top + 20 : Math.max(16, hoverState.top - 20)}px`,
                 transform: hoverState.below ? "translate(-50%, 0)" : "translate(-50%, -100%)",
               }}
             >
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-200/60 pb-1.5">
                 {chartData[hoverState.index].day}
               </div>
               <div className="mt-2 space-y-1.5 text-sm">

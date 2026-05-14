@@ -35,8 +35,8 @@ export default function Dashboard() {
                   <Sparkles size={14} />
                   SiDoku Analytics
                 </div>
-                <div className="space-y-1.5">
-                  <h1 className="text-2xl sm:text-[2.2rem] lg:text-[2.35rem] font-black tracking-tight text-slate-900 leading-tight">
+                <div className="space-y-1">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter text-slate-900 leading-tight">
                     Selamat Datang Kembali, Nabilla
                   </h1>
                   <p className="text-sm sm:text-[15px] text-slate-600 max-w-2xl leading-relaxed">
@@ -59,7 +59,7 @@ export default function Dashboard() {
                   aria-label="Restock"
                 >
                   <ArrowUpRight size={18} />
-                  Restock
+                  Stok Masuk
                 </Link>
                 <Link
                   to="/stok-keluar"
@@ -87,8 +87,8 @@ export default function Dashboard() {
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-blue-700">Uang Masuk</p>
-                  <p className="mt-2 text-[1.7rem] sm:text-[2.1rem] font-black text-slate-950 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 2.4jt" : "Rp 0"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 2.4jt" : "Rp 0"}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">dari penjualan</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
@@ -104,8 +104,8 @@ export default function Dashboard() {
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-600">Uang Keluar</p>
-                  <p className="mt-2 text-[1.7rem] sm:text-[2.1rem] font-black text-slate-950 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 750rb" : "Rp 0"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 750rb" : "Rp 0"}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-slate-200">
@@ -121,8 +121,8 @@ export default function Dashboard() {
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-700">Keuntungan</p>
-                  <p className="mt-2 text-[1.7rem] sm:text-[2.1rem] font-black text-slate-950 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 1.65jt" : "Rp 0"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-600/80">Keuntungan</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 1.65jt" : "Rp 0"}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-sky-100">
@@ -138,9 +138,9 @@ export default function Dashboard() {
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-700">ROI</p>
-                  <p className="mt-2 text-[1.7rem] sm:text-[2.1rem] font-black text-slate-950 leading-none tabular-nums tracking-tight">{hasProducts ? "220%" : "0%"}</p>
-                  <p className="mt-1.5 text-xs font-medium text-slate-500">return on investment</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-600/80">Tingkat Keuntungan</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "220%" : "0%"}</p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-cyan-100">
                   <ShieldAlert size={22} />
@@ -178,47 +178,57 @@ export default function Dashboard() {
           </div>
 
           {hasLowStock ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="grid grid-cols-12 gap-2 border-b border-slate-100 bg-slate-50/90 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                <div className="col-span-6 sm:col-span-5">Produk</div>
-                <div className="col-span-2 text-center">Satuan</div>
-                <div className="col-span-2 text-center">Stok</div>
-                <div className="col-span-2 text-center">Min</div>
-                <div className="col-span-2 text-center hidden sm:block">Perlu</div>
-              </div>
-
-              <div className="divide-y divide-slate-100">
-                {lowStockProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-blue-50/50 transition"
-                  >
-                    <div className="col-span-6 sm:col-span-5 min-w-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-                          <Package size={20} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate">{product.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{product.stock} tersisa dari batas minimum</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-center text-sm font-semibold text-slate-600">{product.unit}</div>
-                    <div className="col-span-2 flex items-center justify-center text-sm font-bold text-red-600">{product.stock}</div>
-                    <div className="col-span-2 flex items-center justify-center text-sm text-slate-600">{product.minimumStock}</div>
-                    <div className="col-span-2 hidden sm:flex items-center justify-center">
-                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 border border-red-100">
-                        {Math.max(0, product.minimumStock - product.stock)} item
-                      </span>
-                    </div>
-                    <div className="col-span-12 sm:hidden mt-2 flex items-center justify-between rounded-2xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-                      <span>Perlu restock</span>
-                      <span>{Math.max(0, product.minimumStock - product.stock)} item</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="overflow-x-auto rounded-[20px] border border-slate-200/60 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.02)]">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50/50 text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200/60">
+                  <tr>
+                    <th className="px-5 py-3.5 font-semibold w-[35%]">Produk</th>
+                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Satuan</th>
+                    <th className="px-4 py-3.5 font-semibold text-center w-[14%]">Sisa Stok</th>
+                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Min.</th>
+                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Status</th>
+                    <th className="px-5 py-3.5 font-semibold text-right w-[15%]">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {lowStockProducts.map((product) => {
+                    const isCritical = product.stock === 0;
+                    const shortage = product.minimumStock - product.stock;
+                    
+                    return (
+                      <tr key={product.id} className="hover:bg-slate-50/40 transition-colors group">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${isCritical ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'} group-hover:shadow-sm transition-all`}>
+                              <Package size={16} />
+                            </div>
+                            <span className="font-bold text-slate-800">{product.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium text-slate-500">{product.unit}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`font-extrabold ${isCritical ? 'text-red-600' : 'text-amber-600'}`}>{product.stock}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center font-medium text-slate-400">{product.minimumStock}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            isCritical 
+                              ? 'bg-red-50 text-red-700 ring-1 ring-red-200/50' 
+                              : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/50'
+                          }`}>
+                            {isCritical ? "Kritis" : "Low"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <span className="text-[12.5px] font-semibold text-slate-500">
+                            {isCritical ? "Segera restok" : `Butuh ${shortage > 0 ? shortage : 1} ${product.unit}`}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-center">
@@ -229,11 +239,8 @@ export default function Dashboard() {
         </section>
 
         <section className="space-y-2.5 sm:space-y-3 w-full">
-          <div className="flex items-end justify-between gap-3 px-1">
-            <div>
-              <h2 className="section-heading">Tren 7 Hari Terakhir</h2>
-              <p className="mt-1 text-sm text-slate-500">Visualisasi yang lebih bersih untuk membaca arah performa.</p>
-            </div>
+          <div className="hidden">
+            {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
           </div>
           <SalesChart />
         </section>

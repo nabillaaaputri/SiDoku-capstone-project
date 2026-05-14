@@ -68,7 +68,7 @@ export default function DashboardLayout({
               </div>
               <div className="hidden sm:block min-w-0">
                 <p className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-none">SiDoku</p>
-                <p className="text-xs text-slate-500 mt-1">Modern business analytics</p>
+                <p className="text-xs text-slate-500 mt-1">Sistem Data Operasional dan Keuangan Usaha</p>
               </div>
             </Link>
           </div>

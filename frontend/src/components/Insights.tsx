@@ -34,24 +34,30 @@ export default function Insights() {
 
     // 1. Income Trend Insight
     if (incomeChange > 0) {
-      const changePercent = ((incomeChange / previous.totalIncome) * 100).toFixed(1);
+      const isInfinity = previous.totalIncome === 0;
+      const changePercent = isInfinity ? 0 : ((incomeChange / previous.totalIncome) * 100);
+      
       insights.push({
         id: "1",
         type: "positive",
         title: "Penjualan Naik",
-        description: `Penjualan bulan ini naik ${changePercent}%. Kerja keras kamu terbayar!`,
+        description: isInfinity 
+          ? `Penjualan bulan ini meningkat tajam! Kerja keras kamu terbayar.`
+          : `Penjualan bulan ini naik ${changePercent.toFixed(1)}%. Kerja keras kamu terbayar!`,
         icon: <TrendingUp size={20} />,
-        metric: `+${changePercent}%`,
+        metric: isInfinity ? "Naik Signifikan" : `+${changePercent.toFixed(1)}%`,
       });
     } else if (incomeChange < 0) {
-      const changePercent = ((Math.abs(incomeChange) / previous.totalIncome) * 100).toFixed(1);
+      const isInfinity = previous.totalIncome === 0;
+      const changePercent = isInfinity ? 0 : ((Math.abs(incomeChange) / previous.totalIncome) * 100);
+      
       insights.push({
         id: "1",
         type: "warning",
         title: "Penjualan Turun",
-        description: `Penjualan bulan ini turun ${changePercent}%. Coba tambah promosi atau variasi produk.`,
+        description: `Penjualan bulan ini turun ${isInfinity ? "signifikan" : changePercent.toFixed(1) + "%"}. Coba tambah promosi.`,
         icon: <TrendingDown size={20} />,
-        metric: `-${changePercent}%`,
+        metric: isInfinity ? "Turun Tajam" : `-${changePercent.toFixed(1)}%`,
       });
     } else {
       insights.push({
@@ -64,17 +70,20 @@ export default function Insights() {
       });
     }
 
-    // 2. Expense Insight
     const expenseChange = current.totalExpense - previous.totalExpense;
     if (expenseChange > 0) {
-      const changePercent = ((expenseChange / previous.totalExpense) * 100).toFixed(1);
+      const isInfinity = previous.totalExpense === 0;
+      const changePercent = isInfinity ? 0 : ((expenseChange / previous.totalExpense) * 100);
+      
       insights.push({
         id: "2",
         type: "warning",
         title: "Biaya Operasional Naik",
-        description: `Biaya bulan ini ${changePercent}% lebih tinggi. Cek apakah ada pengeluaran yang tidak perlu.`,
+        description: isInfinity 
+          ? `Biaya bulan ini meningkat tajam. Cek pengeluaran yang tidak perlu.`
+          : `Biaya bulan ini ${changePercent.toFixed(1)}% lebih tinggi. Cek pengeluaran yang tidak perlu.`,
         icon: <TrendingDown size={20} />,
-        metric: `+${changePercent}%`,
+        metric: isInfinity ? "Pengeluaran Meningkat" : `+${changePercent.toFixed(1)}%`,
       });
     } else {
       insights.push({
@@ -237,12 +246,12 @@ export default function Insights() {
   const maxRecommendations = recommendations.slice(0, 3);
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         {insights.slice(0, 2).map((insight) => (
           <div
             key={insight.id}
-            className={`group rounded-2xl border p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+            className={`group rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
               insight.type === "positive"
                 ? "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)]"
                 : insight.type === "warning"
@@ -280,7 +289,7 @@ export default function Insights() {
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{insight.description}</p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{insight.description}</p>
               </div>
             </div>
           </div>
@@ -288,21 +297,21 @@ export default function Insights() {
       </div>
 
       {maxRecommendations.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-              <AlertCircle size={16} />
+        <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-4 shadow-sm mt-4">
+          <div className="flex items-center gap-2.5 text-sm font-extrabold text-slate-900 mb-3.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
+              <AlertCircle size={18} />
             </span>
             Apa yang bisa kamu lakukan?
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2.5">
             {maxRecommendations.map((rec, idx) => (
               <div
                 key={idx}
-                className="inline-flex items-start gap-2 rounded-full border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm leading-relaxed text-slate-600"
+                className="flex items-start gap-3 rounded-[14px] border border-blue-50 bg-white px-4 py-3 text-[13px] font-medium leading-relaxed text-slate-700 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition hover:border-blue-200"
               >
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                <span className="max-w-[22rem]">{rec}</span>
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                <span>{rec}</span>
               </div>
             ))}
           </div>

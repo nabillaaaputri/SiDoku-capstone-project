@@ -44,18 +44,16 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         to={item.href}
         title={isCompact ? item.label : undefined}
         onClick={onClick}
-        className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 ${
-          isActive
+        className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 ${isActive
             ? "bg-[linear-gradient(135deg,_rgba(29,78,216,0.12),_rgba(56,189,248,0.10))] text-blue-700 shadow-sm ring-1 ring-blue-100"
             : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-        } ${isCompact ? "justify-center" : ""}`}
+          } ${isCompact ? "justify-center" : ""}`}
       >
         <span
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
-            isActive
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${isActive
               ? "border-blue-200 bg-white text-blue-600 shadow-sm"
               : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-slate-300 group-hover:bg-white"
-          }`}
+            }`}
         >
           <IconComponent size={19} className="flex-shrink-0" />
         </span>
@@ -74,14 +72,14 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     <>
       {/* Desktop Sidebar - Collapsible (always visible on desktop) */}
       <aside
-        className={`hidden md:flex md:flex-col flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${
-          isCollapsed ? "w-16" : "w-56"
-        }`}
+        className={`hidden md:flex md:flex-col flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${isCollapsed ? "w-16" : "w-56"
+          }`}
       >
-        <div className="border-b border-slate-200/80 px-4 py-4 flex justify-end">
+        <div className="border-b border-slate-200/80 px-4 py-4 flex items-center justify-between">
+          {!isCollapsed && <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Menu</span>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700"
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700 transition ${isCollapsed ? 'mx-auto' : ''}`}
             aria-label="Toggle sidebar"
           >
             {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
