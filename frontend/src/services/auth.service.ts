@@ -22,22 +22,26 @@ interface AuthResponse {
 
 export const authService = {
   // LOGIN
-  login: async (
-    credentials: LoginCredentials
-  ): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(
-      '/auth/login',
-      credentials
-    );
+login: async (
+  credentials: LoginCredentials
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    '/auth/login',
+    credentials
+  );
 
-    const token = response.data.data.accessToken;
+  console.log("FULL LOGIN RESPONSE:", response.data);
 
-    if (token) {
-      localStorage.setItem('authToken', token);
-    }
+  const token = response.data.data.accessToken;
 
-    return response.data;
-  },
+  console.log("TOKEN DARI BACKEND:", token);
+
+  if (token) {
+    localStorage.setItem('authToken', token);
+  }
+
+  return response.data;
+},
 
   // REGISTER
   register: async (

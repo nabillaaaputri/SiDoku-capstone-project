@@ -99,14 +99,14 @@ export default function ChatPanel({
 
         {/* Mobile Bottom Sheet */}
         <div
-          className={`fixed inset-x-0 bottom-0 h-[92vh] bg-white z-50 rounded-t-[28px] shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden ${
+          className={`fixed inset-x-0 bottom-0 h-[88vh] bg-white z-50 rounded-t-[28px] shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden ${
             isOpen
               ? "translate-y-0"
               : "translate-y-full"
           }`}
         >
           {/* Header */}
-          <div className="border-b border-slate-200 bg-white px-5 py-4 flex items-center justify-between">
+          <div className="border-b border-slate-200 bg-white px-[18px] py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <Bot size={22} />
@@ -132,8 +132,31 @@ export default function ChatPanel({
             </button>
           </div>
 
+          <div className="px-4 pt-3.5">
+            <div className="rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.96),_rgba(255,255,255,0.98))] p-3.5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-sm">
+                  <Sparkles size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">AI Assistant</p>
+                  <h3 className="mt-1 text-sm font-bold text-slate-900">
+                    Halo! Saya Asisten AI SiDoku 👋
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600 leading-relaxed">
+                    Saya membantu Anda memahami kondisi usaha berdasarkan data yang dicatat di aplikasi.
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                    Saya bisa membantu menjelaskan ringkasan usaha, memberi insight pengeluaran, mengecek stok yang hampir habis, dan memberi saran pencatatan usaha sederhana.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Chat */}
-          <div className="flex-1 overflow-y-auto px-4 py-5 bg-gradient-to-b from-slate-50 to-blue-50 space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 py-4 bg-gradient-to-b from-slate-50 to-blue-50 space-y-3.5">
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -149,7 +172,7 @@ export default function ChatPanel({
                       <Bot size={18} />
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm">
                       <p className="text-sm text-slate-700 leading-relaxed">
                         {msg.text}
                       </p>
@@ -166,7 +189,7 @@ export default function ChatPanel({
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-3 max-w-[80%] shadow-md">
+                  <div className="bg-blue-600 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 max-w-[80%] shadow-md">
                     <p className="text-sm leading-relaxed">
                       {msg.text}
                     </p>
@@ -189,9 +212,9 @@ export default function ChatPanel({
           {/* Input */}
           <form
             onSubmit={handleSendMessage}
-            className="border-t border-slate-200 bg-white p-4"
+            className="border-t border-slate-200 bg-white p-3.5"
           >
-            <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition">
+            <div className="flex items-center gap-2.5 bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition">
               <input
                 type="text"
                 value={input}
@@ -204,7 +227,7 @@ export default function ChatPanel({
 
               <button
                 type="submit"
-                className="w-11 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 transition text-white flex items-center justify-center shadow-md shadow-blue-500/30"
+                className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 transition text-white flex items-center justify-center shadow-md shadow-blue-500/30"
               >
                 <SendHorizonal size={18} />
               </button>
@@ -230,14 +253,14 @@ export default function ChatPanel({
 
       {/* Desktop Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-screen w-full max-w-md bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden ${
+        className={`fixed right-0 top-0 h-screen w-full max-w-[28rem] bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden ${
           isOpen
             ? "translate-x-0"
             : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="border-b border-slate-200 bg-white px-5 py-4 flex items-center justify-between">
+          <div className="border-b border-slate-200 bg-white px-[18px] py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Bot size={24} />
@@ -263,8 +286,31 @@ export default function ChatPanel({
           </button>
         </div>
 
+          <div className="px-[18px] pt-4">
+            <div className="rounded-2xl border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.96),_rgba(255,255,255,0.98))] p-3.5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-sm">
+                  <Sparkles size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">AI Assistant</p>
+                  <h3 className="mt-1 text-sm font-bold text-slate-900">
+                    Halo! Saya Asisten AI SiDoku 👋
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600 leading-relaxed">
+                    Saya membantu Anda memahami kondisi usaha berdasarkan data yang dicatat di aplikasi.
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                    Saya bisa membantu menjelaskan ringkasan usaha, memberi insight pengeluaran, mengecek stok yang hampir habis, dan memberi saran pencatatan usaha sederhana.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
         {/* Chat Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-6 bg-gradient-to-b from-slate-50 via-blue-50 to-slate-100 space-y-5">
+        <div className="flex-1 overflow-y-auto px-[18px] py-5 bg-gradient-to-b from-slate-50 via-blue-50 to-slate-100 space-y-4">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -275,12 +321,12 @@ export default function ChatPanel({
               }`}
             >
               {msg.sender === "bot" ? (
-                <div className="flex items-start gap-3 max-w-[85%]">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="flex items-start gap-3 max-w-[85%]">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
                     <Bot size={18} />
                   </div>
 
-                  <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
+                  <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm">
                     <p className="text-sm text-slate-700 leading-relaxed">
                       {msg.text}
                     </p>
@@ -297,7 +343,7 @@ export default function ChatPanel({
                   </div>
                 </div>
               ) : (
-                <div className="bg-blue-600 text-white rounded-2xl rounded-br-md px-5 py-4 max-w-[80%] shadow-md shadow-blue-500/20">
+                <div className="bg-blue-600 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 max-w-[80%] shadow-md shadow-blue-500/20">
                   <p className="text-sm leading-relaxed">
                     {msg.text}
                   </p>
@@ -320,9 +366,9 @@ export default function ChatPanel({
         {/* Input */}
         <form
           onSubmit={handleSendMessage}
-          className="border-t border-slate-200 bg-white p-4"
+          className="border-t border-slate-200 bg-white p-3.5"
         >
-          <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition">
+          <div className="flex items-center gap-2.5 bg-slate-100 border border-slate-200 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition">
             <input
               type="text"
               value={input}
@@ -335,7 +381,7 @@ export default function ChatPanel({
 
             <button
               type="submit"
-              className="w-11 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 transition text-white flex items-center justify-center shadow-md shadow-blue-500/30"
+              className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 transition text-white flex items-center justify-center shadow-md shadow-blue-500/30"
             >
               <SendHorizonal size={18} />
             </button>

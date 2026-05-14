@@ -36,7 +36,7 @@ export default function Expenses() {
     "all"
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
@@ -57,7 +57,7 @@ export default function Expenses() {
       return;
     }
 
-    addExpense({
+    await addExpense({
       name: formData.name,
       amount: formData.amount,
       category: formData.category,
@@ -80,9 +80,9 @@ export default function Expenses() {
     setIsFormOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Yakin ingin menghapus pengeluaran ini?")) {
-      deleteExpense(id);
+      await deleteExpense(id);
       toast({
         title: "Berhasil",
         description: "Pengeluaran berhasil dihapus",

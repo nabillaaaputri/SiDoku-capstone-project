@@ -33,7 +33,7 @@ export default function Products() {
   });
 
   // Handle Tambah Produk Baru Submit
-  const handleAddProductSubmit = (e: React.FormEvent) => {
+  const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!addProductForm.name.trim()) {
@@ -55,7 +55,7 @@ export default function Products() {
     }
 
     const productName = addProductForm.name;
-    addProduct({
+    await addProduct({
       name: addProductForm.name,
       costPrice: addProductForm.costPrice,
       sellPrice: addProductForm.sellPrice,
@@ -89,7 +89,7 @@ export default function Products() {
     setEditingProduct(product);
   };
 
-  const handleSaveEdit = (updatedData: Partial<Product>) => {
+  const handleSaveEdit = async (updatedData: Partial<Product>) => {
     if (editingProduct) {
       if (!updatedData.name?.trim()) {
         toast({
@@ -109,7 +109,7 @@ export default function Products() {
         return;
       }
 
-      updateProduct(editingProduct.id, updatedData);
+      await updateProduct(editingProduct.id, updatedData);
       toast({
         title: "Berhasil",
         description: "Produk berhasil diperbarui",
@@ -122,10 +122,10 @@ export default function Products() {
     setArchiveProductId(productId);
   };
 
-  const handleConfirmArchive = () => {
+  const handleConfirmArchive = async () => {
     if (archiveProductId) {
       const product = products.find((p) => p.id === archiveProductId);
-      archiveProduct(archiveProductId);
+      await archiveProduct(archiveProductId);
       toast({
         title: "Berhasil",
         description: `Produk ${product?.name} berhasil diarsipkan`,
@@ -134,9 +134,9 @@ export default function Products() {
     setArchiveProductId(null);
   };
 
-  const handleRestoreProduct = (productId: string) => {
+  const handleRestoreProduct = async (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    restoreProduct(productId);
+    await restoreProduct(productId);
     toast({
       title: "Berhasil",
       description: `Produk ${product?.name} berhasil dipulihkan`,

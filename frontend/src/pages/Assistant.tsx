@@ -112,37 +112,89 @@ export default function Assistant() {
       </header>
 
       {/* CONTENT */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-4 md:px-6 py-6 gap-6">
-        {/* SIDEBAR */}
-        <aside className="lg:w-80 space-y-5">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-5 py-4 md:py-5 space-y-4 md:space-y-5">
+        {/* AI INTRO CARD */}
+        <div className="rounded-[28px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.95),_rgba(255,255,255,0.95))] shadow-sm p-4 md:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-start gap-3.5 max-w-3xl">
+              <div className="h-12 w-12 shrink-0 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Sparkles size={26} />
+              </div>
+              <div className="space-y-2.5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">AI Assistant</p>
+                  <h2 className="mt-1 text-lg md:text-xl font-black text-slate-900">Halo! Saya Asisten AI SiDoku 👋</h2>
+                  <p className="mt-1.5 text-sm md:text-[15px] text-slate-600 leading-relaxed max-w-2xl">
+                    Saya membantu Anda memahami kondisi usaha berdasarkan data yang dicatat di aplikasi.
+                  </p>
+                </div>
+
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm">
+                    Saya bisa membantu:
+                    <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
+                      <li>• Menjelaskan ringkasan usaha</li>
+                      <li>• Memberikan insight pengeluaran</li>
+                      <li>• Mengecek stok yang hampir habis</li>
+                      <li>• Memberikan saran pencatatan usaha sederhana</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm">
+                    Contoh pertanyaan:
+                    <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
+                      <li>• Pengeluaran saya paling besar di mana?</li>
+                      <li>• Produk apa yang stoknya hampir habis?</li>
+                      <li>• Bagaimana kondisi usaha saya minggu ini?</li>
+                      <li>• Apa yang perlu saya perhatikan hari ini?</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  AI memberikan saran berdasarkan data yang tersedia di aplikasi, jadi hasilnya dapat berbeda sesuai kelengkapan data.
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm">
+              <Bot size={14} />
+              Siap membantu
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-5">
+          {/* SIDEBAR */}
+          <aside className="lg:w-[300px] space-y-4">
           {/* INTRO */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
+          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mb-3">
               <Bot className="text-blue-600" size={28} />
             </div>
 
-            <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">
+            <h2 className="text-xl font-extrabold text-slate-900 leading-tight">
               Tanya Apa Saja Tentang Bisnis Kamu
             </h2>
 
-            <p className="text-sm text-slate-600 mt-3 leading-relaxed">
+            <p className="text-sm text-slate-600 mt-2.5 leading-relaxed">
               Dapatkan insight cepat mengenai stok, penjualan,
               keuntungan, hingga rekomendasi bisnis otomatis.
             </p>
           </div>
 
           {/* QUICK QUESTIONS */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-5 shadow-sm">
+          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
             <p className="text-sm font-bold text-slate-900 mb-4">
               Contoh Pertanyaan
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <button
                 onClick={() =>
                   setInput("Produk apa yang paling laku minggu ini?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
                 <div className="flex items-start gap-3">
                   <TrendingUp
@@ -166,7 +218,7 @@ export default function Assistant() {
                 onClick={() =>
                   setInput("Stok mana yang harus segera restock?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
                 <div className="flex items-start gap-3">
                   <Package
@@ -190,7 +242,7 @@ export default function Assistant() {
                 onClick={() =>
                   setInput("Berapa estimasi keuntungan bulan ini?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
                 <div className="flex items-start gap-3">
                   <Wallet
@@ -211,12 +263,12 @@ export default function Assistant() {
               </button>
             </div>
           </div>
-        </aside>
+          </aside>
 
-        {/* CHAT AREA */}
-        <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[700px]">
+          {/* CHAT AREA */}
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[620px]">
           {/* CHAT HEADER */}
-          <div className="border-b border-slate-200 px-5 py-4 bg-slate-50">
+          <div className="border-b border-slate-200 px-4 py-3.5 bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
@@ -239,7 +291,7 @@ export default function Assistant() {
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-5 bg-gradient-to-b from-slate-50 to-white">
+          <div className="flex-1 overflow-y-auto px-4 md:px-5 py-5 space-y-4 bg-gradient-to-b from-slate-50 to-white">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -258,14 +310,14 @@ export default function Assistant() {
                       />
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm">
                       <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
                         {message.text}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-4 py-3 shadow-lg">
+                  <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
                     <p className="text-sm md:text-[15px] leading-relaxed">
                       {message.text}
                     </p>
@@ -278,8 +330,8 @@ export default function Assistant() {
           </div>
 
           {/* INPUT */}
-          <div className="border-t border-slate-200 bg-white p-4 md:p-5">
-            <div className="flex items-end gap-3">
+          <div className="border-t border-slate-200 bg-white p-3.5 md:p-4">
+            <div className="flex items-end gap-2.5">
               <div className="flex-1">
                 <textarea
                   value={input}
@@ -295,13 +347,13 @@ export default function Assistant() {
                   }}
                   placeholder="Tulis pertanyaan Anda..."
                   rows={2}
-                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
                 />
               </div>
 
               <button
                 onClick={handleSendMessage}
-                className="h-[52px] px-5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2"
+                className="h-11 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2"
               >
                 <SendHorizonal size={18} />
 
@@ -315,7 +367,8 @@ export default function Assistant() {
               AI dapat membuat kesalahan. Pastikan cek kembali data penting.
             </p>
           </div>
-        </section>
+          </section>
+        </div>
       </div>
     </div>
   );
