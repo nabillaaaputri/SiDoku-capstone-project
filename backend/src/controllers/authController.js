@@ -1,122 +1,79 @@
-import users from '../data/users.js';
 import { nanoid } from 'nanoid';
+import users from '../data/users.js';
+import response from '../utils/response.js';
+import {
+  InvariantError,
+  NotFoundError,
+  AuthenticationError,
+  ConflictError,
+} from '../exceptions/index.js';
 
-export const register = (req, res) => {
-  try {
-    const { storeName, email, password, confirmPassword } = req.body;
+export const register = (req, res, next) => {
+  const {
+    storeName,
+    email,
+    password,
+    confirmPassword,
+  } = req.body;
 
-    if (!storeName || !email || !password || !confirmPassword) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Input yang anda masukkan tidak valid.',
-      });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Password dan konfirmasi password tidak sama.',
-      });
-    }
-
-    const isEmailExist = users.find((user) => user.email === email);
-
-    if (isEmailExist) {
-      return res.status(409).json({
-        status: 'fail',
-        message: 'Email sudah terdaftar.',
-      });
-    }
-
-    const id = nanoid();
-
-    const newUser = {
-      id,
-      storeName,
-      email,
-      password,
-    };
-
-    users.push(newUser);
-
-    return res.status(201).json({
-      status: 'success',
-      message: 'Register success',
-      data: {
-        id: newUser.id,
-        storeName: newUser.storeName,
-        email: newUser.email,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Terjadi kesalahan pada server.',
-    });
+  if (!storeName || !email || !password || !confirmPassword) {
+    return next(new InvariantError('Input yang anda masukkan tidak valid.'));
   }
-};
 
-export const getAllUsers = (req, res) => {
-  return res.status(200).json({
-    status: 'success',
-    message: 'Get all users',
-    data: users,
+  if (password !== confirmPassword) {
+    return next(new InvariantError('Password dan konfirmasi password tidak sama.'));
+  }
+
+  const isEmailExist = users.find((user) => user.email === email);
+
+  if (isEmailExist) {
+    return next(new ConflictError('Email sudah terdaftar.'));
+  }
+
+  const id = nanoid();
+
+  const newUser = {
+    id,
+    storeName,
+    email,
+    password,
+  };
+
+  users.push(newUser);
+
+  return response(res, 201, 'Register success', {
+    id: newUser.id,
+    storeName: newUser.storeName,
+    email: newUser.email,
   });
 };
 
-export const login = (req, res) => {
-  try {
-    const { email, password } = req.body;
+export const getAllUsers = (req, res) => {
+  return response(res, 200, 'Get all users', users);
+};
 
-    if (!email || !password) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Input yang anda masukkan tidak valid.',
-      });
-    }
+export const login = (req, res, next) => {
+  const { email, password } = req.body;
 
-    const user = users.find((item) => item.email === email);
-
-    if (!user) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Akun tidak ditemukan.',
-      });
-    }
-
-    if (user.password !== password) {
-      return res.status(401).json({
-        status: 'fail',
-        message: 'Email atau password salah.',
-      });
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Login success',
-      data: {
-        accessToken: 'dummy_jwt_token_here',
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Terjadi kesalahan pada server.',
-    });
+  if (!email || !password) {
+    return next(new InvariantError('Input yang anda masukkan tidak valid.'));
   }
+
+  const user = users.find((item) => item.email === email);
+
+  if (!user) {
+    return next(new NotFoundError('Akun tidak ditemukan.'));
+  }
+
+  if (user.password !== password) {
+    return next(new AuthenticationError('Email atau password salah.'));
+  }
+
+  return response(res, 200, 'Login success', {
+    accessToken: 'dummy_jwt_token_here',
+  });
 };
 
 export const logout = (req, res) => {
-  try {
-    return res.status(200).json({
-      status: 'success',
-      message: 'Logout successful',
-      data: null,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
-    });
-  }
+  return response(res, 200, 'Logout successful', null);
 };

@@ -1,5 +1,10 @@
 import { nanoid } from 'nanoid';
 import expenses from '../data/expenses.js';
+import response from '../utils/response.js';
+import {
+  InvariantError,
+  NotFoundError,
+} from '../exceptions/index.js';
 
 const getCategoryLabel = (category) => {
   const labels = {
@@ -57,113 +62,79 @@ const createExpenseSummary = (records) => {
 };
 
 export const getExpenses = (req, res) => {
-  try {
-    const { category, date } = req.query;
+  const { category, date } = req.query;
 
-    let filteredExpenses = expenses;
+  let filteredExpenses = expenses;
 
-    if (category) {
-      filteredExpenses = filteredExpenses.filter(
-        (expense) => expense.category === category,
-      );
-    }
-
-    if (date) {
-      filteredExpenses = filteredExpenses.filter(
-        (expense) => expense.date === date,
-      );
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      message: filteredExpenses.length > 0
-        ? 'Expenses retrieved successfully'
-        : 'No expenses found',
-      data: {
-        summary: createExpenseSummary(filteredExpenses),
-        records: filteredExpenses,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Terjadi kesalahan pada server.',
-    });
-  }
-};
-
-export const addExpense = (req, res) => {
-  try {
-    const {
-      expenseName,
-      category,
-      amount,
-      date,
-      description,
-    } = req.body;
-
-    if (!expenseName || !category || !amount || !date) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Input pengeluaran tidak valid.',
-      });
-    }
-
-    const newExpense = {
-      id: nanoid(),
-      date,
-      expenseName,
-      category,
-      categoryLabel: getCategoryLabel(category),
-      amount: Number(amount),
-      description: description || '-',
-    };
-
-    expenses.push(newExpense);
-
-    return res.status(201).json({
-      status: 'success',
-      message: 'Expense created successfully',
-      data: newExpense,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Terjadi kesalahan pada server.',
-    });
-  }
-};
-
-export const deleteExpenseById = (req, res) => {
-  try {
-    const { expenseId } = req.params;
-
-    const expenseIndex = expenses.findIndex(
-      (expense) => expense.id === expenseId,
+  if (category) {
+    filteredExpenses = filteredExpenses.filter(
+      (expense) => expense.category === category,
     );
-
-    if (expenseIndex === -1) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Data pengeluaran tidak ditemukan.',
-      });
-    }
-
-    const deletedExpense = expenses.splice(expenseIndex, 1)[0];
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Expense deleted successfully',
-      data: {
-        id: deletedExpense.id,
-        expenseName: deletedExpense.expenseName,
-        amount: deletedExpense.amount,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Terjadi kesalahan pada server.',
-    });
   }
+
+  if (date) {
+    filteredExpenses = filteredExpenses.filter(
+      (expense) => expense.date === date,
+    );
+  }
+
+  return response(
+    res,
+    200,
+    filteredExpenses.length > 0
+      ? 'Expenses retrieved successfully'
+      : 'No expenses found',
+    {
+      summary: createExpenseSummary(filteredExpenses),
+      records: filteredExpenses,
+    },
+  );
+};
+
+export const addExpense = (req, res, next) => {
+  const {
+    expenseName,
+    category,
+    amount,
+    date,
+    description,
+  } = req.body;
+
+  if (!expenseName || !category || !amount || !date) {
+    return next(new InvariantError('Input pengeluaran tidak valid.'));
+  }
+
+  const newExpense = {
+    id: nanoid(),
+    date,
+    expenseName,
+    category,
+    categoryLabel: getCategoryLabel(category),
+    amount: Number(amount),
+    description: description || '-',
+  };
+
+  expenses.push(newExpense);
+
+  return response(res, 201, 'Expense created successfully', newExpense);
+};
+
+export const deleteExpenseById = (req, res, next) => {
+  const { expenseId } = req.params;
+
+  const expenseIndex = expenses.findIndex(
+    (expense) => expense.id === expenseId,
+  );
+
+  if (expenseIndex === -1) {
+    return next(new NotFoundError('Data pengeluaran tidak ditemukan.'));
+  }
+
+  const deletedExpense = expenses.splice(expenseIndex, 1)[0];
+
+  return response(res, 200, 'Expense deleted successfully', {
+    id: deletedExpense.id,
+    expenseName: deletedExpense.expenseName,
+    amount: deletedExpense.amount,
+  });
 };

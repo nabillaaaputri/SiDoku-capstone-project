@@ -9,6 +9,7 @@ import stockOutRoutes from './routes/stockOutsRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import sellingRecapRoutes from './routes/sellingRecapRoutes.js';
 import aiChatbotRoutes from './routes/aiChatbotRoutes.js';
+import ErrorHandler from './middlewares/error.js';
 
 const app = express();
 
@@ -30,5 +31,7 @@ app.get('/', (request, response) => {
     message: 'SiDoku Backend API is running',
   });
 });
+
+app.use(ErrorHandler);
 
 export default app;
