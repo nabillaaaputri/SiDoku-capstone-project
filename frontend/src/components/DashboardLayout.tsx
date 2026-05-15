@@ -63,8 +63,8 @@ export default function DashboardLayout({
             </button>
 
             <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <span className="text-base font-black tracking-tight">S</span>
+              <div className="h-10 w-10 rounded-2xl bg-white border border-slate-200 text-slate-900 flex items-center justify-center shadow-sm">
+                <img src="/logo.png" alt="SiDoku" className="w-6 h-6 object-contain" />
               </div>
               <div className="hidden sm:block min-w-0">
                 <p className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-none">SiDoku</p>
