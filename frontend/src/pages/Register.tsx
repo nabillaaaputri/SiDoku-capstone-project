@@ -1,18 +1,25 @@
 import Layout from "@/components/layout/Layout";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (
       email &&
@@ -21,7 +28,20 @@ export default function Register() {
       businessName &&
       password === confirmPassword
     ) {
-      setIsSubmitted(true);
+      try {
+        setIsLoading(true);
+        await register(businessName, email, password, businessName);
+        setIsSubmitted(true);
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Pendaftaran gagal. Silakan coba lagi.");
+        console.error("Register error:", err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -81,6 +101,12 @@ export default function Register() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             {/* Nama Usaha */}
             <div>
@@ -149,10 +175,11 @@ export default function Register() {
             {/* Button */}
             <Button
               type="submit"
-              className="w-full bg-slate-900 text-white py-3 font-bold hover:bg-slate-800 rounded-xl transition inline-flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="w-full bg-slate-900 text-white py-3 font-bold hover:bg-slate-800 rounded-xl transition inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Daftar
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? "Sedang mendaftar..." : "Daftar"}
+              {!isLoading && <ArrowRight className="w-4 h-4" />}
             </Button>
           </form>
 

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { User, Lock, Store } from "lucide-react";
 
 interface ProfileData {
@@ -17,19 +18,32 @@ interface ProfileData {
 
 export default function Account() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
   );
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<ProfileData>({
-    ownerName: "Nama Pemilik Toko",
-    email: "pemilik@sidoku.id",
+    ownerName: user?.name || "Nama Pemilik Toko",
+    email: user?.email || "pemilik@sidoku.id",
     phone: "+62 812 3456 7890",
-    shopName: "Toko Saya",
+    shopName: user?.storeName || "Toko Saya",
     shopCategory: "Retail",
     shopAddress: "Jl. Contoh No. 123, Jakarta",
     shopDescription: "Toko online yang menjual berbagai produk berkualitas",
   });
+
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        ownerName: user.name || prev.ownerName,
+        email: user.email || prev.email,
+        shopName: user.storeName || prev.shopName,
+      }));
+    }
+  }, [user]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",

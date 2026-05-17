@@ -4,6 +4,7 @@ import Insights from "@/components/Insights";
 import SalesChart from "@/components/SalesChart";
 import { Badge } from "@/ui/badge";
 import { useBusinessContext } from "@/context";
+import { useAuth } from "@/context/AuthContext";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -18,6 +19,9 @@ import {
 
 export default function Dashboard() {
   const { products } = useBusinessContext();
+  const { user } = useAuth();
+  
+  const displayName = user?.name || user?.email?.split('@')[0] || "User";
 
   // Get low stock products from actual data (max 3)
   const lowStockProducts = products.filter(p => p.stock <= p.minimumStock).slice(0, 3);
@@ -37,7 +41,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter text-slate-900 leading-tight">
-                    Selamat Datang Kembali, Nabilla
+                    Selamat Datang Kembali, {displayName}
                   </h1>
                   <p className="text-sm sm:text-[15px] text-slate-600 max-w-2xl leading-relaxed">
                     Pantau ringkasan usaha, insight penting, stok menipis, dan tren performa dalam satu tampilan.

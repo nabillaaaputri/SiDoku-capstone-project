@@ -5,6 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  storeName?: string;
 }
 
 interface AuthContextType {
@@ -12,7 +13,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, storeName?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -43,12 +44,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await authService.login({ email, password });
-    setUser(response.user);
+    if (response && response.data) {
+      setUser({
+        id: response.data.id || '',
+        email: response.data.email || email,
+        name: response.data.email?.split('@')[0] || 'User',
+        storeName: response.data.storeName,
+      });
+    } else {
+      setUser(null);
+    }
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const response = await authService.register({ name, email, password });
-    setUser(response.user);
+  const register = async (name: string, email: string, password: string, storeName?: string) => {
+    const response = await authService.register({ email, password, storeName: storeName || name });
+    if (response && response.data) {
+      setUser({
+        id: response.data.id || '',
+        email: response.data.email || email,
+        name: name,
+        storeName: response.data.storeName,
+      });
+    } else {
+      setUser(null);
+    }
   };
 
   const logout = () => {

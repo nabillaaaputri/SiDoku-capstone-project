@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
 import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -17,8 +18,10 @@ export default function DashboardLayout({
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
-  const displayName = "Nabilla";
-  const storeName = "Toko Saya";
+  const { user } = useAuth();
+  
+  const displayName = user?.name || user?.email?.split('@')[0] || "User";
+  const storeName = user?.storeName || "Toko Saya";
 
   // HANDLE LOGOUT
   const handleLogout = () => {
