@@ -1,4 +1,4 @@
-import apiClient from './api';
+import { authApiClient } from './api';
 
 interface LoginCredentials {
   email: string;
@@ -25,7 +25,7 @@ export const authService = {
 login: async (
   credentials: LoginCredentials
 ): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>(
+  const response = await authApiClient.post<AuthResponse>(
     '/auth/login',
     credentials
   );
@@ -47,7 +47,7 @@ login: async (
   register: async (
     credentials: RegisterCredentials
   ): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(
+    const response = await authApiClient.post<AuthResponse>(
       '/auth/register',
       credentials
     );
@@ -67,7 +67,7 @@ login: async (
   // GET CURRENT USER
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await authApiClient.get('/auth/me');
       return response.data;
     } catch (error) {
       console.error('Get current user error:', error);

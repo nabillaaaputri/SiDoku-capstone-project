@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/ui/button";
+import logoImage from "/logo.png";
 import { 
   Menu, X, Sparkles, LayoutDashboard, 
   CheckCircle2, PlusCircle, ClipboardList,
@@ -9,10 +10,12 @@ import {
 } from "lucide-react";
 
 const TEAM = [
-  { name: "Budi S.", role: "Product Manager", initials: "BS", color: "bg-blue-100 text-blue-700" },
-  { name: "Siti A.", role: "UI/UX Designer", initials: "SA", color: "bg-purple-100 text-purple-700" },
-  { name: "Ahmad R.", role: "Frontend Engineer", initials: "AR", color: "bg-emerald-100 text-emerald-700" },
-  { name: "Dewi L.", role: "Backend Engineer", initials: "DL", color: "bg-orange-100 text-orange-700" },
+  { name: "Nabilla Putri Nuraini", role: "", initials: "NPN", color: "bg-blue-100 text-blue-700" },
+  { name: "Shafira Auliana Salsabila", role: "", initials: "SAS", color: "bg-purple-100 text-purple-700" },
+  { name: "Nayla Poetri Kurnia", role: "", initials: "NPK", color: "bg-emerald-100 text-emerald-700" },
+  { name: "Hikmal Arya Dwitama", role: "", initials: "HAD", color: "bg-orange-100 text-orange-700" },
+  { name: "Yolanda Wulandari", role: "", initials: "YW", color: "bg-pink-100 text-pink-700" },
+  { name: "Bella Azhar Kautsar", role: "", initials: "BAK", color: "bg-cyan-100 text-cyan-700" },
 ];
 
 export default function Landing() {
@@ -26,18 +29,18 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_transparent_26%),linear-gradient(180deg,_#f8fbff_0%,_#f5f8fc_48%,_#eef4fb_100%)] font-sans text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
       {/* 1. NAVBAR */}
       <div className="fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
         <header className={`pointer-events-auto transition-all duration-300 rounded-full border w-full max-w-4xl ${
-          scrolled ? 'bg-white/95 backdrop-blur-md border-slate-200/80 shadow-[0_10px_24px_rgba(15,23,42,0.10)]' 
-          : 'bg-white/92 backdrop-blur-md border-slate-200/70 shadow-[0_8px_20px_rgba(15,23,42,0.08)]'
+          scrolled ? 'bg-[#EAF2FB]/90 backdrop-blur-sm border-slate-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.08)]' 
+          : 'bg-[#EAF2FB]/90 backdrop-blur-sm border-slate-200/70 shadow-[0_8px_20px_rgba(15,23,42,0.06)]'
         }`}>
           <div className="flex justify-between items-center h-14 px-4 sm:px-6">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                 <div className="w-8 h-8 rounded-2xl bg-white text-slate-900 border border-white/80 flex items-center justify-center p-1.5 shadow-sm">
-                  <img src="/logo.png" alt="SiDoku Logo" className="w-5 h-5 object-contain" />
+                  <img src={logoImage} alt="SiDoku Logo" className="w-5 h-5 object-contain" />
                 </div>
                 SiDoku
               </Link>
@@ -123,7 +126,7 @@ export default function Landing() {
               <div className="w-full max-w-lg rounded-3xl border border-blue-100 bg-white shadow-[0_18px_44px_rgba(2,32,71,0.14)] overflow-hidden">
                  <div className="h-11 px-4 border-b border-blue-100 bg-[linear-gradient(90deg,_#0f172a,_#0c4a6e)] flex items-center gap-3">
                    <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm">
-                     <img src="/logo.png" alt="SiDoku" className="w-4 h-4 object-contain" />
+                     <img src={logoImage} alt="SiDoku" className="w-4 h-4 object-contain" />
                    </div>
                    <div className="ml-1 text-[10px] font-bold text-white/90">Dashboard SiDoku</div>
                  </div>
@@ -341,9 +344,8 @@ export default function Landing() {
           <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
             <div className="mb-8">
               <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Dibangun oleh Tim SiDoku</h3>
-              <p className="text-[13px] font-medium text-slate-500 mt-2">Tim lintas bidang yang membangun solusi ini untuk membantu UMKM Indonesia berkembang lebih baik.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {TEAM.map((member, i) => (
                 <div key={i} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-colors cursor-default text-left">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black ${member.color}`}>
@@ -366,7 +368,7 @@ export default function Landing() {
            <div className="text-center md:text-left">
              <div className="flex items-center justify-center md:justify-start gap-2 text-slate-900 font-black text-sm">
              <div className="w-5 h-5 rounded-md flex items-center justify-center p-1 bg-white border border-slate-200 shadow-sm">
-               <img src="/logo.png" className="w-3 h-3 object-contain" alt="SiDoku"/>
+               <img src={logoImage} className="w-3 h-3 object-contain" alt="SiDoku"/>
              </div>
              SiDoku
              </div>
