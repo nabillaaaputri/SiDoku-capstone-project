@@ -1,11 +1,11 @@
 import { nanoid } from 'nanoid';
-import stockOuts from '../data/stockOuts.js';
-import products from '../data/product.js';
 import response from '../utils/response.js';
 import {
   InvariantError,
   NotFoundError,
 } from '../exceptions/index.js';
+import * as stockOutRepository from '../repositories/stockOutRepository.js';
+import * as productRepository from '../repositories/productRepository.js';
 
 const getCurrentTime = () => {
   const now = new Date();
@@ -25,100 +25,122 @@ const getStockStatus = (stock, minimumStock) => {
   return 'safe';
 };
 
-export const getStockOuts = (req, res) => {
-  const { productId, date } = req.query;
+const mapStockOutResponse = (stockOut) => ({
+  id: stockOut.id,
+  productId: stockOut.product_id,
+  productName: stockOut.product_name,
+  quantity: stockOut.quantity,
+  unit: stockOut.unit,
+  date: stockOut.date,
+  time: stockOut.time,
+  note: stockOut.note,
+  currentStock: stockOut.current_stock,
+});
 
-  let filteredStockOuts = stockOuts;
+export const getStockOuts = async (req, res, next) => {
+  try {
+    const { productId, date } = req.query;
 
-  if (productId) {
-    filteredStockOuts = filteredStockOuts.filter(
-      (stockOut) => stockOut.productId === productId,
+    const stockOuts = await stockOutRepository.getAllStockOuts({
+      productId,
+      date,
+    });
+
+    const mappedStockOuts = stockOuts.map(mapStockOutResponse);
+
+    const totalStockOut = mappedStockOuts.reduce(
+      (total, stockOut) => total + stockOut.quantity,
+      0,
     );
-  }
 
-  if (date) {
-    filteredStockOuts = filteredStockOuts.filter(
-      (stockOut) => stockOut.date === date,
+    return response(
+      res,
+      200,
+      mappedStockOuts.length > 0
+        ? 'Stock out records retrieved successfully'
+        : 'No stock out records found',
+      {
+        totalStockOut,
+        records: mappedStockOuts,
+      },
     );
+  } catch (error) {
+    return next(error);
   }
-
-  const totalStockOut = filteredStockOuts.reduce(
-    (total, stockOut) => total + stockOut.quantity,
-    0,
-  );
-
-  return response(
-    res,
-    200,
-    filteredStockOuts.length > 0
-      ? 'Stock out records retrieved successfully'
-      : 'No stock out records found',
-    {
-      totalStockOut,
-      records: filteredStockOuts,
-    },
-  );
 };
 
-export const addStockOut = (req, res, next) => {
-  const {
-    productId,
-    quantity,
-    date,
-    note,
-  } = req.body;
+export const addStockOut = async (req, res, next) => {
+  try {
+    const {
+      productId,
+      quantity,
+      date,
+      note,
+    } = req.body;
 
-  if (!productId || !quantity || !date) {
-    return next(new InvariantError('Input stok keluar tidak valid.'));
+    if (!productId || !quantity || !date) {
+      return next(new InvariantError('Input stok keluar tidak valid.'));
+    }
+
+    const product = await productRepository.getProductById(productId);
+
+    if (!product) {
+      return next(new NotFoundError('Produk tidak ditemukan.'));
+    }
+
+    if (Number(quantity) > product.stock) {
+      return next(new InvariantError('Jumlah stok keluar melebihi stok tersedia.'));
+    }
+
+    const newStock = product.stock - Number(quantity);
+    const stockStatus = getStockStatus(newStock, product.minimum_stock);
+
+    const updatedProduct = await productRepository.updateProductStockById({
+      id: productId,
+      stock: newStock,
+      stockStatus,
+    });
+
+    const newStockOut = await stockOutRepository.addStockOut({
+      id: nanoid(),
+      productId: updatedProduct.id,
+      productName: updatedProduct.product_name,
+      quantity: Number(quantity),
+      unit: updatedProduct.unit,
+      date,
+      time: getCurrentTime(),
+      note: note || '-',
+      currentStock: updatedProduct.stock,
+    });
+
+    return response(
+      res,
+      201,
+      'Stock out record created successfully',
+      mapStockOutResponse(newStockOut),
+    );
+  } catch (error) {
+    return next(error);
   }
-
-  const product = products.find((item) => item.id === productId);
-
-  if (!product) {
-    return next(new NotFoundError('Produk tidak ditemukan.'));
-  }
-
-  if (Number(quantity) > product.stock) {
-    return next(new InvariantError('Jumlah stok keluar melebihi stok tersedia.'));
-  }
-
-  product.stock -= Number(quantity);
-  product.stockStatus = getStockStatus(product.stock, product.minimumStock);
-
-  const newStockOut = {
-    id: nanoid(),
-    productId: product.id,
-    productName: product.productName,
-    quantity: Number(quantity),
-    unit: product.unit,
-    date,
-    time: getCurrentTime(),
-    note: note || '-',
-    currentStock: product.stock,
-  };
-
-  stockOuts.push(newStockOut);
-
-  return response(res, 201, 'Stock out record created successfully', newStockOut);
 };
 
-export const deleteStockOutById = (req, res, next) => {
-  const { stockOutId } = req.params;
+export const deleteStockOutById = async (req, res, next) => {
+  try {
+    const { stockOutId } = req.params;
 
-  const stockOutIndex = stockOuts.findIndex(
-    (stockOut) => stockOut.id === stockOutId,
-  );
+    const deletedStockOut = await stockOutRepository.deleteStockOutById(stockOutId);
 
-  if (stockOutIndex === -1) {
-    return next(new NotFoundError('Riwayat stok keluar tidak ditemukan.'));
+    if (!deletedStockOut) {
+      return next(new NotFoundError('Riwayat stok keluar tidak ditemukan.'));
+    }
+
+    return response(res, 200, 'Stock out record deleted successfully', {
+      id: deletedStockOut.id,
+      productName: deletedStockOut.product_name,
+      quantity: deletedStockOut.quantity,
+      unit: deletedStockOut.unit,
+    });
+  } catch (error) {
+    return next(error);
   }
-
-  const deletedStockOut = stockOuts.splice(stockOutIndex, 1)[0];
-
-  return response(res, 200, 'Stock out record deleted successfully', {
-    id: deletedStockOut.id,
-    productName: deletedStockOut.productName,
-    quantity: deletedStockOut.quantity,
-    unit: deletedStockOut.unit,
-  });
 };

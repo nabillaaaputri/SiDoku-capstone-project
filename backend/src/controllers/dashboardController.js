@@ -1,115 +1,204 @@
 import response from '../utils/response.js';
+import * as dashboardRepository from '../repositories/dashboardRepository.js';
 
-export const getSummary = (req, res) => {
-  return response(res, 200, 'Dashboard summary retrieved successfully', {
-    income: 2400000,
-    expense: 750000,
-    profit: 1650000,
-    roi: 220,
+const getLast7Dates = () => {
+  const dates = [];
+
+  for (let i = 6; i >= 0; i -= 1) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    dates.push(date.toISOString().split('T')[0]);
+  }
+
+  return dates;
+};
+
+const getDayName = (dateString) => {
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString('id-ID', {
+    weekday: 'long',
   });
 };
 
-export const getInsights = (req, res) => {
-  const insights = [
-    {
-      title: 'Penjualan Stabil',
-      description: 'Penjualan bulan ini sama seperti bulan lalu. Pertahankan konsistensinya!',
-    },
-    {
-      title: 'Biaya Terkontrol',
-      description: 'Biaya operasional bulan ini lebih hemat dari bulan lalu. Bagus!',
-    },
-    {
-      title: 'Produk Hampir Habis',
-      description: '1 produk stoknya sudah tinggal sedikit. Buruan pesan ulang sebelum terlambat!',
-    },
-    {
-      title: 'Apa yang bisa kamu lakukan?',
-      description: 'Mulai input data penjualan dan pengeluaran untuk melihat saran untuk kamu.',
-    },
-  ];
+export const getSummary = async (req, res, next) => {
+  try {
+    const products = await dashboardRepository.getAllProducts();
+    const stockOuts = await dashboardRepository.getStockOuts();
+    const expenses = await dashboardRepository.getExpenses();
 
-  return response(
-    res,
-    200,
-    insights.length > 0
-      ? 'Dashboard insights retrieved successfully'
-      : 'No dashboard insights available',
-    insights,
-  );
+    const totalIncome = stockOuts.reduce((total, stockOut) => {
+      const product = products.find((item) => item.id === stockOut.product_id);
+
+      if (!product) {
+        return total;
+      }
+
+      return total + (stockOut.quantity * product.selling_price);
+    }, 0);
+
+    const totalHpp = stockOuts.reduce((total, stockOut) => {
+      const product = products.find((item) => item.id === stockOut.product_id);
+
+      if (!product) {
+        return total;
+      }
+
+      return total + (stockOut.quantity * product.purchase_price);
+    }, 0);
+
+    const totalExpense = expenses.reduce(
+      (total, expense) => total + expense.amount,
+      0,
+    );
+
+    const profit = totalIncome - totalHpp - totalExpense;
+
+    const roi = totalHpp + totalExpense === 0
+      ? 0
+      : Number(((profit / (totalHpp + totalExpense)) * 100).toFixed(2));
+
+    return response(res, 200, 'Dashboard summary retrieved successfully', {
+      income: totalIncome,
+      expense: totalExpense,
+      profit,
+      roi,
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
 
-export const getLowStocks = (req, res) => {
-  const lowStocks = [
-    {
-      id: 'product-1',
-      productName: 'Handuk',
-      currentStock: 5,
-      minimumStock: 10,
-      unit: 'pcs',
-      stockNeeded: 5,
-    },
-    {
-      id: 'product-2',
-      productName: 'Minyak Goreng',
-      currentStock: 5,
-      minimumStock: 7,
-      unit: 'liter',
-      stockNeeded: 2,
-    },
-  ];
+export const getInsights = async (req, res, next) => {
+  try {
+    const lowStocks = await dashboardRepository.getLowStockProducts();
+    const expenses = await dashboardRepository.getExpenses();
+    const stockOuts = await dashboardRepository.getStockOuts();
 
-  return response(
-    res,
-    200,
-    lowStocks.length > 0
-      ? 'Low stock products retrieved successfully'
-      : 'No low stock products found',
-    lowStocks,
-  );
+    const totalExpense = expenses.reduce(
+      (total, expense) => total + expense.amount,
+      0,
+    );
+
+    const totalSold = stockOuts.reduce(
+      (total, stockOut) => total + stockOut.quantity,
+      0,
+    );
+
+    const insights = [
+      {
+        title: totalSold > 0 ? 'Penjualan Mulai Tercatat' : 'Belum Ada Penjualan',
+        description: totalSold > 0
+          ? `Total stok keluar yang tercatat saat ini adalah ${totalSold} item.`
+          : 'Belum ada data stok keluar. Mulai catat stok keluar untuk melihat performa penjualan.',
+      },
+      {
+        title: totalExpense > 0 ? 'Pengeluaran Tercatat' : 'Belum Ada Pengeluaran',
+        description: totalExpense > 0
+          ? `Total pengeluaran yang tercatat saat ini sebesar Rp${totalExpense}.`
+          : 'Belum ada pengeluaran yang tercatat. Catat biaya restok atau operasional agar laporan lebih lengkap.',
+      },
+      {
+        title: lowStocks.length > 0 ? 'Produk Hampir Habis' : 'Stok Produk Aman',
+        description: lowStocks.length > 0
+          ? `${lowStocks.length} produk stoknya sudah berada di batas minimum.`
+          : 'Belum ada produk yang stoknya berada di bawah atau sama dengan minimum stok.',
+      },
+      {
+        title: 'Apa yang bisa kamu lakukan?',
+        description: 'Lanjutkan input data produk, stok keluar, dan pengeluaran agar dashboard bisa memberikan ringkasan yang lebih akurat.',
+      },
+    ];
+
+    return response(
+      res,
+      200,
+      insights.length > 0
+        ? 'Dashboard insights retrieved successfully'
+        : 'No dashboard insights available',
+      insights,
+    );
+  } catch (error) {
+    return next(error);
+  }
 };
 
-export const getTrends = (req, res) => {
-  return response(res, 200, 'Dashboard trends retrieved successfully', {
-    period: '7 days',
-    items: [
-      {
-        day: 'Senin',
-        income: 2400000,
-        expense: 800000,
-      },
-      {
-        day: 'Selasa',
-        income: 2800000,
-        expense: 600000,
-      },
-      {
-        day: 'Rabu',
-        income: 2000000,
-        expense: 700000,
-      },
-      {
-        day: 'Kamis',
-        income: 2900000,
-        expense: 850000,
-      },
-      {
-        day: 'Jumat',
-        income: 2300000,
-        expense: 700000,
-      },
-      {
-        day: 'Sabtu',
-        income: 3200000,
-        expense: 900000,
-      },
-      {
-        day: 'Minggu',
-        income: 2600000,
-        expense: 800000,
-      },
-    ],
-    totalIncome: 18200000,
-    totalExpense: 5350000,
-  });
+export const getLowStocks = async (req, res, next) => {
+  try {
+    const lowStocks = await dashboardRepository.getLowStockProducts();
+
+    const mappedLowStocks = lowStocks.map((product) => ({
+      id: product.id,
+      productName: product.product_name,
+      currentStock: product.stock,
+      minimumStock: product.minimum_stock,
+      unit: product.unit,
+      stockNeeded: product.minimum_stock - product.stock,
+    }));
+
+    return response(
+      res,
+      200,
+      mappedLowStocks.length > 0
+        ? 'Low stock products retrieved successfully'
+        : 'No low stock products found',
+      mappedLowStocks,
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getTrends = async (req, res, next) => {
+  try {
+    const products = await dashboardRepository.getAllProducts();
+    const dates = getLast7Dates();
+
+    const items = await Promise.all(
+      dates.map(async (date) => {
+        const stockOuts = await dashboardRepository.getStockOutsByDate(date);
+        const expenses = await dashboardRepository.getExpensesByDate(date);
+
+        const income = stockOuts.reduce((total, stockOut) => {
+          const product = products.find((item) => item.id === stockOut.product_id);
+
+          if (!product) {
+            return total;
+          }
+
+          return total + (stockOut.quantity * product.selling_price);
+        }, 0);
+
+        const expense = expenses.reduce(
+          (total, item) => total + item.amount,
+          0,
+        );
+
+        return {
+          day: getDayName(date),
+          income,
+          expense,
+        };
+      }),
+    );
+
+    const totalIncome = items.reduce(
+      (total, item) => total + item.income,
+      0,
+    );
+
+    const totalExpense = items.reduce(
+      (total, item) => total + item.expense,
+      0,
+    );
+
+    return response(res, 200, 'Dashboard trends retrieved successfully', {
+      period: '7 days',
+      items,
+      totalIncome,
+      totalExpense,
+    });
+  } catch (error) {
+    return next(error);
+  }
 };

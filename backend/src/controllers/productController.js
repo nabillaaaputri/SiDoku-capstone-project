@@ -1,11 +1,11 @@
 import { nanoid } from 'nanoid';
-import products from '../data/product.js';
 import response from '../utils/response.js';
 import {
   InvariantError,
   NotFoundError,
   ConflictError,
 } from '../exceptions/index.js';
+import * as productRepository from '../repositories/productRepository.js';
 
 const calculateMargin = (purchasePrice, sellingPrice) => {
   return Number((((sellingPrice - purchasePrice) / purchasePrice) * 100).toFixed(2));
@@ -19,169 +19,202 @@ const getStockStatus = (stock, minimumStock) => {
   return 'safe';
 };
 
-export const getProducts = (req, res) => {
-  const { status, category } = req.query;
+const mapProductResponse = (product) => ({
+  id: product.id,
+  productName: product.product_name,
+  category: product.category,
+  unit: product.unit,
+  purchasePrice: product.purchase_price,
+  sellingPrice: product.selling_price,
+  margin: Number(product.margin),
+  stock: product.stock,
+  minimumStock: product.minimum_stock,
+  stockStatus: product.stock_status,
+  isArchived: product.is_archived,
+});
 
-  let filteredProducts = products;
+export const getProducts = async (req, res, next) => {
+  try {
+    const { status, category } = req.query;
 
-  if (status === 'active') {
-    filteredProducts = filteredProducts.filter((product) => product.isArchived === false);
-  }
+    const products = await productRepository.getAllProducts({ status, category });
 
-  if (status === 'archived') {
-    filteredProducts = filteredProducts.filter((product) => product.isArchived === true);
-  }
+    const mappedProducts = products.map(mapProductResponse);
 
-  if (category) {
-    filteredProducts = filteredProducts.filter(
-      (product) => product.category.toLowerCase() === category.toLowerCase(),
+    return response(
+      res,
+      200,
+      mappedProducts.length > 0
+        ? 'Products retrieved successfully'
+        : 'Barang tidak ditemukan',
+      mappedProducts,
     );
+  } catch (error) {
+    return next(error);
   }
-
-  return response(
-    res,
-    200,
-    filteredProducts.length > 0
-      ? 'Products retrieved successfully'
-      : 'Barang tidak ditemukan',
-    filteredProducts,
-  );
 };
 
-export const addProducts = (req, res, next) => {
-  const {
-    productName,
-    purchasePrice,
-    sellingPrice,
-    minimumStock,
-    category,
-    unit,
-    initialStock,
-  } = req.body;
+export const addProducts = async (req, res, next) => {
+  try {
+    const {
+      productName,
+      purchasePrice,
+      sellingPrice,
+      minimumStock,
+      category,
+      unit,
+      initialStock,
+    } = req.body;
 
-  if (
-    !productName
-    || !purchasePrice
-    || !sellingPrice
-    || !minimumStock
-    || !category
-    || !unit
-    || initialStock === undefined
-  ) {
-    return next(new InvariantError('Input produk tidak valid.'));
+    if (
+      !productName
+      || !purchasePrice
+      || !sellingPrice
+      || !minimumStock
+      || !category
+      || !unit
+      || initialStock === undefined
+    ) {
+      return next(new InvariantError('Input produk tidak valid.'));
+    }
+
+    const isProductExist = await productRepository.getProductByName(productName);
+
+    if (isProductExist) {
+      return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
+    }
+
+    const id = nanoid();
+    const margin = calculateMargin(purchasePrice, sellingPrice);
+    const stock = initialStock;
+    const stockStatus = getStockStatus(stock, minimumStock);
+
+    const newProduct = await productRepository.addProduct({
+      id,
+      productName,
+      category,
+      unit,
+      purchasePrice,
+      sellingPrice,
+      margin,
+      stock,
+      minimumStock,
+      stockStatus,
+    });
+
+    return response(
+      res,
+      201,
+      'Product created successfully',
+      mapProductResponse(newProduct),
+    );
+  } catch (error) {
+    return next(error);
   }
-
-  const isProductExist = products.find(
-    (product) => product.productName.toLowerCase() === productName.toLowerCase(),
-  );
-
-  if (isProductExist) {
-    return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
-  }
-
-  const id = nanoid();
-
-  const newProduct = {
-    id,
-    productName,
-    category,
-    unit,
-    purchasePrice,
-    sellingPrice,
-    margin: calculateMargin(purchasePrice, sellingPrice),
-    stock: initialStock,
-    minimumStock,
-    stockStatus: getStockStatus(initialStock, minimumStock),
-    isArchived: false,
-  };
-
-  products.push(newProduct);
-
-  return response(res, 201, 'Product created successfully', newProduct);
 };
 
-export const editProductById = (req, res, next) => {
-  const { productId } = req.params;
-  const {
-    productName,
-    category,
-    unit,
-    purchasePrice,
-    sellingPrice,
-    minimumStock,
-  } = req.body;
+export const editProductById = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const {
+      productName,
+      category,
+      unit,
+      purchasePrice,
+      sellingPrice,
+      minimumStock,
+    } = req.body;
 
-  if (
-    !productName
-    || !category
-    || !unit
-    || !purchasePrice
-    || !sellingPrice
-    || !minimumStock
-  ) {
-    return next(new InvariantError('Input produk tidak valid.'));
+    if (
+      !productName
+      || !category
+      || !unit
+      || !purchasePrice
+      || !sellingPrice
+      || !minimumStock
+    ) {
+      return next(new InvariantError('Input produk tidak valid.'));
+    }
+
+    const product = await productRepository.getProductById(productId);
+
+    if (!product) {
+      return next(new NotFoundError('Produk tidak ditemukan.'));
+    }
+
+    const isProductNameUsed = await productRepository.getProductByName(productName);
+
+    if (isProductNameUsed && isProductNameUsed.id !== productId) {
+      return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
+    }
+
+    const margin = calculateMargin(purchasePrice, sellingPrice);
+    const stockStatus = getStockStatus(product.stock, minimumStock);
+
+    const updatedProduct = await productRepository.updateProductById({
+      id: productId,
+      productName,
+      category,
+      unit,
+      purchasePrice,
+      sellingPrice,
+      margin,
+      stock: product.stock,
+      minimumStock,
+      stockStatus,
+    });
+
+    return response(
+      res,
+      200,
+      'Product updated successfully',
+      mapProductResponse(updatedProduct),
+    );
+  } catch (error) {
+    return next(error);
   }
-
-  const product = products.find((item) => item.id === productId);
-
-  if (!product) {
-    return next(new NotFoundError('Produk tidak ditemukan.'));
-  }
-
-  const isProductNameUsed = products.find(
-    (item) =>
-      item.id !== productId
-      && item.productName.toLowerCase() === productName.toLowerCase(),
-  );
-
-  if (isProductNameUsed) {
-    return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
-  }
-
-  product.productName = productName;
-  product.category = category;
-  product.unit = unit;
-  product.purchasePrice = purchasePrice;
-  product.sellingPrice = sellingPrice;
-  product.margin = calculateMargin(purchasePrice, sellingPrice);
-  product.minimumStock = minimumStock;
-  product.stockStatus = getStockStatus(product.stock, minimumStock);
-
-  return response(res, 200, 'Product updated successfully', product);
 };
 
-export const archiveProductById = (req, res, next) => {
-  const { productId } = req.params;
+export const archiveProductById = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
 
-  const product = products.find((item) => item.id === productId);
+    const product = await productRepository.getProductById(productId);
 
-  if (!product) {
-    return next(new NotFoundError('Produk tidak ditemukan.'));
+    if (!product) {
+      return next(new NotFoundError('Produk tidak ditemukan.'));
+    }
+
+    const archivedProduct = await productRepository.archiveProductById(productId);
+
+    return response(res, 200, 'Product archived successfully', {
+      id: archivedProduct.id,
+      productName: archivedProduct.product_name,
+      isArchived: archivedProduct.is_archived,
+    });
+  } catch (error) {
+    return next(error);
   }
-
-  product.isArchived = true;
-
-  return response(res, 200, 'Product archived successfully', {
-    id: product.id,
-    productName: product.productName,
-    isArchived: product.isArchived,
-  });
 };
 
-export const restoreProductById = (req, res, next) => {
-  const { productId } = req.params;
+export const restoreProductById = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
 
-  const product = products.find((item) => item.id === productId);
+    const product = await productRepository.getProductById(productId);
 
-  if (!product) {
-    return next(new NotFoundError('Produk tidak ditemukan.'));
+    if (!product) {
+      return next(new NotFoundError('Produk tidak ditemukan.'));
+    }
+
+    const restoredProduct = await productRepository.restoreProductById(productId);
+
+    return response(res, 200, 'Product restored successfully', {
+      id: restoredProduct.id,
+      productName: restoredProduct.product_name,
+      isArchived: restoredProduct.is_archived,
+    });
+  } catch (error) {
+    return next(error);
   }
-
-  product.isArchived = false;
-
-  return response(res, 200, 'Product restored successfully', {
-    id: product.id,
-    productName: product.productName,
-    isArchived: product.isArchived,
-  });
 };

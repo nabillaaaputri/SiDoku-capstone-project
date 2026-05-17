@@ -1,96 +1,123 @@
 import { nanoid } from 'nanoid';
-import stockIns from '../data/stockIns.js';
-import products from '../data/product.js';
 import response from '../utils/response.js';
 import {
   InvariantError,
   NotFoundError,
 } from '../exceptions/index.js';
+import * as stockInRepository from '../repositories/stockInRepository.js';
+import * as productRepository from '../repositories/productRepository.js';
 
-export const getStockIns = (req, res) => {
-  const { startDate, endDate, productId } = req.query;
-
-  let filteredStockIns = stockIns;
-
-  if (productId) {
-    filteredStockIns = filteredStockIns.filter(
-      (stockIn) => stockIn.productId === productId,
-    );
+const getStockStatus = (stock, minimumStock) => {
+  if (stock <= minimumStock) {
+    return 'low';
   }
 
-  if (startDate && endDate) {
-    filteredStockIns = filteredStockIns.filter(
-      (stockIn) => stockIn.date >= startDate && stockIn.date <= endDate,
-    );
-  }
-
-  return response(
-    res,
-    200,
-    filteredStockIns.length > 0
-      ? 'Stock in records retrieved successfully'
-      : 'No stock in records found',
-    filteredStockIns,
-  );
+  return 'safe';
 };
 
-export const addStockIn = (req, res, next) => {
-  const {
-    productId,
-    quantity,
-    date,
-    note,
-  } = req.body;
+const mapStockInResponse = (stockIn) => ({
+  id: stockIn.id,
+  productId: stockIn.product_id,
+  productName: stockIn.product_name,
+  quantity: stockIn.quantity,
+  unit: stockIn.unit,
+  date: stockIn.date,
+  note: stockIn.note,
+  currentStock: stockIn.current_stock,
+});
 
-  if (!productId || !quantity || !date) {
-    return next(new InvariantError('Input stok masuk tidak valid.'));
+export const getStockIns = async (req, res, next) => {
+  try {
+    const { startDate, endDate, productId } = req.query;
+
+    const stockIns = await stockInRepository.getAllStockIns({
+      startDate,
+      endDate,
+      productId,
+    });
+
+    const mappedStockIns = stockIns.map(mapStockInResponse);
+
+    return response(
+      res,
+      200,
+      mappedStockIns.length > 0
+        ? 'Stock in records retrieved successfully'
+        : 'No stock in records found',
+      mappedStockIns,
+    );
+  } catch (error) {
+    return next(error);
   }
-
-  const product = products.find((item) => item.id === productId);
-
-  if (!product) {
-    return next(new NotFoundError('Produk tidak ditemukan.'));
-  }
-
-  product.stock += Number(quantity);
-
-  product.stockStatus = product.stock <= product.minimumStock
-    ? 'low'
-    : 'safe';
-
-  const newStockIn = {
-    id: nanoid(),
-    productId: product.id,
-    productName: product.productName,
-    quantity: Number(quantity),
-    unit: product.unit,
-    date,
-    note: note || '',
-    currentStock: product.stock,
-  };
-
-  stockIns.push(newStockIn);
-
-  return response(res, 201, 'Stock in record created successfully', newStockIn);
 };
 
-export const deleteStockInById = (req, res, next) => {
-  const { stockInId } = req.params;
+export const addStockIn = async (req, res, next) => {
+  try {
+    const {
+      productId,
+      quantity,
+      date,
+      note,
+    } = req.body;
 
-  const stockInIndex = stockIns.findIndex(
-    (stockIn) => stockIn.id === stockInId,
-  );
+    if (!productId || !quantity || !date) {
+      return next(new InvariantError('Input stok masuk tidak valid.'));
+    }
 
-  if (stockInIndex === -1) {
-    return next(new NotFoundError('Riwayat stok masuk tidak ditemukan.'));
+    const product = await productRepository.getProductById(productId);
+
+    if (!product) {
+      return next(new NotFoundError('Produk tidak ditemukan.'));
+    }
+
+    const newStock = product.stock + Number(quantity);
+    const stockStatus = getStockStatus(newStock, product.minimum_stock);
+
+    const updatedProduct = await productRepository.updateProductStockById({
+      id: productId,
+      stock: newStock,
+      stockStatus,
+    });
+
+    const newStockIn = await stockInRepository.addStockIn({
+      id: nanoid(),
+      productId: updatedProduct.id,
+      productName: updatedProduct.product_name,
+      quantity: Number(quantity),
+      unit: updatedProduct.unit,
+      date,
+      note: note || '',
+      currentStock: updatedProduct.stock,
+    });
+
+    return response(
+      res,
+      201,
+      'Stock in record created successfully',
+      mapStockInResponse(newStockIn),
+    );
+  } catch (error) {
+    return next(error);
   }
+};
 
-  const deletedStockIn = stockIns.splice(stockInIndex, 1)[0];
+export const deleteStockInById = async (req, res, next) => {
+  try {
+    const { stockInId } = req.params;
 
-  return response(res, 200, 'Stock in record deleted successfully', {
-    id: deletedStockIn.id,
-    productName: deletedStockIn.productName,
-    quantity: deletedStockIn.quantity,
-    unit: deletedStockIn.unit,
-  });
+    const deletedStockIn = await stockInRepository.deleteStockInById(stockInId);
+
+    if (!deletedStockIn) {
+      return next(new NotFoundError('Riwayat stok masuk tidak ditemukan.'));
+    }
+
+    return response(res, 200, 'Stock in record deleted successfully', {
+      id: deletedStockIn.id,
+      productName: deletedStockIn.product_name,
+      quantity: deletedStockIn.quantity,
+      unit: deletedStockIn.unit,
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
