@@ -42,24 +42,21 @@ export default function EditProductModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold">Edit Produk</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">Edit Produk</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Nama Produk */}
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           <div>
-            <label className="block text-sm font-bold mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Nama Produk <span className="text-red-600">*</span>
             </label>
             <input
@@ -68,15 +65,14 @@ export default function EditProductModal({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full border-2 border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-600"
+              className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
               placeholder="Nama produk"
               required
             />
           </div>
 
-          {/* Kategori */}
           <div>
-            <label className="block text-sm font-bold mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Kategori <span className="text-red-600">*</span>
             </label>
             <select
@@ -84,9 +80,10 @@ export default function EditProductModal({
               onChange={(e) =>
                 setFormData({ ...formData, category: e.target.value })
               }
-              className="w-full border-2 border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-600"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
               required
             >
+              <option value="">Pilih kategori</option>
               <option value="Makanan">Makanan</option>
               <option value="Minuman">Minuman</option>
               <option value="Barang">Barang</option>
@@ -96,9 +93,8 @@ export default function EditProductModal({
             </select>
           </div>
 
-          {/* Satuan */}
           <div>
-            <label className="block text-sm font-bold mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Satuan <span className="text-red-600">*</span>
             </label>
             <select
@@ -106,7 +102,7 @@ export default function EditProductModal({
               onChange={(e) =>
                 setFormData({ ...formData, unit: e.target.value })
               }
-              className="w-full border-2 border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-600"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
               required
             >
               <option value="pcs">pcs</option>
@@ -120,9 +116,8 @@ export default function EditProductModal({
             </select>
           </div>
 
-          {/* Harga Beli */}
           <div>
-            <label className="block text-sm font-bold mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Harga Beli (Rp) <span className="text-red-600">*</span>
             </label>
             <input
@@ -134,16 +129,15 @@ export default function EditProductModal({
                   costPrice: parseFloat(e.target.value) || 0,
                 })
               }
-              className="w-full border-2 border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-600"
+              className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
               placeholder="0"
               min="0"
               required
             />
           </div>
 
-          {/* Harga Jual */}
           <div>
-            <label className="block text-sm font-bold mb-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
               Harga Jual (Rp) <span className="text-red-600">*</span>
             </label>
             <input
@@ -155,25 +149,24 @@ export default function EditProductModal({
                   sellPrice: parseFloat(e.target.value) || 0,
                 })
               }
-              className="w-full border-2 border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-600"
+              className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
               placeholder="0"
               min="0"
               required
             />
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-2 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 border-t border-slate-200 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 font-bold rounded transition"
+              className="flex-1 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
             >
-              Simpan
+              Simpan Perubahan
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border-2 border-gray-400 text-gray-700 px-4 py-2 hover:bg-gray-100 font-bold rounded transition"
+              className="flex-1 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Batal
             </button>

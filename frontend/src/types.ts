@@ -4,6 +4,7 @@ export interface Product {
   name: string;
   costPrice: number; // Harga beli
   sellPrice: number; // Harga jual
+  margin?: number;
   stock: number;
   minimumStock: number;
   category: string; // Kategori produk

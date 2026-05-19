@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/v1";
+  import.meta.env.VITE_API_URL || "https://sidoku.up.railway.app/v1";
 
 const AUTH_API_URL =
-  import.meta.env.VITE_AUTH_API_URL || import.meta.env.VITE_API_URL || "http://localhost:5000/v1";
+  import.meta.env.VITE_AUTH_API_URL || import.meta.env.VITE_API_URL || "https://sidoku.up.railway.app/v1";
 
 console.log("API URL:", API_BASE_URL);
 console.log("AUTH API URL:", AUTH_API_URL);

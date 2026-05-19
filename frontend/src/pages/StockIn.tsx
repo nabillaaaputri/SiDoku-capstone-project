@@ -1,84 +1,176 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Clock3, MoreVertical, Package, Plus, Trash2, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
-import { TrendingUp, Trash2, Plus, X } from "lucide-react";
-import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/ui/dropdown-menu";
+import { Input } from "@/ui/input";
+import { Textarea } from "@/ui/textarea";
+
+const getLocalDateString = () => {
+  const date = new Date();
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
+};
 
 export default function StockIn() {
   const { products, stockIns, addStockIn, deleteStockIn } = useBusinessContext();
   const { toast } = useToast();
 
-  const [showStockInForm, setShowStockInForm] = useState(false);
-  const [filterProductDaily, setFilterProductDaily] = useState<string>("");
-
-  // Catat Stok Masuk Form State
+  const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
+  const [historyProductQuery, setHistoryProductQuery] = useState("");
+  const [historySelectedProductId, setHistorySelectedProductId] = useState<string>("");
+  const [showHistoryProductDropdown, setShowHistoryProductDropdown] = useState(false);
+  const [historyDateFilter, setHistoryDateFilter] = useState(getLocalDateString());
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const modalProductComboboxRef = useRef<HTMLDivElement | null>(null);
+  const historyProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const [stockInForm, setStockInForm] = useState({
     productId: "",
     quantity: 0,
-    date: new Date().toISOString().split("T")[0],
+    date: getLocalDateString(),
     notes: "",
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
 
-
-  // Get today's date range (based on createdAt)
-  const getTodayRange = () => {
-    const now = new Date();
+  const todayStockIns = useMemo(() => {
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
-    return { startDate, endDate: now };
-  };
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
 
-  // Filter stock ins for today (based on createdAt - when submitted)
-  const dailyStockIns = useMemo(() => {
-    const { startDate, endDate } = getTodayRange();
+    return (stockIns || [])
+      .filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [stockIns]);
 
-    let filtered = (stockIns || []).filter((item) => {
-      const createdAtDate = new Date(item.createdAt);
-      return createdAtDate >= startDate && createdAtDate <= endDate;
-    });
+  const filteredHistoryStockIns = useMemo(() => {
+    const query = historyProductQuery.trim().toLowerCase();
+    const startDate = new Date(historyDateFilter);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(historyDateFilter);
+    endDate.setHours(23, 59, 59, 999);
 
-    if (filterProductDaily) {
-      filtered = filtered.filter((item) => item.productId === filterProductDaily);
-    }
+    return (stockIns || [])
+      .filter((item) => {
+        const itemDate = new Date(item.date);
+        const matchesDate = itemDate >= startDate && itemDate <= endDate;
+        const matchesSearch = !query || item.productName.toLowerCase().includes(query);
+        const matchesProduct = !historySelectedProductId || item.productId === historySelectedProductId;
 
-    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [stockIns, filterProductDaily]);
+        return matchesDate && matchesSearch && matchesProduct;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [historyDateFilter, historyProductQuery, historySelectedProductId, stockIns]);
 
-
-  const totalStockIn = dailyStockIns.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Filter products based on search (show all when focused, filter when typing)
-  const filteredProducts = useMemo(() => {
-    if (searchQuery) {
-      return products
-        .filter((p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .slice(0, 10);
-    }
-    // Show all products when focused but not typing
-    return products.slice(0, 10);
-  }, [searchQuery, products]);
+  const totalStockInToday = todayStockIns.reduce((sum, item) => sum + item.quantity, 0);
+  const totalTransactionsToday = todayStockIns.length;
+  const latestProductToday = todayStockIns[0]?.productName || "-";
 
   const selectedProduct = products.find((p) => p.id === stockInForm.productId);
+  const filteredProducts = useMemo(() => {
+    const query = productSearchQuery.trim().toLowerCase();
+
+    if (!query) {
+      return products;
+    }
+
+    return products.filter((product) => product.name.toLowerCase().includes(query));
+  }, [productSearchQuery, products]);
+
+  const selectedHistoryProduct = products.find((p) => p.id === historySelectedProductId);
+  const filteredHistoryProducts = useMemo(() => {
+    const query = historyProductQuery.trim().toLowerCase();
+
+    if (!query) {
+      return products;
+    }
+
+    return products.filter((product) => product.name.toLowerCase().includes(query));
+  }, [historyProductQuery, products]);
 
   const handleSelectProduct = (productId: string) => {
+    const product = products.find((item) => item.id === productId);
+
     setStockInForm({ ...stockInForm, productId });
-    setSearchQuery("");
-    setShowDropdown(false);
+    setProductSearchQuery(product?.name || "");
+    setShowProductDropdown(false);
   };
 
   const handleClearProduct = () => {
     setStockInForm({ ...stockInForm, productId: "" });
-    setSearchQuery("");
-    setShowDropdown(false);
+    setProductSearchQuery("");
+    setShowProductDropdown(false);
   };
 
-  // Handle Catat Stok Masuk Submit
-  const handleStockInSubmit = (e: React.FormEvent) => {
+  const handleSelectHistoryProduct = (productId: string) => {
+    const product = products.find((item) => item.id === productId);
+
+    setHistorySelectedProductId(productId);
+    setHistoryProductQuery(product?.name || "");
+    setShowHistoryProductDropdown(false);
+  };
+
+  const handleClearHistoryProduct = () => {
+    setHistorySelectedProductId("");
+    setHistoryProductQuery("");
+    setShowHistoryProductDropdown(false);
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const targetNode = event.target as Node;
+
+      if (
+        showProductDropdown &&
+        modalProductComboboxRef.current &&
+        !modalProductComboboxRef.current.contains(targetNode)
+      ) {
+        setShowProductDropdown(false);
+      }
+
+      if (
+        showHistoryProductDropdown &&
+        historyProductComboboxRef.current &&
+        !historyProductComboboxRef.current.contains(targetNode)
+      ) {
+        setShowHistoryProductDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [showHistoryProductDropdown, showProductDropdown]);
+
+  const resetHistoryFilters = () => {
+    setHistoryProductQuery("");
+    setHistorySelectedProductId("");
+    setShowHistoryProductDropdown(false);
+    setHistoryDateFilter(getLocalDateString());
+  };
+
+  const handleStockInSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!stockInForm.productId) {
@@ -122,16 +214,16 @@ export default function StockIn() {
       description: `${stockInForm.quantity} unit ${product.name} berhasil dicatat`,
     });
 
-    // Reset form
     setStockInForm({
       productId: "",
       quantity: 0,
-      date: new Date().toISOString().split("T")[0],
+      date: getLocalDateString(),
       notes: "",
     });
-    setShowStockInForm(false);
+    setProductSearchQuery("");
+    setShowProductDropdown(false);
+    setIsStockInModalOpen(false);
   };
-
 
   const handleDeleteStockIn = (id: string) => {
     if (window.confirm("Yakin ingin menghapus catatan ini?")) {
@@ -143,37 +235,62 @@ export default function StockIn() {
     }
   };
 
+  const renderHistoryActionMenu = (id: string) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900">
+            <MoreVertical size={18} />
+            <span className="sr-only">Aksi</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuItem
+            onClick={() => handleDeleteStockIn(id)}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Hapus
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="section-shell p-4 sm:p-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Stok Masuk</h1>
-            <p className="text-sm text-slate-600 mt-2">
-              Catat stok masuk dari supplier di sini
-            </p>
-          </div>
-          <Button
-            onClick={() => setShowStockInForm(!showStockInForm)}
-            className="bg-green-600 text-white px-6 py-3 hover:bg-green-700 font-bold flex items-center gap-2 rounded-lg transition shadow-sm"
-            disabled={products.length === 0}
-          >
-            <TrendingUp size={18} /> Catat Stok Masuk
-          </Button>
-        </div>
+      <div className="space-y-4 sm:space-y-5">
+        <section className="section-shell overflow-hidden">
+          <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
+                Stok Masuk
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-600">
+                Catat barang masuk dari supplier dengan tampilan yang lebih rapi dan mudah dipakai.
+              </p>
+            </div>
 
-        {/* Empty State for No Products */}
+            <Button
+              onClick={() => setIsStockInModalOpen(true)}
+              className="h-11 w-full rounded-xl bg-blue-600 px-4 text-white shadow-sm hover:bg-blue-700 sm:w-auto"
+              disabled={products.length === 0}
+            >
+              <Plus size={18} />
+              Catat Stok Masuk
+            </Button>
+          </div>
+        </section>
+
         {products.length === 0 && (
-          <div className="section-shell bg-yellow-50 p-6">
-            <p className="text-gray-700 text-center mb-4">
-              Belum ada produk. Produk harus ditambahkan di Daftar Produk terlebih
-              dahulu.
+          <div className="section-shell border-amber-100 bg-gradient-to-br from-amber-50 to-white p-6">
+            <p className="mb-4 text-center text-sm text-slate-600">
+              Belum ada produk. Produk harus ditambahkan di Daftar Produk terlebih dahulu.
             </p>
             <div className="flex justify-center">
               <a
                 href="/products"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition text-sm"
+                className="rounded-xl bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
               >
                 Tambah Produk
               </a>
@@ -181,251 +298,167 @@ export default function StockIn() {
           </div>
         )}
 
-        {/* Catat Stok Masuk Form */}
-        {showStockInForm && (
-          <div className="section-shell bg-gradient-to-b from-green-50 to-white p-5">
-            <h2 className="text-lg font-bold mb-4 text-green-900">Catat Stok Masuk</h2>
-
-            {products.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">
-                  Belum ada produk. Tambahkan produk baru terlebih dahulu.
-                </p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="section-shell border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Total Stok Masuk Hari Ini</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{totalStockInToday}</p>
               </div>
-            ) : (
-              <form onSubmit={handleStockInSubmit} className="space-y-4">
-                {/* Product Selection - Searchable */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Produk <span className="text-red-600">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="flex items-center">
-                      <input
-                        type="text"
-                        placeholder="Cari produk..."
-                        value={selectedProduct ? selectedProduct.name : searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          setShowDropdown(true);
-                          if (selectedProduct) {
-                            setStockInForm({ ...stockInForm, productId: "" });
-                          }
-                        }}
-                        onFocus={() => setShowDropdown(true)}
-                        className="flex-1 border border-green-300 bg-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
-                      />
-                      {selectedProduct && (
-                        <button
-                          type="button"
-                          onClick={handleClearProduct}
-                          className="absolute right-2 text-gray-400 hover:text-gray-600"
-                        >
-                          <X size={18} />
-                        </button>
-                      )}
-                    </div>
-                    {showDropdown && (
-                      <div className="absolute top-full left-0 right-0 bg-white border border-green-300 border-t-0 rounded-b-lg max-h-40 overflow-y-auto z-10 shadow-sm">
-                        {filteredProducts.length > 0 ? (
-                          filteredProducts.map((product) => (
-                            <button
-                              key={product.id}
-                              type="button"
-                              onClick={() => handleSelectProduct(product.id)}
-                              className="w-full text-left px-3 py-2 hover:bg-green-50 border-b border-slate-200 text-sm"
-                            >
-                              <span className="font-semibold">{product.name}</span>
-                              <span className="text-gray-600 text-xs block">
-                                {product.category} - {product.unit}
-                              </span>
-                            </button>
-                          ))
-                        ) : searchQuery ? (
-                          <div className="px-3 py-2 text-sm text-gray-600 text-center">
-                            Produk tidak ditemukan
-                          </div>
-                        ) : (
-                          <div className="px-3 py-2 text-sm text-gray-600 text-center">
-                            Tidak ada produk
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quantity */}
-                <div>
-                  {(() => {
-                    const selectedProduct = products.find(p => p.id === stockInForm.productId);
-                    return (
-                      <label className="block text-sm font-bold mb-2">
-                        Jumlah Masuk {selectedProduct && <span className="text-gray-600">({selectedProduct.unit})</span>} <span className="text-red-600">*</span>
-                      </label>
-                    );
-                  })()}
-                  <input
-                    type="number"
-                    value={stockInForm.quantity}
-                    onChange={(e) =>
-                      setStockInForm({
-                        ...stockInForm,
-                        quantity: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full border border-green-300 bg-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-
-                {/* Date */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Tanggal <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={stockInForm.date}
-                    onChange={(e) =>
-                      setStockInForm({ ...stockInForm, date: e.target.value })
-                    }
-                    className="w-full border border-green-300 bg-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
-                  />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Catatan (Opsional)
-                  </label>
-                  <textarea
-                    value={stockInForm.notes}
-                    onChange={(e) =>
-                      setStockInForm({ ...stockInForm, notes: e.target.value })
-                    }
-                    className="w-full border border-green-300 bg-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
-                    placeholder="Contoh: Pengiriman dari supplier..."
-                    rows={2}
-                  />
-                </div>
-
-                {/* Buttons */}
-                <div className="flex gap-2 pt-4 border-t border-green-200">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-green-600 text-white px-4 py-2 hover:bg-green-700 font-bold rounded-lg transition"
-                  >
-                    Simpan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowStockInForm(false)}
-                    className="flex-1 border border-slate-300 text-slate-700 px-4 py-2 hover:bg-slate-100 font-bold rounded-lg transition"
-                  >
-                    Batal
-                  </button>
-                </div>
-              </form>
-            )}
+              <div className="rounded-2xl bg-blue-600/10 p-3 text-blue-700">
+                <TrendingUp size={22} />
+              </div>
+            </div>
           </div>
-        )}
 
-
-        {/* Summary */}
-        {products.length > 0 && (
-          <div className="section-shell bg-gradient-to-r from-green-50 to-white p-4">
-            <p className="text-sm font-semibold text-gray-900">
-              Total Stok Masuk: <span className="text-green-600">{totalStockIn} unit</span>
-            </p>
+          <div className="section-shell border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Total Transaksi</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{totalTransactionsToday}</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-600/10 p-3 text-emerald-700">
+                <Package size={22} />
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Daily History Section */}
+          <div className="section-shell border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Produk Terakhir</p>
+                <p className="mt-2 text-lg font-bold tracking-tight text-slate-900">{latestProductToday}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-900/5 p-3 text-slate-700">
+                <Clock3 size={22} />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {products.length > 0 && (
           <section className="section-shell p-4 sm:p-5 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Riwayat Harian Stok Masuk</h2>
-              <p className="text-sm text-gray-600">Daftar stok masuk hari ini (terbaru di atas)</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Riwayat Stok Masuk</h2>
+                <p className="text-sm text-slate-600">Cari dan filter catatan stok masuk dengan lebih mudah.</p>
+              </div>
             </div>
 
-            {/* Product Filter for Daily */}
-            <select
-              value={filterProductDaily}
-              onChange={(e) => setFilterProductDaily(e.target.value)}
-              className="border border-slate-300 px-3 py-2 rounded-lg text-sm max-w-xs bg-white"
-            >
-              <option value="">Semua Produk</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_160px_160px] lg:grid-cols-[minmax(0,1fr)_180px_180px] gap-4">
+              <div ref={historyProductComboboxRef} className="relative">
+                <Input
+                  value={selectedHistoryProduct ? selectedHistoryProduct.name : historyProductQuery}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setHistoryProductQuery(value);
+                    setShowHistoryProductDropdown(true);
+                    if (historySelectedProductId) {
+                      setHistorySelectedProductId("");
+                    }
+                  }}
+                  onFocus={() => setShowHistoryProductDropdown(true)}
+                  placeholder="Cari atau pilih produk..."
+                  className="h-11 w-full rounded-xl pr-10"
+                />
 
-            {/* Daily History Table */}
-            {dailyStockIns.length === 0 ? (
-              <div className="border-2 border-gray-300 bg-gray-50 rounded-lg p-8 text-center">
-                <p className="text-gray-600 text-sm">Belum ada riwayat stok harian.</p>
+                {(selectedHistoryProduct || historyProductQuery) && (
+                  <button
+                    type="button"
+                    onClick={handleClearHistoryProduct}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                  >
+                    ×
+                  </button>
+                )}
+
+                {showHistoryProductDropdown && (
+                  <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                    {filteredHistoryProducts.length > 0 ? (
+                      filteredHistoryProducts.map((product) => (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => handleSelectHistoryProduct(product.id)}
+                          className="flex w-full flex-col items-start border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 hover:bg-slate-50"
+                        >
+                          <span className="font-semibold text-slate-900">{product.name}</span>
+                          <span className="text-xs text-slate-500">
+                            {product.category} · {product.unit}
+                          </span>
+                        </button>
+                      ))
+                    ) : historyProductQuery ? (
+                      <div className="px-3 py-3 text-sm text-slate-500">Produk tidak ditemukan</div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              <Input
+                type="date"
+                value={historyDateFilter}
+                onChange={(e) => setHistoryDateFilter(e.target.value)}
+                className="h-11 w-full rounded-xl"
+              />
+
+              <Button
+                variant="outline"
+                onClick={resetHistoryFilters}
+                className="h-11 rounded-xl w-full"
+              >
+                Reset Filter
+              </Button>
+            </div>
+
+            {filteredHistoryStockIns.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+                <p className="text-sm text-slate-600">Belum ada riwayat stok masuk untuk filter yang dipilih.</p>
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="min-w-full border-collapse bg-white">
                     <thead>
-                      <tr className="bg-slate-50/90 border-b border-slate-200">
-                        <th className="text-left py-3 px-4 text-xs font-bold text-gray-700">
-                          Tanggal & Jam
-                        </th>
-                        <th className="text-left py-3 px-4 text-xs font-bold text-gray-700">
-                          Produk
-                        </th>
-                        <th className="text-center py-3 px-4 text-xs font-bold text-gray-700">
-                          Jumlah
-                        </th>
-                        <th className="text-left py-3 px-4 text-xs font-bold text-gray-700">
-                          Catatan
-                        </th>
-                        <th className="text-center py-3 px-4 text-xs font-bold text-gray-700">
-                          Aksi
-                        </th>
+                      <tr className="border-b border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        <th className="px-5 py-4">Tanggal & Jam</th>
+                        <th className="px-5 py-4">Produk</th>
+                        <th className="px-5 py-4 text-center">Jumlah</th>
+                        <th className="px-5 py-4">Catatan</th>
+                        <th className="px-5 py-4 text-center">Aksi</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {dailyStockIns.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50 transition">
-                          <td className="py-3 px-4 text-sm text-gray-900">
-                            <div>
-                              {new Date(item.createdAt).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })}
+                    <tbody>
+                      {filteredHistoryStockIns.map((item) => (
+                        <tr key={item.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
+                          <td className="px-5 py-4 align-top text-sm text-slate-600">
+                            <div className="space-y-1">
+                              <p className="font-semibold text-slate-900">
+                                {new Date(item.createdAt).toLocaleDateString("id-ID", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {new Date(item.createdAt).toLocaleTimeString("id-ID", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
                             </div>
-                            <span className="text-gray-600 text-xs">
-                              {new Date(item.createdAt).toLocaleTimeString("id-ID", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
                           </td>
-                          <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                            {item.productName}
+                          <td className="px-5 py-4 align-top">
+                            <p className="font-semibold text-slate-900">{item.productName}</p>
                           </td>
-                          <td className="py-3 px-4 text-sm text-center text-green-600 font-bold">
+                          <td className="px-5 py-4 align-top text-center text-sm font-semibold text-blue-600">
                             +{item.quantity}
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-600">
+                          <td className="px-5 py-4 align-top text-sm text-slate-500">
                             {item.notes || "-"}
                           </td>
-                          <td className="py-3 px-4 text-center">
-                            <button
-                              onClick={() => handleDeleteStockIn(item.id)}
-                              className="inline-flex items-center gap-1 border border-red-300 text-red-600 px-2 py-1 hover:bg-red-50 font-bold text-xs rounded-lg transition"
-                            >
-                              <Trash2 size={12} /> Hapus
-                            </button>
+                          <td className="px-5 py-4 align-top text-center">
+                            {renderHistoryActionMenu(item.id)}
                           </td>
                         </tr>
                       ))}
@@ -436,8 +469,152 @@ export default function StockIn() {
             )}
           </section>
         )}
-
       </div>
+
+      <Dialog
+        open={isStockInModalOpen}
+        onOpenChange={(open) => {
+          setIsStockInModalOpen(open);
+          if (!open) {
+            setShowProductDropdown(false);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Catat Stok Masuk</DialogTitle>
+            <DialogDescription>
+              Isi data stok masuk secara singkat agar stok bisa langsung diperbarui.
+            </DialogDescription>
+          </DialogHeader>
+
+          {products.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-8 text-center text-sm text-slate-600">
+              Belum ada produk. Tambahkan produk baru terlebih dahulu.
+            </div>
+          ) : (
+            <form onSubmit={handleStockInSubmit} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Produk <span className="text-red-600">*</span>
+                </label>
+                <div ref={modalProductComboboxRef} className="relative">
+                  <Input
+                    value={selectedProduct ? selectedProduct.name : productSearchQuery}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setProductSearchQuery(value);
+                      setShowProductDropdown(true);
+                      if (stockInForm.productId) {
+                        setStockInForm({ ...stockInForm, productId: "" });
+                      }
+                    }}
+                    onFocus={() => setShowProductDropdown(true)}
+                    placeholder="Cari produk..."
+                    className="h-11 rounded-xl pr-10"
+                  />
+
+                  {selectedProduct && (
+                    <button
+                      type="button"
+                      onClick={handleClearProduct}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                    >
+                      ×
+                    </button>
+                  )}
+
+                  {showProductDropdown && (
+                    <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                      {filteredProducts.length > 0 ? (
+                        filteredProducts.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => handleSelectProduct(product.id)}
+                            className="flex w-full flex-col items-start border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 hover:bg-slate-50"
+                          >
+                            <span className="font-semibold text-slate-900">{product.name}</span>
+                            <span className="text-xs text-slate-500">
+                              {product.category} · {product.unit}
+                            </span>
+                          </button>
+                        ))
+                      ) : productSearchQuery ? (
+                        <div className="px-3 py-3 text-sm text-slate-500">
+                          Produk tidak ditemukan
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Jumlah Masuk {selectedProduct && <span className="text-slate-500">({selectedProduct.unit})</span>} <span className="text-red-600">*</span>
+                </label>
+                <Input
+                  type="number"
+                  value={stockInForm.quantity || ""}
+                  onChange={(e) =>
+                    setStockInForm({
+                      ...stockInForm,
+                      quantity: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className="h-11 rounded-xl"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Tanggal <span className="text-red-600">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={stockInForm.date}
+                  onChange={(e) =>
+                    setStockInForm({ ...stockInForm, date: e.target.value })
+                  }
+                  className="h-11 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Catatan</label>
+                <Textarea
+                  value={stockInForm.notes}
+                  onChange={(e) =>
+                    setStockInForm({ ...stockInForm, notes: e.target.value })
+                  }
+                  className="min-h-[96px] rounded-xl"
+                  placeholder="Contoh: Pengiriman dari supplier"
+                />
+              </div>
+
+              <DialogFooter className="gap-2 pt-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsStockInModalOpen(false)}
+                  className="h-11 rounded-xl"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  className="h-11 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Simpan
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

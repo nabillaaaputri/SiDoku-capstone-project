@@ -1,22 +1,44 @@
 import { useState, useMemo } from "react";
-import { Download } from "lucide-react";
+import { BarChart3, CircleDollarSign, Download, Package, Search, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
 import { formatIDR } from "@/lib/utils";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
+
+const getLocalDateString = () => {
+  const date = new Date();
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
+};
 
 export default function SalesRecap() {
   const { getDailySalesRecap, products } = useBusinessContext();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
+  const [productSearch, setProductSearch] = useState("");
 
   // Get recap for selected date
   const recap = useMemo(() => {
     return getDailySalesRecap(new Date(selectedDate));
   }, [selectedDate, getDailySalesRecap]);
 
-  // Calculate total expenses per day
-  const totalUangKeluar = recap.totalUangKeluar;
-  const totalUntung = recap.labaBersih;
+  // Filter details by product search
+  const filteredDetails = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    if (!query) return recap.details;
+    return recap.details.filter((d) =>
+      d.productName.toLowerCase().includes(query)
+    );
+  }, [recap.details, productSearch]);
+
+  // Calculate totals — all from the same details array that renders the table
+  const totalPenjualan = recap.totalNilaiPenjualan;
+  const totalHPP = recap.totalHppTerpakai;
+  const labaKotor = totalPenjualan - totalHPP;
+  const totalPengeluaran = recap.totalUangKeluar;
+  const labaBersih = labaKotor - totalPengeluaran;
 
   // Export to Excel function
   const handleExportExcel = () => {
@@ -34,10 +56,11 @@ export default function SalesRecap() {
       [`Tanggal: ${new Date(recap.date).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`, "", "", "", "", "", "", ""],
       [],
       ["RINGKASAN"],
-      ["Total Uang Masuk", recap.totalUangMasuk],
-      ["Total HPP", recap.totalHppTerpakai],
-      ["Total Untung", totalUntung],
-      ["Total Uang Keluar", totalUangKeluar],
+      ["Total Penjualan", totalPenjualan],
+      ["Total HPP", totalHPP],
+      ["Laba Kotor", labaKotor],
+      ["Pengeluaran", totalPengeluaran],
+      ["Laba Bersih", labaBersih],
       [],
       ["DETAIL PENJUALAN PER PRODUK"],
       [
@@ -89,163 +112,280 @@ export default function SalesRecap() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Rekap Penjualan</h1>
-          <p className="text-sm text-gray-600 mt-2">
-            Lihat detail penjualan, HPP, dan keuntungan per produk
-          </p>
-        </div>
+        <section className="section-shell overflow-hidden">
+          <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
+                Rekap Penjualan
+              </h1>
+              <p className="max-w-2xl text-sm text-slate-600">
+                Pantau penjualan, HPP, dan keuntungan usaha Anda.
+              </p>
+            </div>
 
-        {/* Date Picker */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <label className="text-sm font-bold">Pilih Tanggal:</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border-2 border-gray-300 px-4 py-2 rounded text-sm"
-          />
-        </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="h-11 w-full rounded-xl sm:w-44"
+              />
+              <Button
+                onClick={handleExportExcel}
+                disabled={!recap.isComplete || recap.details.length === 0}
+                className="h-11 w-full rounded-xl bg-emerald-600 px-4 text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+              >
+                <Download size={18} />
+                Export Excel
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* No products state */}
+        {products.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
+              <Package size={24} />
+            </div>
+            <p className="text-sm font-semibold text-slate-900">Belum ada produk</p>
+            <p className="text-sm text-slate-500 mt-1">Tambahkan produk terlebih dahulu untuk melihat rekap penjualan.</p>
+          </div>
+        )}
 
         {/* Data Not Complete Warning */}
         {!recap.isComplete && products.length > 0 && (
-          <div className="border-4 border-yellow-300 bg-yellow-50 p-6 rounded-lg">
-            <p className="text-gray-700 font-semibold">
-              ⚠️ Lengkapi stok awal, stok masuk, dan stok akhir untuk melihat rekap penjualan.
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-medium text-amber-800">
+              ⚠️ Lengkapi stok awal, stok masuk, dan stok akhir untuk melihat rekap penjualan pada tanggal ini.
             </p>
           </div>
         )}
 
         {/* Summary Cards */}
         {recap.isComplete && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="border-2 border-blue-300 bg-blue-50 p-4 rounded-lg">
-              <p className="text-xs font-bold text-gray-600 mb-1">Total Uang Masuk</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {formatIDR(recap.totalUangMasuk)}
-              </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="section-shell border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Total Penjualan</p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-blue-700">
+                    {formatIDR(totalPenjualan)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-blue-600/10 p-3 text-blue-700">
+                  <CircleDollarSign size={22} />
+                </div>
+              </div>
             </div>
 
-            <div className="border-2 border-red-300 bg-red-50 p-4 rounded-lg">
-              <p className="text-xs font-bold text-gray-600 mb-1">Total HPP</p>
-              <p className="text-2xl font-bold text-red-600">
-                {formatIDR(recap.totalHppTerpakai)}
-              </p>
+            <div className="section-shell border-rose-100 bg-gradient-to-br from-rose-50 to-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Total HPP</p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-rose-700">
+                    {formatIDR(totalHPP)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-rose-600/10 p-3 text-rose-700">
+                  <TrendingDown size={22} />
+                </div>
+              </div>
             </div>
 
-            <div className="border-2 border-green-300 bg-green-50 p-4 rounded-lg">
-              <p className="text-xs font-bold text-gray-600 mb-1">Total Untung</p>
-              <p className="text-2xl font-bold text-green-600">
-                {formatIDR(totalUntung)}
-              </p>
+            <div className="section-shell border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Laba Kotor</p>
+                  <p className={`mt-2 text-2xl font-bold tracking-tight ${labaKotor >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                    {formatIDR(labaKotor)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-emerald-600/10 p-3 text-emerald-700">
+                  <TrendingUp size={22} />
+                </div>
+              </div>
             </div>
 
-            <div className="border-2 border-orange-300 bg-orange-50 p-4 rounded-lg">
-              <p className="text-xs font-bold text-gray-600 mb-1">Total Uang Keluar</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {formatIDR(totalUangKeluar)}
-              </p>
+            <div className="section-shell border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Pengeluaran</p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-orange-700">
+                    {formatIDR(totalPengeluaran)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-orange-600/10 p-3 text-orange-700">
+                  <ShoppingCart size={22} />
+                </div>
+              </div>
+            </div>
+
+            <div className={`section-shell p-4 ${labaBersih >= 0 ? "border-emerald-100 bg-emerald-900" : "border-red-100 bg-red-900"}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-white/70">Laba Bersih</p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-white">
+                    {formatIDR(labaBersih)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-3 text-white">
+                  <BarChart3 size={22} />
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* Detail Table */}
-        {recap.isComplete ? (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
+        {recap.isComplete && (
+          <section className="section-shell p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Detail Penjualan Per Produk</h2>
-                <p className="text-sm text-gray-600">Tanggal: {new Date(recap.date).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</p>
+                <h2 className="text-lg font-bold text-slate-900">Detail Penjualan Per Produk</h2>
+                <p className="text-sm text-slate-600">
+                  Ringkasan penjualan pada{" "}
+                  {new Date(recap.date).toLocaleDateString("id-ID", {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  .
+                </p>
               </div>
-              <button
-                onClick={handleExportExcel}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold rounded hover:bg-green-700 transition"
-              >
-                <Download size={18} />
-                Export Excel
-              </button>
             </div>
 
-            {recap.details.length === 0 ? (
-              <div className="border-2 border-gray-300 bg-gray-50 rounded-lg p-8 text-center">
-                <p className="text-gray-600 text-sm">Tidak ada catatan penjualan pada tanggal ini.</p>
+            {/* Search */}
+            <div className="max-w-sm">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Cari produk..."
+                  className="h-11 w-full rounded-xl pl-9"
+                />
+              </div>
+            </div>
+
+            {filteredDetails.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
+                  <BarChart3 size={24} />
+                </div>
+                <p className="text-sm font-semibold text-slate-900">Belum ada data penjualan</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  Data akan muncul setelah ada stok keluar atau transaksi penjualan pada tanggal yang dipilih.
+                </p>
               </div>
             ) : (
-              <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-100 border-b-2 border-gray-300">
-                        <th className="text-left py-3 px-3 text-xs font-bold text-gray-700">
-                          Produk
-                        </th>
-                        <th className="text-center py-3 px-3 text-xs font-bold text-gray-700">
-                          Stok Awal
-                        </th>
-                        <th className="text-center py-3 px-3 text-xs font-bold text-gray-700">
-                          Stok Masuk
-                        </th>
-                        <th className="text-center py-3 px-3 text-xs font-bold text-gray-700">
-                          Stok Akhir
-                        </th>
-                        <th className="text-center py-3 px-3 text-xs font-bold text-gray-700">
-                          Terjual
-                        </th>
-                        <th className="text-right py-3 px-3 text-xs font-bold text-gray-700">
-                          HPP
-                        </th>
-                        <th className="text-right py-3 px-3 text-xs font-bold text-gray-700">
-                          Nilai Penjualan
-                        </th>
-                        <th className="text-right py-3 px-3 text-xs font-bold text-gray-700">
-                          Untung
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {recap.details.map((detail) => (
-                        <tr key={detail.productId} className="hover:bg-gray-50 transition">
-                          <td className="py-3 px-3 font-semibold text-gray-900">
-                            {detail.productName}
-                          </td>
-                          <td className="py-3 px-3 text-center text-gray-700">
-                            {detail.stokAwal}
-                          </td>
-                          <td className="py-3 px-3 text-center text-green-600 font-semibold">
-                            +{detail.stokMasuk}
-                          </td>
-                          <td className="py-3 px-3 text-center text-gray-700">
-                            {detail.stokAkhir}
-                          </td>
-                          <td className="py-3 px-3 text-center text-red-600 font-semibold">
-                            {detail.terjual}
-                          </td>
-                          <td className="py-3 px-3 text-right text-gray-700">
-                            {formatIDR(detail.hppTerpakai)}
-                          </td>
-                          <td className="py-3 px-3 text-right text-gray-700">
-                            {formatIDR(detail.nilaiPenjualan)}
-                          </td>
-                          <td className="py-3 px-3 text-right font-bold">
-                            <span className={detail.nilaiPenjualan - detail.hppTerpakai >= 0 ? "text-green-600" : "text-red-600"}>
-                              {formatIDR(detail.nilaiPenjualan - detail.hppTerpakai)}
-                            </span>
-                          </td>
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse bg-white">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                          <th className="px-5 py-4">Produk</th>
+                          <th className="px-5 py-4 text-center">Stok Awal</th>
+                          <th className="px-5 py-4 text-center">Stok Masuk</th>
+                          <th className="px-5 py-4 text-center">Stok Akhir</th>
+                          <th className="px-5 py-4 text-center">Terjual</th>
+                          <th className="px-5 py-4 text-right">HPP</th>
+                          <th className="px-5 py-4 text-right">Penjualan</th>
+                          <th className="px-5 py-4 text-right">Untung</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredDetails.map((detail) => {
+                          const untung = detail.nilaiPenjualan - detail.hppTerpakai;
+                          return (
+                            <tr key={detail.productId} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition">
+                              <td className="px-5 py-4">
+                                <p className="font-semibold text-slate-900">{detail.productName}</p>
+                              </td>
+                              <td className="px-5 py-4 text-center text-sm text-slate-700">
+                                {detail.stokAwal}
+                              </td>
+                              <td className="px-5 py-4 text-center text-sm font-semibold text-emerald-600">
+                                +{detail.stokMasuk}
+                              </td>
+                              <td className="px-5 py-4 text-center text-sm text-slate-700">
+                                {detail.stokAkhir}
+                              </td>
+                              <td className="px-5 py-4 text-center text-sm font-semibold text-red-600">
+                                {detail.terjual}
+                              </td>
+                              <td className="px-5 py-4 text-right text-sm text-slate-700">
+                                {formatIDR(detail.hppTerpakai)}
+                              </td>
+                              <td className="px-5 py-4 text-right text-sm text-slate-700">
+                                {formatIDR(detail.nilaiPenjualan)}
+                              </td>
+                              <td className="px-5 py-4 text-right text-sm font-bold">
+                                <span className={untung >= 0 ? "text-emerald-600" : "text-red-600"}>
+                                  {formatIDR(untung)}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {filteredDetails.map((detail) => {
+                    const untung = detail.nilaiPenjualan - detail.hppTerpakai;
+                    return (
+                      <div key={detail.productId} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+                        <p className="font-bold text-slate-900">{detail.productName}</p>
+
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Stok</p>
+                            <div className="space-y-0.5 text-slate-700">
+                              <p>Awal: <span className="font-medium">{detail.stokAwal}</span></p>
+                              <p>Masuk: <span className="font-medium text-emerald-600">+{detail.stokMasuk}</span></p>
+                              <p>Akhir: <span className="font-medium">{detail.stokAkhir}</span></p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Penjualan</p>
+                            <div className="space-y-0.5 text-slate-700">
+                              <p>Terjual: <span className="font-medium text-red-600">{detail.terjual}</span></p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Keuangan</p>
+                            <div className="space-y-0.5 text-slate-700">
+                              <p>HPP: <span className="font-medium">{formatIDR(detail.hppTerpakai)}</span></p>
+                              <p>Penjualan: <span className="font-medium">{formatIDR(detail.nilaiPenjualan)}</span></p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Untung</p>
+                            <p className={`text-lg font-bold ${untung >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                              {formatIDR(untung)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </section>
-        ) : products.length === 0 ? (
-          <div className="border-4 border-gray-300 bg-gray-50 p-6 rounded-lg text-center">
-            <p className="text-gray-700">Belum ada produk. Tambahkan produk terlebih dahulu.</p>
-          </div>
-        ) : null}
+        )}
       </div>
     </DashboardLayout>
   );

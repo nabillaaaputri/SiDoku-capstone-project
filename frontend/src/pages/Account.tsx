@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { User, Lock, Store } from "lucide-react";
+import { Camera, Lock, Shield, Store, User } from "lucide-react";
 
 interface ProfileData {
   ownerName: string;
@@ -102,278 +102,300 @@ export default function Account() {
     });
   };
 
+  const initials = formData.ownerName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const tabs = [
+    { key: "profile" as const, label: "Profil", icon: User },
+    { key: "shop" as const, label: "Data Toko", icon: Store },
+    { key: "security" as const, label: "Keamanan", icon: Lock },
+  ];
+
+  const inputClass =
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  const selectClass =
+    "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  const textareaClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Pengaturan Akun</h1>
+      <div className="space-y-4 sm:space-y-5">
+        {/* Header */}
+        <section className="section-shell overflow-hidden">
+          <div className="p-4 sm:p-5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
+              Pengaturan Akun
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-slate-600">
+              Kelola profil, data toko, dan keamanan akun Anda.
+            </p>
+          </div>
+        </section>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b-2 border-black">
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`px-4 py-3 font-bold border-b-2 transition ${
-              activeTab === "profile"
-                ? "border-b-black text-black"
-                : "border-b-transparent text-gray-600 hover:text-black"
-            }`}
-          >
-            <User className="inline mr-2" size={18} />
-            Profil
-          </button>
-          <button
-            onClick={() => setActiveTab("shop")}
-            className={`px-4 py-3 font-bold border-b-2 transition ${
-              activeTab === "shop"
-                ? "border-b-black text-black"
-                : "border-b-transparent text-gray-600 hover:text-black"
-            }`}
-          >
-            <Store className="inline mr-2" size={18} />
-            Data Toko
-          </button>
-          <button
-            onClick={() => setActiveTab("security")}
-            className={`px-4 py-3 font-bold border-b-2 transition ${
-              activeTab === "security"
-                ? "border-b-black text-black"
-                : "border-b-transparent text-gray-600 hover:text-black"
-            }`}
-          >
-            <Lock className="inline mr-2" size={18} />
-            Keamanan
-          </button>
+        <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-slate-100 p-1.5">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setIsEditing(false);
+                }}
+                className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+                  isActive
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <Icon size={16} />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Profile Tab */}
         {activeTab === "profile" && (
-          <div className="space-y-6">
-            <div className="border-3 border-black p-6 bg-white">
-              <h2 className="text-2xl font-bold mb-6">Informasi Profil</h2>
+          <div className="section-shell p-5 sm:p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Informasi Profil</h2>
+              <p className="text-sm text-slate-600">Perbarui data pribadi pemilik toko.</p>
+            </div>
 
-              {/* Profile Picture Section */}
-              <div className="mb-6 pb-6 border-b-2 border-gray-200">
-                <label className="block text-sm font-bold mb-3">Foto Profil</label>
-                <div className="flex gap-4 items-center">
-                  <div className="w-20 h-20 rounded-full bg-gray-300 border-2 border-black flex items-center justify-center text-2xl font-bold">
-                    👤
-                  </div>
-                  {isEditing && (
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="border-2 border-black px-3 py-2 text-sm"
-                    />
-                  )}
-                </div>
+            {/* Profile Picture Section */}
+            <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white shadow-md">
+                {initials}
               </div>
-
-              {/* Form Fields */}
-              <div className="space-y-4">
-                {/* Owner Name */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Nama Pemilik Toko
-                  </label>
-                  <input
-                    type="text"
-                    name="ownerName"
-                    value={formData.ownerName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Nomor Telepon
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 mt-6">
-                {!isEditing ? (
+              <div className="space-y-1.5">
+                {isEditing ? (
                   <Button
-                    onClick={() => setIsEditing(true)}
-                    className="border-2 border-black bg-black text-white px-4 py-2 font-bold hover:bg-gray-800"
+                    type="button"
+                    variant="outline"
+                    className="h-9 rounded-lg border-slate-200 px-3 text-sm"
                   >
-                    Edit Profil
+                    <Camera size={14} className="mr-1.5" />
+                    Ubah Foto
                   </Button>
                 ) : (
-                  <>
-                    <Button
-                      onClick={handleSaveProfile}
-                      className="border-2 border-black bg-black text-white px-4 py-2 font-bold hover:bg-gray-800"
-                    >
-                      Simpan Perubahan
-                    </Button>
-                    <Button
-                      onClick={() => setIsEditing(false)}
-                      variant="outline"
-                      className="border-2 border-black px-4 py-2 font-bold hover:bg-gray-100"
-                    >
-                      Batal
-                    </Button>
-                  </>
+                  <p className="text-sm font-semibold text-slate-900">{formData.ownerName}</p>
                 )}
+                <p className="text-xs text-slate-500">
+                  Gunakan foto yang jelas agar profil mudah dikenali.
+                </p>
               </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Nama Pemilik Toko
+                </label>
+                <input
+                  type="text"
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Nomor Telepon
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              {!isEditing ? (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="h-11 rounded-xl bg-slate-900 px-5 text-white hover:bg-slate-800"
+                >
+                  Edit Profil
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleSaveProfile}
+                    className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
+                  >
+                    Simpan Perubahan
+                  </Button>
+                  <Button
+                    onClick={() => setIsEditing(false)}
+                    variant="outline"
+                    className="h-11 rounded-xl border-slate-200 px-5 hover:bg-slate-50"
+                  >
+                    Batal
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {/* Shop Data Tab */}
         {activeTab === "shop" && (
-          <div className="space-y-6">
-            <div className="border-3 border-black p-6 bg-white">
-              <h2 className="text-2xl font-bold mb-6">Data Toko</h2>
+          <div className="section-shell p-5 sm:p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Data Toko</h2>
+              <p className="text-sm text-slate-600">Kelola informasi dan detail toko Anda.</p>
+            </div>
 
-              <div className="space-y-4">
-                {/* Shop Name */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Nama Toko
-                  </label>
-                  <input
-                    type="text"
-                    name="shopName"
-                    value={formData.shopName}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Shop Category */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Kategori Toko
-                  </label>
-                  <select
-                    name="shopCategory"
-                    value={formData.shopCategory}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option>Retail</option>
-                    <option>Grosir</option>
-                    <option>Jasa</option>
-                    <option>Makanan & Minuman</option>
-                    <option>Fashion</option>
-                    <option>Elektronik</option>
-                    <option>Lainnya</option>
-                  </select>
-                </div>
-
-                {/* Shop Address */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Alamat Toko
-                  </label>
-                  <textarea
-                    name="shopAddress"
-                    value={formData.shopAddress}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows={3}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Shop Description */}
-                <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Deskripsi Toko
-                  </label>
-                  <textarea
-                    name="shopDescription"
-                    value={formData.shopDescription}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows={3}
-                    className="w-full border-2 border-black px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Nama Toko
+                </label>
+                <input
+                  type="text"
+                  name="shopName"
+                  value={formData.shopName}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={inputClass}
+                />
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 mt-6">
-                {!isEditing ? (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Jenis Usaha
+                </label>
+                <select
+                  name="shopCategory"
+                  value={formData.shopCategory}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  className={selectClass}
+                >
+                  <option>Retail</option>
+                  <option>Grosir</option>
+                  <option>Jasa</option>
+                  <option>Makanan & Minuman</option>
+                  <option>Fashion</option>
+                  <option>Elektronik</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Alamat Toko
+                </label>
+                <textarea
+                  name="shopAddress"
+                  value={formData.shopAddress}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  rows={3}
+                  className={textareaClass}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Deskripsi Toko
+                </label>
+                <textarea
+                  name="shopDescription"
+                  value={formData.shopDescription}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  rows={3}
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              {!isEditing ? (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="h-11 rounded-xl bg-slate-900 px-5 text-white hover:bg-slate-800"
+                >
+                  Edit Data Toko
+                </Button>
+              ) : (
+                <>
                   <Button
-                    onClick={() => setIsEditing(true)}
-                    className="border-2 border-black bg-black text-white px-4 py-2 font-bold hover:bg-gray-800"
+                    onClick={handleSaveProfile}
+                    className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
                   >
-                    Edit Data Toko
+                    Simpan Perubahan
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={handleSaveProfile}
-                      className="border-2 border-black bg-black text-white px-4 py-2 font-bold hover:bg-gray-800"
-                    >
-                      Simpan Perubahan
-                    </Button>
-                    <Button
-                      onClick={() => setIsEditing(false)}
-                      variant="outline"
-                      className="border-2 border-black px-4 py-2 font-bold hover:bg-gray-100"
-                    >
-                      Batal
-                    </Button>
-                  </>
-                )}
-              </div>
+                  <Button
+                    onClick={() => setIsEditing(false)}
+                    variant="outline"
+                    className="h-11 rounded-xl border-slate-200 px-5 hover:bg-slate-50"
+                  >
+                    Batal
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {/* Security Tab */}
         {activeTab === "security" && (
-          <div className="space-y-6">
-            <div className="border-3 border-black p-6 bg-white">
-              <h2 className="text-2xl font-bold mb-6">Keamanan Akun</h2>
+          <div className="space-y-4 sm:space-y-5">
+            <div className="section-shell p-5 sm:p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Keamanan Akun</h2>
+                <p className="text-sm text-slate-600">Ubah password untuk menjaga keamanan akun Anda.</p>
+              </div>
 
               <div className="space-y-4">
-                {/* Current Password */}
                 <div>
-                  <label className="block text-sm font-bold mb-2">
-                    Password Saat Ini
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Password Lama
                   </label>
                   <input
                     type="password"
                     name="currentPassword"
                     value={passwordData.currentPassword}
                     onChange={handlePasswordChange}
-                    className="w-full border-2 border-black px-3 py-2"
+                    placeholder="Masukkan password lama"
+                    className={inputClass}
                   />
                 </div>
 
-                {/* New Password */}
                 <div>
-                  <label className="block text-sm font-bold mb-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Password Baru
                   </label>
                   <input
@@ -381,13 +403,13 @@ export default function Account() {
                     name="newPassword"
                     value={passwordData.newPassword}
                     onChange={handlePasswordChange}
-                    className="w-full border-2 border-black px-3 py-2"
+                    placeholder="Masukkan password baru"
+                    className={inputClass}
                   />
                 </div>
 
-                {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-bold mb-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
                     Konfirmasi Password Baru
                   </label>
                   <input
@@ -395,35 +417,44 @@ export default function Account() {
                     name="confirmPassword"
                     value={passwordData.confirmPassword}
                     onChange={handlePasswordChange}
-                    className="w-full border-2 border-black px-3 py-2"
+                    placeholder="Ulangi password baru"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="flex gap-2 mt-6">
+              <div className="pt-2">
                 <Button
                   onClick={handleChangePassword}
-                  className="border-2 border-black bg-black text-white px-4 py-2 font-bold hover:bg-gray-800"
+                  className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
                 >
                   Ubah Password
                 </Button>
               </div>
             </div>
 
-            {/* Additional Security Info */}
-            <div className="border-3 border-black p-6 bg-gray-50">
-              <h3 className="font-bold mb-4">Informasi Keamanan</h3>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li>
-                  • Akun Anda dilindungi dengan enkripsi tingkat enterprise
+            {/* Security Tips */}
+            <div className="section-shell border-slate-100 bg-slate-50/50 p-5 sm:p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Shield size={18} className="text-slate-500" />
+                <h3 className="text-sm font-bold text-slate-700">Tips Keamanan</h3>
+              </div>
+              <ul className="space-y-1.5 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  Akun Anda dilindungi dengan enkripsi tingkat enterprise
                 </li>
-                <li>• Ganti password secara berkala untuk keamanan maksimal</li>
-                <li>
-                  • Jangan pernah membagikan password Anda kepada siapapun
+                <li className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  Ganti password secara berkala untuk keamanan maksimal
                 </li>
-                <li>
-                  • Gunakan password yang kuat kombinasi huruf, angka, dan simbol
+                <li className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  Jangan pernah membagikan password Anda kepada siapapun
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  Gunakan password yang kuat: kombinasi huruf, angka, dan simbol
                 </li>
               </ul>
             </div>

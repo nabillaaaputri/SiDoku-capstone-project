@@ -11,11 +11,19 @@ import {
   DailySalesRecapDetail,
 } from "@/types";
 
+const STORAGE_KEYS = {
+  PRODUCTS: "sidoku_products",
+  SALES_RECORDS: "sidoku_sales_records",
+  EXPENSES: "sidoku_expenses",
+  STOCK_INS: "sidoku_stock_ins",
+  STOCK_OUTS: "sidoku_stock_outs",
+};
+
 interface BusinessContextType {
   products: Product[];
   addProduct: (product: Omit<Product, "id" | "createdAt">) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
-  deleteProduct: (id: string) => void;
+  deleteProduct: (id: string) => Promise<void>;
   archiveProduct: (id: string) => Promise<void>;
   restoreProduct: (id: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
@@ -63,40 +71,29 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
 
-  // AMBIL PRODUK DARI BACKEND
+  // AMBIL PRODUK DARI LOCAL STORAGE
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await apiClient.get("/products");
+    const savedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
 
-        console.log("PRODUCTS RESPONSE:", response.data);
-
-        const data =
-          response.data.data?.products ||
-          response.data.data ||
-          [];
-
-        setProducts(
-  data.map((p: any) => ({
-    id: p.id,
-    name: p.productName,
-    costPrice: p.purchasePrice,
-    sellPrice: p.sellingPrice,
-    stock: p.stock,
-    minimumStock: p.minimumStock,
-    category: p.category || "Lainnya",
-    unit: p.unit || "pcs",
-    archived: p.isArchived ?? false,
-    createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-  }))
-);
-      } catch (error) {
-        console.error("Gagal ambil produk:", error);
-      }
-    };
-
-    fetchProducts();
+    if (savedProducts) {
+      setProducts(
+        JSON.parse(savedProducts).map((p: Product) => ({
+          ...p,
+          createdAt: new Date(p.createdAt),
+          margin:
+            p.margin ??
+            (p.costPrice > 0 ? ((p.sellPrice - p.costPrice) / p.costPrice) * 100 : 0),
+          category: p.category || "Lainnya",
+          unit: p.unit || "pcs",
+          archived: p.archived ?? false,
+        }))
+      );
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+  }, [products]);
 
   // DATA LAIN MASIH LOCALSTORAGE DULU
   useEffect(() => {
@@ -160,108 +157,57 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("sidoku_stock_outs", JSON.stringify(stockOuts));
   }, [stockOuts]);
 
-  // PRODUCT FUNCTIONS KE BACKEND
+  // PRODUCT FUNCTIONS LOCAL ONLY
   const addProduct = async (product: Omit<Product, "id" | "createdAt">) => {
-  const payload = {
-    productName: product.name,
-    purchasePrice: product.costPrice,
-    sellingPrice: product.sellPrice,
-    minimumStock: product.minimumStock,
-    category: product.category,
-    unit: product.unit,
-    initialStock: product.stock,
-  };
-
-  console.log("PAYLOAD KE BACKEND:", payload);
-
-  const response = await apiClient.post("/products", payload);
-
-  console.log("ADD PRODUCT RESPONSE:", response.data);
-
-  const newProduct = response.data.data;
-
-  setProducts((prev) => [
-    ...prev,
-    {
-      id: newProduct.id,
-      name: newProduct.productName,
-      costPrice: newProduct.purchasePrice,
-      sellPrice: newProduct.sellingPrice,
-      stock: newProduct.stock,
-      minimumStock: newProduct.minimumStock,
-      category: newProduct.category,
-      unit: newProduct.unit,
-      archived: newProduct.isArchived ?? false,
+    const newProduct: Product = {
+      ...product,
+      id: Date.now().toString(),
       createdAt: new Date(),
-    },
-  ]);
-};
+      margin:
+        product.margin ??
+        (product.costPrice > 0
+          ? ((product.sellPrice - product.costPrice) / product.costPrice) * 100
+          : 0),
+      category: product.category || "Barang",
+      unit: product.unit || "pcs",
+      archived: product.archived ?? false,
+    };
+
+    setProducts((prev) => [...prev, newProduct]);
+  };
 
   const updateProduct = async (id: string, updatedData: Partial<Product>) => {
-  const oldProduct = products.find((p) => p.id === id);
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
 
-  if (!oldProduct) return;
+        const mergedProduct = { ...p, ...updatedData };
 
-  const mergedProduct = {
-    ...oldProduct,
-    ...updatedData,
+        return {
+          ...mergedProduct,
+          margin:
+            mergedProduct.margin ??
+            (mergedProduct.costPrice > 0
+              ? ((mergedProduct.sellPrice - mergedProduct.costPrice) /
+                  mergedProduct.costPrice) *
+                100
+              : 0),
+        };
+      })
+    );
   };
 
-  const payload = {
-    productName: mergedProduct.name,
-    purchasePrice: mergedProduct.costPrice,
-    sellingPrice: mergedProduct.sellPrice,
-    stock: mergedProduct.stock,
-    minimumStock: mergedProduct.minimumStock,
-    category: mergedProduct.category,
-    unit: mergedProduct.unit,
-  };
-
-  console.log("UPDATE PAYLOAD:", payload);
-
-  const response = await apiClient.put(`/products/${id}`, payload);
-
-  console.log("UPDATE PRODUCT RESPONSE:", response.data);
-
-  const updatedProduct = response.data.data;
-
-  setProducts((prev) =>
-    prev.map((p) =>
-      p.id === id
-        ? {
-            id: updatedProduct.id,
-            name: updatedProduct.productName,
-            costPrice: updatedProduct.purchasePrice,
-            sellPrice: updatedProduct.sellingPrice,
-            stock: updatedProduct.stock,
-            minimumStock: updatedProduct.minimumStock,
-            category: updatedProduct.category,
-            unit: updatedProduct.unit,
-            archived: updatedProduct.isArchived ?? false,
-            createdAt: updatedProduct.createdAt
-              ? new Date(updatedProduct.createdAt)
-              : p.createdAt,
-          }
-        : p
-    )
-  );
-};
-
-  const deleteProduct = (id: string) => {
+  const deleteProduct = async (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
   const archiveProduct = async (id: string) => {
-    await apiClient.patch(`/products/${id}/archive`);
-
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, archived: true } : p))
     );
   };
 
   const restoreProduct = async (id: string) => {
-    await apiClient.patch(`/products/${id}/restore`);
-
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, archived: false } : p))
     );
@@ -303,42 +249,20 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // EXPENSE
-const addExpense = async (expense: Omit<Expense, "id">) => {
-  const payload = {
-    expenseName: expense.name,
-    amount: expense.amount,
-    category: expense.category,
-    date: expense.date,
-    description: expense.description,
+// EXPENSE
+  const addExpense = async (expense: Omit<Expense, "id">) => {
+    const newExpense: Expense = {
+      ...expense,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setExpenses((prev) => [...prev, newExpense]);
   };
 
-  console.log("EXPENSE PAYLOAD:", payload);
-
-  const response = await apiClient.post("/expenses", payload);
-
-  console.log("ADD EXPENSE RESPONSE:", response.data);
-
-  const newExpense = response.data.data;
-
-  setExpenses((prev) => [
-    ...prev,
-    {
-      id: newExpense.id,
-      name: newExpense.expenseName,
-      amount: newExpense.amount,
-      category: newExpense.category,
-      date: new Date(newExpense.date),
-      description: newExpense.description || "",
-    },
-  ]);
-};
-
-const deleteExpense = async (id: string) => {
-  await apiClient.delete(`/expenses/${id}`);
-
-  setExpenses((prev) => prev.filter((e) => e.id !== id));
-};
+  const deleteExpense = async (id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+  };
 
 const getExpensesByDateRange = (startDate: Date, endDate: Date) => {
   return expenses.filter((e) => {
@@ -474,18 +398,15 @@ const getExpensesByCategory = (category: string) => {
 
     const details = Array.from(recapByProduct.values());
 
-    const totalUangMasuk = dailySalesRecords.reduce(
-      (sum, r) => sum + r.totalAmount,
-      0
-    );
     const totalUangKeluar = dailyExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalTerjual = dailySalesRecords.reduce((sum, r) => sum + r.quantity, 0);
+    const totalTerjual = details.reduce((sum, d) => sum + d.terjual, 0);
     const totalNilaiPenjualan = details.reduce(
       (sum, d) => sum + d.nilaiPenjualan,
       0
     );
     const totalHppTerpakai = details.reduce((sum, d) => sum + d.hppTerpakai, 0);
-    const labaKotor = totalUangMasuk - totalHppTerpakai;
+    const totalUangMasuk = totalNilaiPenjualan;
+    const labaKotor = totalNilaiPenjualan - totalHppTerpakai;
     const labaBersih = labaKotor - totalUangKeluar;
 
     return {
