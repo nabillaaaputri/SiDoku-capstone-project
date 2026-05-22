@@ -10,13 +10,10 @@ numpy==1.26.0
 pandas==2.2.0
 scikit-learn==1.4.0
 tensorflow==2.16.0
+joblib==1.5.3
 
 # Text Processing
 nltk==3.9
-
-# Visualization (optional, for notebooks)
-matplotlib==3.8.0
-seaborn==0.13.0
 
 # Testing
 pytest==7.4.0
