@@ -305,8 +305,8 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       const [productsResult, expensesResult, stockInsResult, stockOutsResult] = await Promise.allSettled([
         apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
         apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
-        apiClient.get<BackendResponse<BackendStockIn[]>>("/stock-ins"),
-        apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stock-outs"),
+        apiClient.get<BackendResponse<BackendStockIn[]>>("/stocks-in"),
+        apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stocks-out"),
       ]);
 
       if (productsResult.status === "fulfilled") {
@@ -439,7 +439,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   const addStockIn = async (stockIn: Omit<StockIn, "id" | "createdAt">) => {
-    const response = await apiClient.post<BackendResponse<BackendStockIn>>("/stock-ins", {
+    const response = await apiClient.post<BackendResponse<BackendStockIn>>("/stocks-in", {
       productId: stockIn.productId,
       quantity: stockIn.quantity,
       date: toApiDateTime(stockIn.date),
@@ -465,7 +465,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
-    const response = await apiClient.post<BackendResponse<BackendStockOut>>("/stock-outs", {
+    const response = await apiClient.post<BackendResponse<BackendStockOut>>("/stocks-out", {
       productId: stockOut.productId,
       quantity: stockOut.quantity,
       date: toApiDateTime(stockOut.date),
@@ -492,7 +492,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const deleteStockIn = async (id: string) => {
     const stockIn = stockIns.find((item) => item.id === id);
-    await apiClient.delete(`/stock-ins/${id}`);
+    await apiClient.delete(`/stocks-in/${id}`);
 
     if (stockIn) {
       setProducts((currentProducts) =>
@@ -514,7 +514,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const deleteStockOut = async (id: string) => {
     const stockOut = stockOuts.find((item) => item.id === id);
-    await apiClient.delete(`/stock-outs/${id}`);
+    await apiClient.delete(`/stocks-out/${id}`);
 
     if (stockOut) {
       setProducts((currentProducts) =>

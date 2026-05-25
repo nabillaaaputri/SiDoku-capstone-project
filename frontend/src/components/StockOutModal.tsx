@@ -48,7 +48,7 @@ export default function StockOutModal({ isOpen, onClose }: StockOutModalProps) {
     setShowDropdown(false);
   };
 
-  const handleSubmit = (e: React.FormEvent, saveAgain: boolean = false) => {
+  const handleSubmit = async (e: React.FormEvent, saveAgain: boolean = false) => {
     e.preventDefault();
 
     if (!formData.productId) {
@@ -88,30 +88,38 @@ export default function StockOutModal({ isOpen, onClose }: StockOutModalProps) {
       return;
     }
 
-    addStockOut({
-      productId: formData.productId,
-      productName: product.name,
-      quantity: formData.quantity,
-      date: new Date(formData.date),
-      notes: formData.notes || undefined,
-    });
-
-    toast({
-      title: "Berhasil",
-      description: `${formData.quantity} unit ${product.name} berhasil dicatat keluar`,
-    });
-
-    if (saveAgain) {
-      // Reset form for next entry
-      setFormData({
-        productId: "",
-        quantity: 0,
-        date: new Date().toISOString().split("T")[0],
-        notes: "",
+    try {
+      await addStockOut({
+        productId: formData.productId,
+        productName: product.name,
+        quantity: formData.quantity,
+        date: new Date(formData.date),
+        notes: formData.notes || undefined,
       });
-      setSearchQuery("");
-    } else {
-      handleClose();
+
+      toast({
+        title: "Berhasil",
+        description: `${formData.quantity} unit ${product.name} berhasil dicatat keluar`,
+      });
+
+      if (saveAgain) {
+        // Reset form for next entry
+        setFormData({
+          productId: "",
+          quantity: 0,
+          date: new Date().toISOString().split("T")[0],
+          notes: "",
+        });
+        setSearchQuery("");
+      } else {
+        handleClose();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Gagal menyimpan stok keluar",
+        variant: "destructive",
+      });
     }
   };
 

@@ -79,30 +79,38 @@ export default function StockInModal({ isOpen, onClose }: StockInModalProps) {
       return;
     }
 
-    await addStockIn({
-      productId: formData.productId,
-      productName: product.name,
-      quantity: formData.quantity,
-      date: new Date(formData.date),
-      notes: formData.notes || undefined,
-    });
-
-    toast({
-      title: "Berhasil",
-      description: `${formData.quantity} unit ${product.name} berhasil ditambahkan ke stok`,
-    });
-
-    if (saveAgain) {
-      // Reset form for next entry
-      setFormData({
-        productId: "",
-        quantity: 0,
-        date: new Date().toISOString().split("T")[0],
-        notes: "",
+    try {
+      await addStockIn({
+        productId: formData.productId,
+        productName: product.name,
+        quantity: formData.quantity,
+        date: new Date(formData.date),
+        notes: formData.notes || undefined,
       });
-      setSearchQuery("");
-    } else {
-      handleClose();
+
+      toast({
+        title: "Berhasil",
+        description: `${formData.quantity} unit ${product.name} berhasil ditambahkan ke stok`,
+      });
+
+      if (saveAgain) {
+        // Reset form for next entry
+        setFormData({
+          productId: "",
+          quantity: 0,
+          date: new Date().toISOString().split("T")[0],
+          notes: "",
+        });
+        setSearchQuery("");
+      } else {
+        handleClose();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Gagal menyimpan stok masuk",
+        variant: "destructive",
+      });
     }
   };
 
