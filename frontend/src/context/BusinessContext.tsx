@@ -300,47 +300,37 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
 
-  useEffect(() => {
-    let isActive = true;
+  const refreshData = async () => {
+    try {
+      const [productsResult, expensesResult, stockInsResult, stockOutsResult] = await Promise.allSettled([
+        apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
+        apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
+        apiClient.get<BackendResponse<BackendStockIn[]>>("/stock-ins"),
+        apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stock-outs"),
+      ]);
 
-    const loadData = async () => {
-      try {
-        const [productsResult, expensesResult, stockInsResult, stockOutsResult] = await Promise.allSettled([
-          apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
-          apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
-          apiClient.get<BackendResponse<BackendStockIn[]>>("/stock-ins"),
-          apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stock-outs"),
-        ]);
-
-        if (!isActive) {
-          return;
-        }
-
-        if (productsResult.status === "fulfilled") {
-          setProducts(productsResult.value.data.data.map(mapProductResponse));
-        }
-
-        if (expensesResult.status === "fulfilled") {
-          setExpenses(expensesResult.value.data.data.records.map(mapExpenseResponse));
-        }
-
-        if (stockInsResult.status === "fulfilled") {
-          setStockIns(stockInsResult.value.data.data.map(mapStockInResponse));
-        }
-
-        if (stockOutsResult.status === "fulfilled") {
-          setStockOuts(stockOutsResult.value.data.data.records.map(mapStockOutResponse));
-        }
-      } catch (error) {
-        console.error("Failed to load business data:", error);
+      if (productsResult.status === "fulfilled") {
+        setProducts(productsResult.value.data.data.map(mapProductResponse));
       }
-    };
 
-    loadData();
+      if (expensesResult.status === "fulfilled") {
+        setExpenses(expensesResult.value.data.data.records.map(mapExpenseResponse));
+      }
 
-    return () => {
-      isActive = false;
-    };
+      if (stockInsResult.status === "fulfilled") {
+        setStockIns(stockInsResult.value.data.data.map(mapStockInResponse));
+      }
+
+      if (stockOutsResult.status === "fulfilled") {
+        setStockOuts(stockOutsResult.value.data.data.records.map(mapStockOutResponse));
+      }
+    } catch (error) {
+      console.error("Failed to load business data:", error);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
   }, []);
 
   useEffect(() => {
@@ -470,6 +460,8 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
           : product,
       ),
     );
+
+    await refreshData();
   };
 
   const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
@@ -494,6 +486,8 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
           : product,
       ),
     );
+
+    await refreshData();
   };
 
   const deleteStockIn = async (id: string) => {
@@ -515,6 +509,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     }
 
     setStockIns((currentStockIns) => currentStockIns.filter((item) => item.id !== id));
+    await refreshData();
   };
 
   const deleteStockOut = async (id: string) => {
@@ -536,6 +531,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     }
 
     setStockOuts((currentStockOuts) => currentStockOuts.filter((item) => item.id !== id));
+    await refreshData();
   };
 
   const getStockInByDate = (date: Date) => {

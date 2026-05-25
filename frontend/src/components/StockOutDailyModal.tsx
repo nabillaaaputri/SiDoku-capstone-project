@@ -66,7 +66,7 @@ export default function StockOutDailyModal({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const itemsToRemove = stockOutItems.filter((item) => item.quantity > 0);
@@ -101,7 +101,7 @@ export default function StockOutDailyModal({
     for (const item of itemsToRemove) {
       const product = products.find((p) => p.id === item.productId);
       if (product) {
-        addStockOut({
+        await addStockOut({
           productId: item.productId,
           productName: product.name,
           quantity: item.quantity,
@@ -173,7 +173,7 @@ export default function StockOutDailyModal({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
             {/* Product Selection Dropdown */}
             <div className="space-y-2">
               <label className="block text-sm font-bold">Pilih Produk</label>

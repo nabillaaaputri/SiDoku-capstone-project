@@ -48,7 +48,7 @@ export default function StockInModal({ isOpen, onClose }: StockInModalProps) {
     setShowDropdown(false);
   };
 
-  const handleSubmit = (e: React.FormEvent, saveAgain: boolean = false) => {
+  const handleSubmit = async (e: React.FormEvent, saveAgain: boolean = false) => {
     e.preventDefault();
 
     if (!formData.productId) {
@@ -79,7 +79,7 @@ export default function StockInModal({ isOpen, onClose }: StockInModalProps) {
       return;
     }
 
-    addStockIn({
+    await addStockIn({
       productId: formData.productId,
       productName: product.name,
       quantity: formData.quantity,
@@ -150,7 +150,7 @@ export default function StockInModal({ isOpen, onClose }: StockInModalProps) {
             </div>
           </div>
         ) : (
-          <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
+          <form onSubmit={(e) => void handleSubmit(e, false)} className="space-y-4">
             {/* Product Selection - Searchable */}
             <div className="relative">
               <label className="block text-sm font-bold mb-2">
