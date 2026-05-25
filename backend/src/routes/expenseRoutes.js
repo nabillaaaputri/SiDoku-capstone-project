@@ -6,11 +6,20 @@ import {
 } from '../controllers/expenseController.js';
 import authenticateToken from '../middlewares/auth.js';
 import validatePayload from '../middlewares/validatePayload.js';
-import { ExpensePayloadSchema } from '../validators/expenseValidator.js';
+import validateQuery from '../middlewares/validateQuery.js';
+import {
+  ExpensePayloadSchema,
+  ExpenseQuerySchema,
+} from '../validators/expenseValidator.js';
 
 const expenseRouter = express.Router();
 
-expenseRouter.get('/', authenticateToken, getExpenses);
+expenseRouter.get(
+  '/',
+  authenticateToken,
+  validateQuery(ExpenseQuerySchema, 'Query pengeluaran tidak valid.'),
+  getExpenses,
+);
 
 expenseRouter.post(
   '/',

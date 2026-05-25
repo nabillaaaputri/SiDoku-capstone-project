@@ -7,3 +7,9 @@ export const ExpensePayloadSchema = Joi.object({
   date: Joi.string().isoDate().required(),
   description: Joi.string().trim().allow('', null).optional(),
 });
+
+export const ExpenseQuerySchema = Joi.object({
+  category: Joi.string().valid('restock', 'operational', 'others').optional(),
+  startDate: Joi.string().isoDate().optional(),
+  endDate: Joi.string().isoDate().optional(),
+});
