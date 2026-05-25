@@ -6,15 +6,15 @@ sqlalchemy==2.0.0
 psycopg2-binary==2.9.0
 
 # Data & ML
-numpy==1.26.0
+numpy>=1.26.0,<2.0.0
 pandas==2.2.0
 scikit-learn==1.4.0
 tensorflow-cpu==2.16.0
-keras==3.3.3
+# Note: keras is bundled inside tensorflow-cpu 2.16+, do NOT add keras as separate dependency
 joblib==1.5.3
 
 # Text Processing
-nltk==3.9
+nltk==3.9.1
 
 # Testing
 pytest==7.4.0
