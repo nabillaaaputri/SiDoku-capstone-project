@@ -36,7 +36,7 @@ import {
 import { Input } from "@/ui/input";
 
 const UNIT_OPTIONS = ["pcs", "kg", "gram", "ml", "liter", "botol", "pack", "dus"];
-const CATEGORY_OPTIONS = ["Makanan", "Minuman", "Barang", "Bahan Baku", "Peralatan", "Lainnya"];
+const CATEGORY_OPTIONS = ["Makanan", "Minuman", "Bahan Baku", "Peralatan", "Lainnya"];
 
 type ViewMode = "active" | "archived";
 type StockFilter = "all" | "aman" | "menipis" | "habis";

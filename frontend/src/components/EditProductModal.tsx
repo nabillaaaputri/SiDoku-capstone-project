@@ -2,6 +2,8 @@ import { Product } from "@/types";
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
+const CATEGORY_OPTIONS = ["Makanan", "Minuman", "Bahan Baku", "Peralatan", "Lainnya"];
+
 interface EditProductModalProps {
   product: Product;
   isOpen: boolean;
@@ -84,12 +86,11 @@ export default function EditProductModal({
               required
             >
               <option value="">Pilih kategori</option>
-              <option value="Makanan">Makanan</option>
-              <option value="Minuman">Minuman</option>
-              <option value="Barang">Barang</option>
-              <option value="Bahan Baku">Bahan Baku</option>
-              <option value="Peralatan">Peralatan</option>
-              <option value="Lainnya">Lainnya</option>
+              {CATEGORY_OPTIONS.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
             </select>
           </div>
 
