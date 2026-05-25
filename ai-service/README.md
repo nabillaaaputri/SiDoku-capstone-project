@@ -50,7 +50,7 @@ ai-service/
 ### 1. Buat Virtual Environment
 
 ```bash
-python -m venv .venv
+py -3.12 -m venv .venv
 
 # Windows
 .venv\Scripts\activate
