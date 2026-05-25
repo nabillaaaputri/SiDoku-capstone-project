@@ -50,13 +50,28 @@ const authApiClient = axios.create({
   },
 });
 
+const attachAuthHeader = (config: any) => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    return config;
+  }
+
+  config.headers = AxiosHeaders.from(config.headers);
+  config.headers.set("Authorization", `Bearer ${token}`);
+
+  return config;
+};
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");
 
-  if (token) {
-    config.headers = config.headers ?? new AxiosHeaders();
-    config.headers.Authorization = `Bearer ${token}`;
+  if (!token) {
+    return config;
   }
+
+  config.headers = AxiosHeaders.from(config.headers);
+  config.headers.set("Authorization", `Bearer ${token}`);
 
   return config;
 });
@@ -64,14 +79,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use((response) => response, handleUnauthorizedError);
 
 authApiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-
-  if (token) {
-    config.headers = config.headers ?? new AxiosHeaders();
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
+  return attachAuthHeader(config);
 });
 
 authApiClient.interceptors.response.use((response) => response, handleUnauthorizedError);
