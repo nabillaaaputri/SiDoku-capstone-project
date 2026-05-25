@@ -1,0 +1,8 @@
+import Joi from 'joi';
+
+export const StockOutPayloadSchema = Joi.object({
+  productId: Joi.string().trim().required(),
+  quantity: Joi.number().integer().min(1).required(),
+  date: Joi.string().isoDate().required(),
+  note: Joi.string().trim().allow('', null).optional(),
+});

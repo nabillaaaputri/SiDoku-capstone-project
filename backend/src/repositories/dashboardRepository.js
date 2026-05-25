@@ -1,54 +1,74 @@
 import { query } from '../config/database.js';
 
-export const getAllProducts = async () => {
-  const result = await query(
-    'SELECT * FROM products ORDER BY created_at DESC',
-  );
-
-  return result.rows;
-};
-
-export const getLowStockProducts = async () => {
+export const getAllProducts = async (userId) => {
   const result = await query(
     `SELECT *
      FROM products
-     WHERE stock <= minimum_stock
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [userId],
+  );
+
+  return result.rows;
+};
+
+export const getLowStockProducts = async (userId) => {
+  const result = await query(
+    `SELECT *
+     FROM products
+     WHERE user_id = $1
+     AND stock <= minimum_stock
      AND is_archived = false
      ORDER BY stock ASC`,
+    [userId],
   );
 
   return result.rows;
 };
 
-export const getStockOuts = async () => {
+export const getStockOuts = async (userId) => {
   const result = await query(
-    'SELECT * FROM stock_outs ORDER BY date DESC, created_at DESC',
+    `SELECT *
+     FROM stock_outs
+     WHERE user_id = $1
+     ORDER BY date DESC, created_at DESC`,
+    [userId],
   );
 
   return result.rows;
 };
 
-export const getExpenses = async () => {
+export const getExpenses = async (userId) => {
   const result = await query(
-    'SELECT * FROM expenses ORDER BY date DESC, created_at DESC',
+    `SELECT *
+     FROM expenses
+     WHERE user_id = $1
+     ORDER BY date DESC, created_at DESC`,
+    [userId],
   );
 
   return result.rows;
 };
 
-export const getStockOutsByDate = async (date) => {
+export const getStockOutsByDate = async (userId, date) => {
   const result = await query(
-    'SELECT * FROM stock_outs WHERE date = $1',
-    [date],
+    `SELECT *
+     FROM stock_outs
+     WHERE user_id = $1
+     AND date = $2`,
+    [userId, date],
   );
 
   return result.rows;
 };
 
-export const getExpensesByDate = async (date) => {
+export const getExpensesByDate = async (userId, date) => {
   const result = await query(
-    'SELECT * FROM expenses WHERE date = $1',
-    [date],
+    `SELECT *
+     FROM expenses
+     WHERE user_id = $1
+     AND date = $2`,
+    [userId, date],
   );
 
   return result.rows;

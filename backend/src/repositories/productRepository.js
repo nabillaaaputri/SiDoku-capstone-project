@@ -1,9 +1,14 @@
 import { query } from '../config/database.js';
 
-export const getAllProducts = async ({ status, category }) => {
+export const getAllProducts = async ({ status, category, userId }) => {
   let queryText = 'SELECT * FROM products';
   const values = [];
   const conditions = [];
+
+  if (userId) {
+    values.push(userId);
+    conditions.push(`user_id = $${values.length}`);
+  }
 
   if (status === 'active') {
     conditions.push('is_archived = false');
@@ -15,7 +20,7 @@ export const getAllProducts = async ({ status, category }) => {
 
   if (category) {
     values.push(category);
-    conditions.push(`category = $${values.length}`);
+    conditions.push(`LOWER(category) = LOWER($${values.length})`);
   }
 
   if (conditions.length > 0) {
@@ -28,26 +33,37 @@ export const getAllProducts = async ({ status, category }) => {
   return result.rows;
 };
 
-export const getProductById = async (id) => {
-  const result = await query(
-    'SELECT * FROM products WHERE id = $1',
-    [id],
-  );
+export const getProductById = async (id, userId = null) => {
+  let queryText = 'SELECT * FROM products WHERE id = $1';
+  const values = [id];
+
+  if (userId) {
+    values.push(userId);
+    queryText += ` AND user_id = $${values.length}`;
+  }
+
+  const result = await query(queryText, values);
 
   return result.rows[0];
 };
 
-export const getProductByName = async (productName) => {
-  const result = await query(
-    'SELECT * FROM products WHERE LOWER(product_name) = LOWER($1)',
-    [productName],
-  );
+export const getProductByName = async (productName, userId = null) => {
+  let queryText = 'SELECT * FROM products WHERE LOWER(product_name) = LOWER($1)';
+  const values = [productName];
+
+  if (userId) {
+    values.push(userId);
+    queryText += ` AND user_id = $${values.length}`;
+  }
+
+  const result = await query(queryText, values);
 
   return result.rows[0];
 };
 
 export const addProduct = async ({
   id,
+  userId,
   productName,
   category,
   unit,
@@ -61,6 +77,7 @@ export const addProduct = async ({
   const result = await query(
     `INSERT INTO products (
       id,
+      user_id,
       product_name,
       category,
       unit,
@@ -72,10 +89,11 @@ export const addProduct = async ({
       stock_status,
       is_archived
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false)
     RETURNING *`,
     [
       id,
+      userId,
       productName,
       category,
       unit,
@@ -93,6 +111,7 @@ export const addProduct = async ({
 
 export const updateProductById = async ({
   id,
+  userId,
   productName,
   category,
   unit,
@@ -116,7 +135,7 @@ export const updateProductById = async ({
       minimum_stock = $8,
       stock_status = $9,
       updated_at = NOW()
-     WHERE id = $10
+     WHERE id = $10 AND user_id = $11
      RETURNING *`,
     [
       productName,
@@ -129,47 +148,62 @@ export const updateProductById = async ({
       minimumStock,
       stockStatus,
       id,
+      userId,
     ],
   );
 
   return result.rows[0];
 };
 
-export const archiveProductById = async (id) => {
+export const archiveProductById = async (id, userId) => {
   const result = await query(
     `UPDATE products
      SET is_archived = true, updated_at = NOW()
-     WHERE id = $1
+     WHERE id = $1 AND user_id = $2
      RETURNING *`,
-    [id],
+    [id, userId],
   );
 
   return result.rows[0];
 };
 
-export const restoreProductById = async (id) => {
+export const restoreProductById = async (id, userId) => {
   const result = await query(
     `UPDATE products
      SET is_archived = false, updated_at = NOW()
-     WHERE id = $1
+     WHERE id = $1 AND user_id = $2
      RETURNING *`,
-    [id],
+    [id, userId],
   );
 
   return result.rows[0];
 };
 
-export const updateProductStockById = async ({ id, stock, stockStatus }) => {
-  const result = await query(
-    `UPDATE products
-     SET
+export const updateProductStockById = async ({
+  id,
+  userId = null,
+  stock,
+  stockStatus,
+}) => {
+  let queryText = `
+    UPDATE products
+    SET
       stock = $1,
       stock_status = $2,
       updated_at = NOW()
-     WHERE id = $3
-     RETURNING *`,
-    [stock, stockStatus, id],
-  );
+    WHERE id = $3
+  `;
+
+  const values = [stock, stockStatus, id];
+
+  if (userId) {
+    values.push(userId);
+    queryText += ` AND user_id = $${values.length}`;
+  }
+
+  queryText += ' RETURNING *';
+
+  const result = await query(queryText, values);
 
   return result.rows[0];
 };

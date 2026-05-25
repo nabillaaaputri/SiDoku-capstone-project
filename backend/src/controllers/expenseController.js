@@ -1,9 +1,6 @@
 import { nanoid } from 'nanoid';
 import response from '../utils/response.js';
-import {
-  InvariantError,
-  NotFoundError,
-} from '../exceptions/index.js';
+import { NotFoundError } from '../exceptions/index.js';
 import * as expenseRepository from '../repositories/expenseRepository.js';
 
 const getCategoryLabel = (category) => {
@@ -27,7 +24,10 @@ const mapExpenseResponse = (expense) => ({
 });
 
 const createExpenseSummary = (records) => {
-  const totalExpense = records.reduce((total, expense) => total + expense.amount, 0);
+  const totalExpense = records.reduce(
+    (total, expense) => total + Number(expense.amount),
+    0,
+  );
 
   const categoryTotals = {
     restock: 0,
@@ -37,9 +37,9 @@ const createExpenseSummary = (records) => {
 
   records.forEach((expense) => {
     if (categoryTotals[expense.category] !== undefined) {
-      categoryTotals[expense.category] += expense.amount;
+      categoryTotals[expense.category] += Number(expense.amount);
     } else {
-      categoryTotals.others += expense.amount;
+      categoryTotals.others += Number(expense.amount);
     }
   });
 
@@ -74,8 +74,10 @@ const createExpenseSummary = (records) => {
 export const getExpenses = async (req, res, next) => {
   try {
     const { category, date } = req.query;
+    const userId = req.user.id;
 
     const expenses = await expenseRepository.getAllExpenses({
+      userId,
       category,
       date,
     });
@@ -100,6 +102,8 @@ export const getExpenses = async (req, res, next) => {
 
 export const addExpense = async (req, res, next) => {
   try {
+    const userId = req.user.id;
+
     const {
       expenseName,
       category,
@@ -108,12 +112,9 @@ export const addExpense = async (req, res, next) => {
       description,
     } = req.body;
 
-    if (!expenseName || !category || !amount || !date) {
-      return next(new InvariantError('Input pengeluaran tidak valid.'));
-    }
-
     const newExpense = await expenseRepository.addExpense({
       id: nanoid(),
+      userId,
       expenseName,
       category,
       categoryLabel: getCategoryLabel(category),
@@ -136,12 +137,18 @@ export const addExpense = async (req, res, next) => {
 export const deleteExpenseById = async (req, res, next) => {
   try {
     const { expenseId } = req.params;
+    const userId = req.user.id;
 
-    const deletedExpense = await expenseRepository.deleteExpenseById(expenseId);
+    const expense = await expenseRepository.getExpenseById(expenseId, userId);
 
-    if (!deletedExpense) {
+    if (!expense) {
       return next(new NotFoundError('Data pengeluaran tidak ditemukan.'));
     }
+
+    const deletedExpense = await expenseRepository.deleteExpenseById(
+      expenseId,
+      userId,
+    );
 
     return response(res, 200, 'Expense deleted successfully', {
       id: deletedExpense.id,

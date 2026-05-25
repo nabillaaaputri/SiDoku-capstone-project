@@ -40,8 +40,10 @@ const mapStockOutResponse = (stockOut) => ({
 export const getStockOuts = async (req, res, next) => {
   try {
     const { productId, date } = req.query;
+    const userId = req.user.id;
 
     const stockOuts = await stockOutRepository.getAllStockOuts({
+      userId,
       productId,
       date,
     });
@@ -49,7 +51,7 @@ export const getStockOuts = async (req, res, next) => {
     const mappedStockOuts = stockOuts.map(mapStockOutResponse);
 
     const totalStockOut = mappedStockOuts.reduce(
-      (total, stockOut) => total + stockOut.quantity,
+      (total, stockOut) => total + Number(stockOut.quantity),
       0,
     );
 
@@ -71,6 +73,8 @@ export const getStockOuts = async (req, res, next) => {
 
 export const addStockOut = async (req, res, next) => {
   try {
+    const userId = req.user.id;
+
     const {
       productId,
       quantity,
@@ -78,31 +82,29 @@ export const addStockOut = async (req, res, next) => {
       note,
     } = req.body;
 
-    if (!productId || !quantity || !date) {
-      return next(new InvariantError('Input stok keluar tidak valid.'));
-    }
-
-    const product = await productRepository.getProductById(productId);
+    const product = await productRepository.getProductById(productId, userId);
 
     if (!product) {
       return next(new NotFoundError('Produk tidak ditemukan.'));
     }
 
-    if (Number(quantity) > product.stock) {
+    if (Number(quantity) > Number(product.stock)) {
       return next(new InvariantError('Jumlah stok keluar melebihi stok tersedia.'));
     }
 
-    const newStock = product.stock - Number(quantity);
+    const newStock = Number(product.stock) - Number(quantity);
     const stockStatus = getStockStatus(newStock, product.minimum_stock);
 
     const updatedProduct = await productRepository.updateProductStockById({
       id: productId,
+      userId,
       stock: newStock,
       stockStatus,
     });
 
     const newStockOut = await stockOutRepository.addStockOut({
       id: nanoid(),
+      userId,
       productId: updatedProduct.id,
       productName: updatedProduct.product_name,
       quantity: Number(quantity),
@@ -127,12 +129,18 @@ export const addStockOut = async (req, res, next) => {
 export const deleteStockOutById = async (req, res, next) => {
   try {
     const { stockOutId } = req.params;
+    const userId = req.user.id;
 
-    const deletedStockOut = await stockOutRepository.deleteStockOutById(stockOutId);
+    const stockOut = await stockOutRepository.getStockOutById(stockOutId, userId);
 
-    if (!deletedStockOut) {
+    if (!stockOut) {
       return next(new NotFoundError('Riwayat stok keluar tidak ditemukan.'));
     }
+
+    const deletedStockOut = await stockOutRepository.deleteStockOutById(
+      stockOutId,
+      userId,
+    );
 
     return response(res, 200, 'Stock out record deleted successfully', {
       id: deletedStockOut.id,

@@ -1,9 +1,6 @@
 import { nanoid } from 'nanoid';
 import response from '../utils/response.js';
-import {
-  InvariantError,
-  NotFoundError,
-} from '../exceptions/index.js';
+import { NotFoundError } from '../exceptions/index.js';
 import * as stockInRepository from '../repositories/stockInRepository.js';
 import * as productRepository from '../repositories/productRepository.js';
 
@@ -29,8 +26,10 @@ const mapStockInResponse = (stockIn) => ({
 export const getStockIns = async (req, res, next) => {
   try {
     const { startDate, endDate, productId } = req.query;
+    const userId = req.user.id;
 
     const stockIns = await stockInRepository.getAllStockIns({
+      userId,
       startDate,
       endDate,
       productId,
@@ -53,6 +52,8 @@ export const getStockIns = async (req, res, next) => {
 
 export const addStockIn = async (req, res, next) => {
   try {
+    const userId = req.user.id;
+
     const {
       productId,
       quantity,
@@ -60,27 +61,25 @@ export const addStockIn = async (req, res, next) => {
       note,
     } = req.body;
 
-    if (!productId || !quantity || !date) {
-      return next(new InvariantError('Input stok masuk tidak valid.'));
-    }
-
-    const product = await productRepository.getProductById(productId);
+    const product = await productRepository.getProductById(productId, userId);
 
     if (!product) {
       return next(new NotFoundError('Produk tidak ditemukan.'));
     }
 
-    const newStock = product.stock + Number(quantity);
+    const newStock = Number(product.stock) + Number(quantity);
     const stockStatus = getStockStatus(newStock, product.minimum_stock);
 
     const updatedProduct = await productRepository.updateProductStockById({
       id: productId,
+      userId,
       stock: newStock,
       stockStatus,
     });
 
     const newStockIn = await stockInRepository.addStockIn({
       id: nanoid(),
+      userId,
       productId: updatedProduct.id,
       productName: updatedProduct.product_name,
       quantity: Number(quantity),
@@ -104,12 +103,18 @@ export const addStockIn = async (req, res, next) => {
 export const deleteStockInById = async (req, res, next) => {
   try {
     const { stockInId } = req.params;
+    const userId = req.user.id;
 
-    const deletedStockIn = await stockInRepository.deleteStockInById(stockInId);
+    const stockIn = await stockInRepository.getStockInById(stockInId, userId);
 
-    if (!deletedStockIn) {
+    if (!stockIn) {
       return next(new NotFoundError('Riwayat stok masuk tidak ditemukan.'));
     }
+
+    const deletedStockIn = await stockInRepository.deleteStockInById(
+      stockInId,
+      userId,
+    );
 
     return response(res, 200, 'Stock in record deleted successfully', {
       id: deletedStockIn.id,

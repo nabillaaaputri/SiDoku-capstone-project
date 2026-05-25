@@ -23,9 +23,11 @@ const getDayName = (dateString) => {
 
 export const getSummary = async (req, res, next) => {
   try {
-    const products = await dashboardRepository.getAllProducts();
-    const stockOuts = await dashboardRepository.getStockOuts();
-    const expenses = await dashboardRepository.getExpenses();
+    const userId = req.user.id;
+
+    const products = await dashboardRepository.getAllProducts(userId);
+    const stockOuts = await dashboardRepository.getStockOuts(userId);
+    const expenses = await dashboardRepository.getExpenses(userId);
 
     const totalIncome = stockOuts.reduce((total, stockOut) => {
       const product = products.find((item) => item.id === stockOut.product_id);
@@ -34,7 +36,7 @@ export const getSummary = async (req, res, next) => {
         return total;
       }
 
-      return total + (stockOut.quantity * product.selling_price);
+      return total + (Number(stockOut.quantity) * Number(product.selling_price));
     }, 0);
 
     const totalHpp = stockOuts.reduce((total, stockOut) => {
@@ -44,11 +46,11 @@ export const getSummary = async (req, res, next) => {
         return total;
       }
 
-      return total + (stockOut.quantity * product.purchase_price);
+      return total + (Number(stockOut.quantity) * Number(product.purchase_price));
     }, 0);
 
     const totalExpense = expenses.reduce(
-      (total, expense) => total + expense.amount,
+      (total, expense) => total + Number(expense.amount),
       0,
     );
 
@@ -71,17 +73,19 @@ export const getSummary = async (req, res, next) => {
 
 export const getInsights = async (req, res, next) => {
   try {
-    const lowStocks = await dashboardRepository.getLowStockProducts();
-    const expenses = await dashboardRepository.getExpenses();
-    const stockOuts = await dashboardRepository.getStockOuts();
+    const userId = req.user.id;
+
+    const lowStocks = await dashboardRepository.getLowStockProducts(userId);
+    const expenses = await dashboardRepository.getExpenses(userId);
+    const stockOuts = await dashboardRepository.getStockOuts(userId);
 
     const totalExpense = expenses.reduce(
-      (total, expense) => total + expense.amount,
+      (total, expense) => total + Number(expense.amount),
       0,
     );
 
     const totalSold = stockOuts.reduce(
-      (total, stockOut) => total + stockOut.quantity,
+      (total, stockOut) => total + Number(stockOut.quantity),
       0,
     );
 
@@ -125,7 +129,9 @@ export const getInsights = async (req, res, next) => {
 
 export const getLowStocks = async (req, res, next) => {
   try {
-    const lowStocks = await dashboardRepository.getLowStockProducts();
+    const userId = req.user.id;
+
+    const lowStocks = await dashboardRepository.getLowStockProducts(userId);
 
     const mappedLowStocks = lowStocks.map((product) => ({
       id: product.id,
@@ -151,13 +157,15 @@ export const getLowStocks = async (req, res, next) => {
 
 export const getTrends = async (req, res, next) => {
   try {
-    const products = await dashboardRepository.getAllProducts();
+    const userId = req.user.id;
+
+    const products = await dashboardRepository.getAllProducts(userId);
     const dates = getLast7Dates();
 
     const items = await Promise.all(
       dates.map(async (date) => {
-        const stockOuts = await dashboardRepository.getStockOutsByDate(date);
-        const expenses = await dashboardRepository.getExpensesByDate(date);
+        const stockOuts = await dashboardRepository.getStockOutsByDate(userId, date);
+        const expenses = await dashboardRepository.getExpensesByDate(userId, date);
 
         const income = stockOuts.reduce((total, stockOut) => {
           const product = products.find((item) => item.id === stockOut.product_id);
@@ -166,11 +174,11 @@ export const getTrends = async (req, res, next) => {
             return total;
           }
 
-          return total + (stockOut.quantity * product.selling_price);
+          return total + (Number(stockOut.quantity) * Number(product.selling_price));
         }, 0);
 
         const expense = expenses.reduce(
-          (total, item) => total + item.amount,
+          (total, item) => total + Number(item.amount),
           0,
         );
 
@@ -183,12 +191,12 @@ export const getTrends = async (req, res, next) => {
     );
 
     const totalIncome = items.reduce(
-      (total, item) => total + item.income,
+      (total, item) => total + Number(item.income),
       0,
     );
 
     const totalExpense = items.reduce(
-      (total, item) => total + item.expense,
+      (total, item) => total + Number(item.expense),
       0,
     );
 

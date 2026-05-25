@@ -1,9 +1,19 @@
 import { query } from '../config/database.js';
 
-export const getAllStockIns = async ({ startDate, endDate, productId }) => {
+export const getAllStockIns = async ({
+  userId,
+  startDate,
+  endDate,
+  productId,
+}) => {
   let queryText = 'SELECT * FROM stock_ins';
   const values = [];
   const conditions = [];
+
+  if (userId) {
+    values.push(userId);
+    conditions.push(`user_id = $${values.length}`);
+  }
 
   if (startDate && endDate) {
     values.push(startDate, endDate);
@@ -27,6 +37,7 @@ export const getAllStockIns = async ({ startDate, endDate, productId }) => {
 
 export const addStockIn = async ({
   id,
+  userId,
   productId,
   productName,
   quantity,
@@ -38,6 +49,7 @@ export const addStockIn = async ({
   const result = await query(
     `INSERT INTO stock_ins (
       id,
+      user_id,
       product_id,
       product_name,
       quantity,
@@ -46,10 +58,11 @@ export const addStockIn = async ({
       note,
       current_stock
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *`,
     [
       id,
+      userId,
       productId,
       productName,
       quantity,
@@ -63,12 +76,22 @@ export const addStockIn = async ({
   return result.rows[0];
 };
 
-export const deleteStockInById = async (id) => {
+export const getStockInById = async (id, userId) => {
+  const result = await query(
+    `SELECT * FROM stock_ins
+     WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+
+  return result.rows[0];
+};
+
+export const deleteStockInById = async (id, userId) => {
   const result = await query(
     `DELETE FROM stock_ins
-     WHERE id = $1
+     WHERE id = $1 AND user_id = $2
      RETURNING *`,
-    [id],
+    [id, userId],
   );
 
   return result.rows[0];

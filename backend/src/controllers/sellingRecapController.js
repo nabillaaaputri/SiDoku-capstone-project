@@ -10,6 +10,7 @@ const isValidDateFormat = (date) => {
 export const getSellingRecap = async (req, res, next) => {
   try {
     const { date } = req.query;
+    const userId = req.user.id;
 
     if (date && !isValidDateFormat(date)) {
       return next(new InvariantError('Format tanggal tidak valid.'));
@@ -17,13 +18,22 @@ export const getSellingRecap = async (req, res, next) => {
 
     const selectedDate = date || new Date().toISOString().split('T')[0];
 
-    const products = await sellingRecapRepository.getProducts();
-    const filteredStockIns = await sellingRecapRepository.getStockInsByDate(selectedDate);
-    const filteredStockOuts = await sellingRecapRepository.getStockOutsByDate(selectedDate);
-    const filteredExpenses = await sellingRecapRepository.getExpensesByDate(selectedDate);
+    const products = await sellingRecapRepository.getProducts(userId);
+    const filteredStockIns = await sellingRecapRepository.getStockInsByDate(
+      userId,
+      selectedDate,
+    );
+    const filteredStockOuts = await sellingRecapRepository.getStockOutsByDate(
+      userId,
+      selectedDate,
+    );
+    const filteredExpenses = await sellingRecapRepository.getExpensesByDate(
+      userId,
+      selectedDate,
+    );
 
     const totalExpense = filteredExpenses.reduce(
-      (total, expense) => total + expense.amount,
+      (total, expense) => total + Number(expense.amount),
       0,
     );
 
@@ -37,25 +47,25 @@ export const getSellingRecap = async (req, res, next) => {
       );
 
       const stockIn = productStockIns.reduce(
-        (total, item) => total + item.quantity,
+        (total, item) => total + Number(item.quantity),
         0,
       );
 
       const sold = productStockOuts.reduce(
-        (total, item) => total + item.quantity,
+        (total, item) => total + Number(item.quantity),
         0,
       );
 
-      const hpp = sold * product.purchase_price;
-      const salesValue = sold * product.selling_price;
+      const hpp = sold * Number(product.purchase_price);
+      const salesValue = sold * Number(product.selling_price);
       const profit = salesValue - hpp;
 
       return {
         productId: product.id,
         productName: product.product_name,
-        initialStock: product.stock - stockIn + sold,
+        initialStock: Number(product.stock) - stockIn + sold,
         stockIn,
-        finalStock: product.stock,
+        finalStock: Number(product.stock),
         sold,
         hpp,
         salesValue,
@@ -64,12 +74,12 @@ export const getSellingRecap = async (req, res, next) => {
     });
 
     const totalIncome = recapProducts.reduce(
-      (total, product) => total + product.salesValue,
+      (total, product) => total + Number(product.salesValue),
       0,
     );
 
     const totalHpp = recapProducts.reduce(
-      (total, product) => total + product.hpp,
+      (total, product) => total + Number(product.hpp),
       0,
     );
 

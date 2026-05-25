@@ -1,11 +1,11 @@
 import { nanoid } from 'nanoid';
 import response from '../utils/response.js';
 import {
-  InvariantError,
   NotFoundError,
   ConflictError,
 } from '../exceptions/index.js';
 import * as productRepository from '../repositories/productRepository.js';
+import productCategories from '../constants/productCategories.js';
 
 const calculateMargin = (purchasePrice, sellingPrice) => {
   return Number((((sellingPrice - purchasePrice) / purchasePrice) * 100).toFixed(2));
@@ -33,11 +33,29 @@ const mapProductResponse = (product) => ({
   isArchived: product.is_archived,
 });
 
+export const getProductCategories = async (req, res, next) => {
+  try {
+    return response(
+      res,
+      200,
+      'Product categories retrieved successfully',
+      productCategories,
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const getProducts = async (req, res, next) => {
   try {
     const { status, category } = req.query;
+    const userId = req.user.id;
 
-    const products = await productRepository.getAllProducts({ status, category });
+    const products = await productRepository.getAllProducts({
+      status,
+      category,
+      userId,
+    });
 
     const mappedProducts = products.map(mapProductResponse);
 
@@ -56,6 +74,8 @@ export const getProducts = async (req, res, next) => {
 
 export const addProducts = async (req, res, next) => {
   try {
+    const userId = req.user.id;
+
     const {
       productName,
       purchasePrice,
@@ -66,19 +86,10 @@ export const addProducts = async (req, res, next) => {
       initialStock,
     } = req.body;
 
-    if (
-      !productName
-      || !purchasePrice
-      || !sellingPrice
-      || !minimumStock
-      || !category
-      || !unit
-      || initialStock === undefined
-    ) {
-      return next(new InvariantError('Input produk tidak valid.'));
-    }
-
-    const isProductExist = await productRepository.getProductByName(productName);
+    const isProductExist = await productRepository.getProductByName(
+      productName,
+      userId,
+    );
 
     if (isProductExist) {
       return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
@@ -91,6 +102,7 @@ export const addProducts = async (req, res, next) => {
 
     const newProduct = await productRepository.addProduct({
       id,
+      userId,
       productName,
       category,
       unit,
@@ -116,6 +128,8 @@ export const addProducts = async (req, res, next) => {
 export const editProductById = async (req, res, next) => {
   try {
     const { productId } = req.params;
+    const userId = req.user.id;
+
     const {
       productName,
       category,
@@ -125,24 +139,16 @@ export const editProductById = async (req, res, next) => {
       minimumStock,
     } = req.body;
 
-    if (
-      !productName
-      || !category
-      || !unit
-      || !purchasePrice
-      || !sellingPrice
-      || !minimumStock
-    ) {
-      return next(new InvariantError('Input produk tidak valid.'));
-    }
-
-    const product = await productRepository.getProductById(productId);
+    const product = await productRepository.getProductById(productId, userId);
 
     if (!product) {
       return next(new NotFoundError('Produk tidak ditemukan.'));
     }
 
-    const isProductNameUsed = await productRepository.getProductByName(productName);
+    const isProductNameUsed = await productRepository.getProductByName(
+      productName,
+      userId,
+    );
 
     if (isProductNameUsed && isProductNameUsed.id !== productId) {
       return next(new ConflictError('Produk dengan nama tersebut sudah ada.'));
@@ -153,6 +159,7 @@ export const editProductById = async (req, res, next) => {
 
     const updatedProduct = await productRepository.updateProductById({
       id: productId,
+      userId,
       productName,
       category,
       unit,
@@ -178,14 +185,18 @@ export const editProductById = async (req, res, next) => {
 export const archiveProductById = async (req, res, next) => {
   try {
     const { productId } = req.params;
+    const userId = req.user.id;
 
-    const product = await productRepository.getProductById(productId);
+    const product = await productRepository.getProductById(productId, userId);
 
     if (!product) {
       return next(new NotFoundError('Produk tidak ditemukan.'));
     }
 
-    const archivedProduct = await productRepository.archiveProductById(productId);
+    const archivedProduct = await productRepository.archiveProductById(
+      productId,
+      userId,
+    );
 
     return response(res, 200, 'Product archived successfully', {
       id: archivedProduct.id,
@@ -200,14 +211,18 @@ export const archiveProductById = async (req, res, next) => {
 export const restoreProductById = async (req, res, next) => {
   try {
     const { productId } = req.params;
+    const userId = req.user.id;
 
-    const product = await productRepository.getProductById(productId);
+    const product = await productRepository.getProductById(productId, userId);
 
     if (!product) {
       return next(new NotFoundError('Produk tidak ditemukan.'));
     }
 
-    const restoredProduct = await productRepository.restoreProductById(productId);
+    const restoredProduct = await productRepository.restoreProductById(
+      productId,
+      userId,
+    );
 
     return response(res, 200, 'Product restored successfully', {
       id: restoredProduct.id,
