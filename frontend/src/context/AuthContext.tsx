@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '@/services/auth.service';
+import { clearStoredAuthTokens } from '@/services/api';
 
 interface User {
   id: string;
@@ -14,7 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, storeName?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(currentUser);
         } catch (error) {
           console.error('Failed to fetch user:', error);
-          localStorage.removeItem('authToken');
+          clearStoredAuthTokens();
         }
       }
       setIsLoading(false);
@@ -43,35 +44,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await authService.login({ email, password });
-    if (response && response.data) {
-      setUser({
-        id: response.data.id || '',
-        email: response.data.email || email,
-        name: response.data.email?.split('@')[0] || 'User',
-        storeName: response.data.storeName,
-      });
-    } else {
-      setUser(null);
+    await authService.login({ email, password });
+
+    const currentUser = await authService.getCurrentUser();
+
+    if (currentUser) {
+      setUser(currentUser);
+      return;
     }
+
+    setUser({
+      id: '',
+      email,
+      name: email.split('@')[0] || 'User',
+    });
   };
 
   const register = async (name: string, email: string, password: string, storeName?: string) => {
-    const response = await authService.register({ email, password, storeName: storeName || name });
-    if (response && response.data) {
-      setUser({
-        id: response.data.id || '',
-        email: response.data.email || email,
-        name: name,
-        storeName: response.data.storeName,
-      });
-    } else {
-      setUser(null);
-    }
+    await authService.register({
+      email,
+      password,
+      storeName: storeName || name,
+      confirmPassword: password,
+    });
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
   };
 

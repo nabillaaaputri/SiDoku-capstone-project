@@ -50,7 +50,7 @@ export default function Reports() {
     0
   );
   const totalExpenseAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const profit = totalTransactionAmount - totalExpenseAmount;
+  const profit = totalSalesAmount - totalExpenseAmount;
 
   // Calculate totals for daily recap
   const totalRecapUangMasuk = dailyRecaps.reduce((sum, recap) => sum + recap.totalUangMasuk, 0);

@@ -1,5 +1,7 @@
 // Layout Components
-export { default as Layout, Sidebar, DashboardLayout } from './layout';
+export { default as Layout } from './layout/Layout';
+export { default as Sidebar } from './layout/Sidebar';
+export { default as DashboardLayout } from './layout/DashboardLayout';
 
 // Custom Components
 export { default as ArchiveConfirmDialog } from './ArchiveConfirmDialog';

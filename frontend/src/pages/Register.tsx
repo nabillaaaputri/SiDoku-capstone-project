@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { authService } from "@/services/auth.service";
 
 export default function Register() {
   const [businessName, setBusinessName] = useState("");
@@ -10,18 +11,36 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      email &&
-      password &&
-      confirmPassword &&
-      businessName &&
-      password === confirmPassword
-    ) {
+    if (!email || !password || !confirmPassword || !businessName) {
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Password dan konfirmasi password tidak sama.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await authService.register({
+        email,
+        password,
+        storeName: businessName,
+        confirmPassword,
+      });
+
       setIsSubmitted(true);
+    } catch (error) {
+      console.error("Register gagal:", error);
+      alert(authService.getErrorMessage(error, "Gagal mendaftar. Coba lagi."));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,10 +168,11 @@ export default function Register() {
             {/* Button */}
             <Button
               type="submit"
+              disabled={loading}
               className="w-full bg-slate-900 text-white py-3 font-bold hover:bg-slate-800 rounded-xl transition inline-flex items-center justify-center gap-2"
             >
-              Daftar
-              <ArrowRight className="w-4 h-4" />
+              {loading ? "Loading..." : "Daftar"}
+              {!loading && <ArrowRight className="w-4 h-4" />}
             </Button>
           </form>
 

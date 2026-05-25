@@ -24,9 +24,12 @@ export default function DashboardLayout({
   const storeName = user?.storeName || "Toko Saya";
 
   // HANDLE LOGOUT
-  const handleLogout = () => {
-    authService.logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      navigate("/login");
+    }
   };
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import apiClient from "@/services/api";
 import {
   Product,
@@ -11,13 +11,57 @@ import {
   DailySalesRecapDetail,
 } from "@/types";
 
-const STORAGE_KEYS = {
-  PRODUCTS: "sidoku_products",
-  SALES_RECORDS: "sidoku_sales_records",
-  EXPENSES: "sidoku_expenses",
-  STOCK_INS: "sidoku_stock_ins",
-  STOCK_OUTS: "sidoku_stock_outs",
-};
+interface BackendResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
+interface BackendProduct {
+  id: string;
+  productName: string;
+  category: string;
+  unit: string;
+  purchasePrice: number;
+  sellingPrice: number;
+  margin: number;
+  stock: number;
+  minimumStock: number;
+  stockStatus: "low" | "safe";
+  isArchived: boolean;
+}
+
+interface BackendExpense {
+  id: string;
+  date: string;
+  expenseName: string;
+  category: "restock" | "operational" | "others";
+  amount: number;
+  description?: string;
+}
+
+interface BackendStockIn {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  date: string;
+  note?: string;
+  currentStock: number;
+}
+
+interface BackendStockOut {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  date: string;
+  time?: string;
+  note?: string;
+  currentStock: number;
+}
 
 interface BusinessContextType {
   products: Product[];
@@ -29,22 +73,22 @@ interface BusinessContextType {
   getProductById: (id: string) => Product | undefined;
 
   salesRecords: SalesRecord[];
-  addSalesRecord: (salesRecord: Omit<SalesRecord, "id">) => void;
-  deleteSalesRecord: (id: string) => void;
+  addSalesRecord: (salesRecord: Omit<SalesRecord, "id">) => Promise<void>;
+  deleteSalesRecord: (id: string) => Promise<void>;
   getSalesRecordsByDateRange: (startDate: Date, endDate: Date) => SalesRecord[];
 
   expenses: Expense[];
   addExpense: (expense: Omit<Expense, "id">) => Promise<void>;
-deleteExpense: (id: string) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   getExpensesByDateRange: (startDate: Date, endDate: Date) => Expense[];
   getExpensesByCategory: (category: string) => Expense[];
 
   stockIns: StockIn[];
   stockOuts: StockOut[];
-  addStockIn: (stockIn: Omit<StockIn, "id">) => void;
-  addStockOut: (stockOut: Omit<StockOut, "id">) => void;
-  deleteStockIn: (id: string) => void;
-  deleteStockOut: (id: string) => void;
+  addStockIn: (stockIn: Omit<StockIn, "id" | "createdAt">) => Promise<void>;
+  addStockOut: (stockOut: Omit<StockOut, "id" | "createdAt">) => Promise<void>;
+  deleteStockIn: (id: string) => Promise<void>;
+  deleteStockOut: (id: string) => Promise<void>;
   getStockInByDate: (date: Date) => StockIn[];
   getStockOutByDate: (date: Date) => StockOut[];
 
@@ -52,17 +96,202 @@ deleteExpense: (id: string) => Promise<void>;
   getSummaryByMonth: (year: number, month: number) => BusinessSummary;
   getMonthlyComparison: (
     currentMonth: number,
-    currentYear: number
+    currentYear: number,
   ) => { current: BusinessSummary; previous: BusinessSummary; change: number };
 
   getDailySalesRecap: (date: Date) => DailySalesRecapSummary;
   getDailySalesRecapByDateRange: (
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ) => DailySalesRecapSummary[];
 }
 
 const BusinessContext = createContext<BusinessContextType | undefined>(undefined);
+
+const mapProductResponse = (product: BackendProduct): Product => ({
+  id: product.id,
+  name: product.productName,
+  costPrice: Number(product.purchasePrice),
+  sellPrice: Number(product.sellingPrice),
+  margin: Number(product.margin),
+  stock: Number(product.stock),
+  minimumStock: Number(product.minimumStock),
+  category: product.category,
+  unit: product.unit,
+  archived: product.isArchived,
+  createdAt: new Date(),
+});
+
+const mapUiCategoryToBackend = (category: string) => {
+  if (category === "operasional") {
+    return "operational";
+  }
+
+  if (category === "lain-lain") {
+    return "others";
+  }
+
+  return category;
+};
+
+const mapBackendCategoryToUi = (category: string) => {
+  if (category === "operational") {
+    return "operasional";
+  }
+
+  if (category === "others") {
+    return "lain-lain";
+  }
+
+  return category;
+};
+
+const mapExpenseResponse = (expense: BackendExpense): Expense => ({
+  id: expense.id,
+  name: expense.expenseName,
+  amount: Number(expense.amount),
+  category: mapBackendCategoryToUi(expense.category) as Expense["category"],
+  date: new Date(expense.date),
+  description: expense.description || undefined,
+  createdAt: expense.date,
+});
+
+const mapStockInResponse = (stockIn: BackendStockIn): StockIn => ({
+  id: stockIn.id,
+  productId: stockIn.productId,
+  productName: stockIn.productName,
+  quantity: Number(stockIn.quantity),
+  date: new Date(stockIn.date),
+  createdAt: new Date(stockIn.date),
+  notes: stockIn.note || undefined,
+});
+
+const mapStockOutResponse = (stockOut: BackendStockOut): StockOut => ({
+  id: stockOut.id,
+  productId: stockOut.productId,
+  productName: stockOut.productName,
+  quantity: Number(stockOut.quantity),
+  date: new Date(stockOut.date),
+  createdAt: new Date(stockOut.date),
+  notes: stockOut.note || undefined,
+});
+
+const toApiDateTime = (date: Date) => date.toISOString();
+
+const toApiDate = (date: Date) => {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().split("T")[0];
+};
+
+const getStockStatus = (stock: number, minimumStock: number): "low" | "safe" => {
+  return stock <= minimumStock ? "low" : "safe";
+};
+
+const buildSalesRecords = (
+  products: Product[],
+  stockOuts: StockOut[],
+): SalesRecord[] => {
+  return stockOuts.map((stockOut) => {
+    const product = products.find((item) => item.id === stockOut.productId);
+    const sellPrice = product?.sellPrice ?? 0;
+
+    return {
+      id: stockOut.id,
+      productId: stockOut.productId,
+      productName: stockOut.productName || product?.name || "",
+      quantity: Number(stockOut.quantity),
+      sellPrice,
+      totalAmount: sellPrice * Number(stockOut.quantity),
+      date: new Date(stockOut.date),
+    };
+  });
+};
+
+const buildDailyRecap = (
+  date: Date,
+  products: Product[],
+  salesRecords: SalesRecord[],
+  expenses: Expense[],
+  stockIns: StockIn[],
+  stockOuts: StockOut[],
+): DailySalesRecapSummary => {
+  const dateKey = toApiDate(date);
+
+  const dailySalesRecords = salesRecords.filter(
+    (record) => toApiDate(new Date(record.date)) === dateKey,
+  );
+  const dailyStockIns = stockIns.filter(
+    (stockIn) => toApiDate(new Date(stockIn.date)) === dateKey,
+  );
+  const dailyStockOuts = stockOuts.filter(
+    (stockOut) => toApiDate(new Date(stockOut.date)) === dateKey,
+  );
+  const dailyExpenses = expenses.filter(
+    (expense) => toApiDate(new Date(expense.date)) === dateKey,
+  );
+
+  const recapByProduct = new Map<string, DailySalesRecapDetail>();
+
+  products.forEach((product) => {
+    const productSalesRecords = dailySalesRecords.filter(
+      (record) => record.productId === product.id,
+    );
+    const productStockIns = dailyStockIns.filter(
+      (stockIn) => stockIn.productId === product.id,
+    );
+    const productStockOuts = dailyStockOuts.filter(
+      (stockOut) => stockOut.productId === product.id,
+    );
+
+    const stokMasuk = productStockIns.reduce((sum, item) => sum + item.quantity, 0);
+    const stokKeluar = productStockOuts.reduce((sum, item) => sum + item.quantity, 0);
+    const stokAkhir = product.stock;
+    const terjualDariCatatan = productSalesRecords.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    const stokAwal = Math.max(0, stokAkhir + stokKeluar + terjualDariCatatan - stokMasuk);
+    const terjual = Math.max(0, stokAwal + stokMasuk - stokAkhir);
+
+    if (terjual > 0 || stokMasuk > 0 || stokKeluar > 0) {
+      recapByProduct.set(product.id, {
+        productId: product.id,
+        productName: product.name,
+        stokAwal,
+        stokMasuk,
+        stokKeluar,
+        stokAkhir,
+        terjual,
+        hargaJual: product.sellPrice,
+        hargaModal: product.costPrice,
+        nilaiPenjualan: terjual * product.sellPrice,
+        hppTerpakai: terjual * product.costPrice,
+      });
+    }
+  });
+
+  const details = Array.from(recapByProduct.values());
+  const totalUangMasuk = dailySalesRecords.reduce((sum, record) => sum + record.totalAmount, 0);
+  const totalUangKeluar = dailyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalTerjual = dailySalesRecords.reduce((sum, record) => sum + record.quantity, 0);
+  const totalNilaiPenjualan = details.reduce((sum, item) => sum + item.nilaiPenjualan, 0);
+  const totalHppTerpakai = details.reduce((sum, item) => sum + item.hppTerpakai, 0);
+  const labaKotor = totalUangMasuk - totalHppTerpakai;
+  const labaBersih = labaKotor - totalUangKeluar;
+
+  return {
+    date,
+    details: details.sort((a, b) => a.productName.localeCompare(b.productName)),
+    totalUangMasuk,
+    totalUangKeluar,
+    totalTerjual,
+    totalNilaiPenjualan,
+    totalHppTerpakai,
+    labaKotor,
+    labaBersih,
+    isComplete: details.length > 0,
+  };
+};
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
@@ -71,231 +300,261 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
 
-  // AMBIL PRODUK DARI LOCAL STORAGE
   useEffect(() => {
-    const savedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    let isActive = true;
 
-    if (savedProducts) {
-      setProducts(
-        JSON.parse(savedProducts).map((p: Product) => ({
-          ...p,
-          createdAt: new Date(p.createdAt),
-          margin:
-            p.margin ??
-            (p.costPrice > 0 ? ((p.sellPrice - p.costPrice) / p.costPrice) * 100 : 0),
-          category: p.category || "Lainnya",
-          unit: p.unit || "pcs",
-          archived: p.archived ?? false,
-        }))
-      );
-    }
-  }, []);
+    const loadData = async () => {
+      try {
+        const [productsResult, expensesResult, stockInsResult, stockOutsResult] = await Promise.allSettled([
+          apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
+          apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
+          apiClient.get<BackendResponse<BackendStockIn[]>>("/stock-ins"),
+          apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stock-outs"),
+        ]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-  }, [products]);
+        if (!isActive) {
+          return;
+        }
 
-  // DATA LAIN MASIH LOCALSTORAGE DULU
-  useEffect(() => {
-    const savedSalesRecords = localStorage.getItem("sidoku_sales_records");
-    const savedExpenses = localStorage.getItem("sidoku_expenses");
-    const savedStockIns = localStorage.getItem("sidoku_stock_ins");
-    const savedStockOuts = localStorage.getItem("sidoku_stock_outs");
+        if (productsResult.status === "fulfilled") {
+          setProducts(productsResult.value.data.data.map(mapProductResponse));
+        }
 
-    if (savedSalesRecords) {
-      setSalesRecords(
-        JSON.parse(savedSalesRecords).map((t: SalesRecord) => ({
-          ...t,
-          date: new Date(t.date),
-        }))
-      );
-    }
+        if (expensesResult.status === "fulfilled") {
+          setExpenses(expensesResult.value.data.data.records.map(mapExpenseResponse));
+        }
 
-    if (savedExpenses) {
-      setExpenses(
-        JSON.parse(savedExpenses).map((e: Expense) => ({
-          ...e,
-          date: new Date(e.date),
-        }))
-      );
-    }
+        if (stockInsResult.status === "fulfilled") {
+          setStockIns(stockInsResult.value.data.data.map(mapStockInResponse));
+        }
 
-    if (savedStockIns) {
-      setStockIns(
-        JSON.parse(savedStockIns).map((s: StockIn) => ({
-          ...s,
-          date: new Date(s.date),
-          createdAt: new Date(s.createdAt),
-        }))
-      );
-    }
-
-    if (savedStockOuts) {
-      setStockOuts(
-        JSON.parse(savedStockOuts).map((s: StockOut) => ({
-          ...s,
-          date: new Date(s.date),
-          createdAt: new Date(s.createdAt),
-        }))
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("sidoku_sales_records", JSON.stringify(salesRecords));
-  }, [salesRecords]);
-
-  useEffect(() => {
-    localStorage.setItem("sidoku_expenses", JSON.stringify(expenses));
-  }, [expenses]);
-
-  useEffect(() => {
-    localStorage.setItem("sidoku_stock_ins", JSON.stringify(stockIns));
-  }, [stockIns]);
-
-  useEffect(() => {
-    localStorage.setItem("sidoku_stock_outs", JSON.stringify(stockOuts));
-  }, [stockOuts]);
-
-  // PRODUCT FUNCTIONS LOCAL ONLY
-  const addProduct = async (product: Omit<Product, "id" | "createdAt">) => {
-    const newProduct: Product = {
-      ...product,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      margin:
-        product.margin ??
-        (product.costPrice > 0
-          ? ((product.sellPrice - product.costPrice) / product.costPrice) * 100
-          : 0),
-      category: product.category || "Barang",
-      unit: product.unit || "pcs",
-      archived: product.archived ?? false,
+        if (stockOutsResult.status === "fulfilled") {
+          setStockOuts(stockOutsResult.value.data.data.records.map(mapStockOutResponse));
+        }
+      } catch (error) {
+        console.error("Failed to load business data:", error);
+      }
     };
 
-    setProducts((prev) => [...prev, newProduct]);
+    loadData();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setSalesRecords(buildSalesRecords(products, stockOuts));
+  }, [products, stockOuts]);
+
+  const getProductById = (id: string) => products.find((product) => product.id === id);
+
+  const addProduct = async (product: Omit<Product, "id" | "createdAt">) => {
+    const response = await apiClient.post<BackendResponse<BackendProduct>>("/products", {
+      productName: product.name,
+      purchasePrice: product.costPrice,
+      sellingPrice: product.sellPrice,
+      minimumStock: product.minimumStock,
+      category: product.category,
+      unit: product.unit,
+      initialStock: product.stock,
+    });
+
+    setProducts((currentProducts) => [...currentProducts, mapProductResponse(response.data.data)]);
   };
 
   const updateProduct = async (id: string, updatedData: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p;
+    const currentProduct = getProductById(id);
 
-        const mergedProduct = { ...p, ...updatedData };
+    if (!currentProduct) {
+      return;
+    }
 
-        return {
-          ...mergedProduct,
-          margin:
-            mergedProduct.margin ??
-            (mergedProduct.costPrice > 0
-              ? ((mergedProduct.sellPrice - mergedProduct.costPrice) /
-                  mergedProduct.costPrice) *
-                100
-              : 0),
-        };
-      })
+    const response = await apiClient.put<BackendResponse<BackendProduct>>(`/products/${id}`, {
+      productName: updatedData.name ?? currentProduct.name,
+      purchasePrice: updatedData.costPrice ?? currentProduct.costPrice,
+      sellingPrice: updatedData.sellPrice ?? currentProduct.sellPrice,
+      minimumStock: updatedData.minimumStock ?? currentProduct.minimumStock,
+      category: updatedData.category ?? currentProduct.category,
+      unit: updatedData.unit ?? currentProduct.unit,
+    });
+
+    const mappedProduct = mapProductResponse(response.data.data);
+    setProducts((currentProducts) =>
+      currentProducts.map((product) => (product.id === id ? mappedProduct : product)),
     );
   };
 
-  const deleteProduct = async (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
-
   const archiveProduct = async (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, archived: true } : p))
+    const response = await apiClient.patch<BackendResponse<BackendProduct>>(`/products/${id}/archive`);
+    const mappedProduct = mapProductResponse(response.data.data);
+    setProducts((currentProducts) =>
+      currentProducts.map((product) => (product.id === id ? mappedProduct : product)),
     );
   };
 
   const restoreProduct = async (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, archived: false } : p))
+    const response = await apiClient.patch<BackendResponse<BackendProduct>>(`/products/${id}/restore`);
+    const mappedProduct = mapProductResponse(response.data.data);
+    setProducts((currentProducts) =>
+      currentProducts.map((product) => (product.id === id ? mappedProduct : product)),
     );
   };
 
-  const getProductById = (id: string) => {
-    return products.find((p) => p.id === id);
+  const deleteProduct = async (id: string) => {
+    await archiveProduct(id);
   };
 
-  // SALES RECORD
-  const addSalesRecord = (salesRecord: Omit<SalesRecord, "id">) => {
-    const newSalesRecord: SalesRecord = {
-      ...salesRecord,
-      id: Date.now().toString(),
-    };
-
-    setSalesRecords([...salesRecords, newSalesRecord]);
-
-    const product = getProductById(salesRecord.productId);
-    if (product) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === salesRecord.productId
-            ? { ...p, stock: p.stock - salesRecord.quantity }
-            : p
-        )
-      );
-    }
+  const addSalesRecord = async (_salesRecord: Omit<SalesRecord, "id">) => {
+    return;
   };
 
-  const deleteSalesRecord = (id: string) => {
-    setSalesRecords(salesRecords.filter((r) => r.id !== id));
+  const deleteSalesRecord = async (_id: string) => {
+    return;
   };
 
   const getSalesRecordsByDateRange = (startDate: Date, endDate: Date) => {
-    return salesRecords.filter((r) => {
-      const rDate = new Date(r.date);
-      return rDate >= startDate && rDate <= endDate;
+    return salesRecords.filter((record) => {
+      const recordDate = new Date(record.date);
+      return recordDate >= startDate && recordDate <= endDate;
     });
   };
 
-// EXPENSE
   const addExpense = async (expense: Omit<Expense, "id">) => {
-    const newExpense: Expense = {
-      ...expense,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
+    const response = await apiClient.post<BackendResponse<BackendExpense>>("/expenses", {
+      expenseName: expense.name,
+      category: mapUiCategoryToBackend(expense.category),
+      amount: expense.amount,
+      date: toApiDateTime(expense.date),
+      description: expense.description || undefined,
+    });
 
-    setExpenses((prev) => [...prev, newExpense]);
+    setExpenses((currentExpenses) => [...currentExpenses, mapExpenseResponse(response.data.data)]);
   };
 
   const deleteExpense = async (id: string) => {
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    await apiClient.delete(`/expenses/${id}`);
+    setExpenses((currentExpenses) => currentExpenses.filter((expense) => expense.id !== id));
   };
 
-const getExpensesByDateRange = (startDate: Date, endDate: Date) => {
-  return expenses.filter((e) => {
-    const eDate = new Date(e.date);
-    return eDate >= startDate && eDate <= endDate;
-  });
-};
+  const getExpensesByDateRange = (startDate: Date, endDate: Date) => {
+    return expenses.filter((expense) => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= startDate && expenseDate <= endDate;
+    });
+  };
 
-const getExpensesByCategory = (category: string) => {
-  return expenses.filter((e) => e.category === category);
-};
+  const getExpensesByCategory = (category: string) => {
+    return expenses.filter((expense) => expense.category === category);
+  };
 
-  // SUMMARY
-  const getSummary = (startDate?: Date, endDate?: Date): BusinessSummary => {
-    let relevantSalesRecords = salesRecords;
-    let relevantExpenses = expenses;
+  const addStockIn = async (stockIn: Omit<StockIn, "id" | "createdAt">) => {
+    const response = await apiClient.post<BackendResponse<BackendStockIn>>("/stock-ins", {
+      productId: stockIn.productId,
+      quantity: stockIn.quantity,
+      date: toApiDateTime(stockIn.date),
+      note: stockIn.notes || undefined,
+    });
 
-    if (startDate && endDate) {
-      relevantSalesRecords = getSalesRecordsByDateRange(startDate, endDate);
-      relevantExpenses = getExpensesByDateRange(startDate, endDate);
+    const mappedStockIn = mapStockInResponse(response.data.data);
+    setStockIns((currentStockIns) => [...currentStockIns, mappedStockIn]);
+
+    setProducts((currentProducts) =>
+      currentProducts.map((product) =>
+        product.id === stockIn.productId
+          ? {
+              ...product,
+              stock: response.data.data.currentStock,
+              archived: product.archived ?? false,
+            }
+          : product,
+      ),
+    );
+  };
+
+  const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
+    const response = await apiClient.post<BackendResponse<BackendStockOut>>("/stock-outs", {
+      productId: stockOut.productId,
+      quantity: stockOut.quantity,
+      date: toApiDateTime(stockOut.date),
+      note: stockOut.notes || undefined,
+    });
+
+    const mappedStockOut = mapStockOutResponse(response.data.data);
+    setStockOuts((currentStockOuts) => [...currentStockOuts, mappedStockOut]);
+
+    setProducts((currentProducts) =>
+      currentProducts.map((product) =>
+        product.id === stockOut.productId
+          ? {
+              ...product,
+              stock: response.data.data.currentStock,
+              archived: product.archived ?? false,
+            }
+          : product,
+      ),
+    );
+  };
+
+  const deleteStockIn = async (id: string) => {
+    const stockIn = stockIns.find((item) => item.id === id);
+    await apiClient.delete(`/stock-ins/${id}`);
+
+    if (stockIn) {
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product.id === stockIn.productId
+            ? {
+                ...product,
+                stock: Math.max(0, product.stock - stockIn.quantity),
+                archived: product.archived ?? false,
+              }
+            : product,
+        ),
+      );
     }
 
-    const totalIncome = relevantSalesRecords.reduce(
-      (sum, t) => sum + t.totalAmount,
-      0
-    );
-    const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
+    setStockIns((currentStockIns) => currentStockIns.filter((item) => item.id !== id));
+  };
+
+  const deleteStockOut = async (id: string) => {
+    const stockOut = stockOuts.find((item) => item.id === id);
+    await apiClient.delete(`/stock-outs/${id}`);
+
+    if (stockOut) {
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product.id === stockOut.productId
+            ? {
+                ...product,
+                stock: product.stock + stockOut.quantity,
+                archived: product.archived ?? false,
+              }
+            : product,
+        ),
+      );
+    }
+
+    setStockOuts((currentStockOuts) => currentStockOuts.filter((item) => item.id !== id));
+  };
+
+  const getStockInByDate = (date: Date) => {
+    return stockIns.filter((stockIn) => new Date(stockIn.date).toDateString() === date.toDateString());
+  };
+
+  const getStockOutByDate = (date: Date) => {
+    return stockOuts.filter((stockOut) => new Date(stockOut.date).toDateString() === date.toDateString());
+  };
+
+  const getSummary = (startDate?: Date, endDate?: Date): BusinessSummary => {
+    const relevantSalesRecords = startDate && endDate ? getSalesRecordsByDateRange(startDate, endDate) : salesRecords;
+    const relevantExpenses = startDate && endDate ? getExpensesByDateRange(startDate, endDate) : expenses;
+
+    const totalIncome = relevantSalesRecords.reduce((sum, record) => sum + record.totalAmount, 0);
+    const totalExpense = relevantExpenses.reduce((sum, expense) => sum + expense.amount, 0);
     const profit = totalIncome - totalExpense;
     const profitMargin = totalIncome > 0 ? (profit / totalIncome) * 100 : 0;
-    const totalProductsSold = relevantSalesRecords.reduce(
-      (sum, t) => sum + t.quantity,
-      0
-    );
+    const totalProductsSold = relevantSalesRecords.reduce((sum, record) => sum + record.quantity, 0);
 
     return {
       totalIncome,
@@ -308,7 +567,7 @@ const getExpensesByCategory = (category: string) => {
 
   const getSummaryByMonth = (year: number, month: number): BusinessSummary => {
     const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
     return getSummary(startDate, endDate);
   };
 
@@ -329,105 +588,13 @@ const getExpensesByCategory = (category: string) => {
     return { current, previous, change };
   };
 
-  // DAILY SALES RECAP
   const getDailySalesRecap = (date: Date): DailySalesRecapSummary => {
-    const dateStr = date.toDateString();
-
-    const dailySalesRecords = salesRecords.filter(
-      (r) => new Date(r.date).toDateString() === dateStr
-    );
-
-    const dailyStockIns = stockIns.filter(
-      (s) => new Date(s.date).toDateString() === dateStr
-    );
-
-    const dailyStockOuts = stockOuts.filter(
-      (s) => new Date(s.date).toDateString() === dateStr
-    );
-
-    const dailyExpenses = expenses.filter(
-      (e) => new Date(e.date).toDateString() === dateStr
-    );
-
-    const recapByProduct = new Map<string, DailySalesRecapDetail>();
-
-    products.forEach((product) => {
-      const prodSalesRecords = dailySalesRecords.filter(
-        (r) => r.productId === product.id
-      );
-      const prodStockIns = dailyStockIns.filter(
-        (s) => s.productId === product.id
-      );
-      const prodStockOuts = dailyStockOuts.filter(
-        (s) => s.productId === product.id
-      );
-
-      const stokMasuk = prodStockIns.reduce((sum, s) => sum + s.quantity, 0);
-      const stokKeluar = prodStockOuts.reduce((sum, s) => sum + s.quantity, 0);
-      const stokAkhir = product.stock;
-      const terjualDariCatatan = prodSalesRecords.reduce(
-        (sum, r) => sum + r.quantity,
-        0
-      );
-
-      const stokAwal = Math.max(
-        0,
-        stokAkhir + stokKeluar + terjualDariCatatan - stokMasuk
-      );
-
-      const terjual = Math.max(0, stokAwal + stokMasuk - stokAkhir);
-      const nilaiPenjualan = terjual * product.sellPrice;
-      const hppTerpakai = terjual * product.costPrice;
-
-      if (terjual > 0 || stokMasuk > 0 || stokKeluar > 0) {
-        recapByProduct.set(product.id, {
-          productId: product.id,
-          productName: product.name,
-          stokAwal,
-          stokMasuk,
-          stokKeluar,
-          stokAkhir,
-          terjual,
-          hargaJual: product.sellPrice,
-          hargaModal: product.costPrice,
-          nilaiPenjualan,
-          hppTerpakai,
-        });
-      }
-    });
-
-    const details = Array.from(recapByProduct.values());
-
-    const totalUangKeluar = dailyExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalTerjual = details.reduce((sum, d) => sum + d.terjual, 0);
-    const totalNilaiPenjualan = details.reduce(
-      (sum, d) => sum + d.nilaiPenjualan,
-      0
-    );
-    const totalHppTerpakai = details.reduce((sum, d) => sum + d.hppTerpakai, 0);
-    const totalUangMasuk = totalNilaiPenjualan;
-    const labaKotor = totalNilaiPenjualan - totalHppTerpakai;
-    const labaBersih = labaKotor - totalUangKeluar;
-
-    return {
-      date,
-      details: details.sort((a, b) =>
-        a.productName.localeCompare(b.productName)
-      ),
-      totalUangMasuk,
-      totalUangKeluar,
-      totalTerjual,
-      totalNilaiPenjualan,
-      totalHppTerpakai,
-      labaKotor,
-      labaBersih,
-      isComplete: details.length > 0,
-    };
+    return buildDailyRecap(date, products, salesRecords, expenses, stockIns, stockOuts);
   };
 
   const getDailySalesRecapByDateRange = (
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): DailySalesRecapSummary[] => {
     const recaps: DailySalesRecapSummary[] = [];
     const current = new Date(startDate);
@@ -438,71 +605,6 @@ const getExpensesByCategory = (category: string) => {
     }
 
     return recaps;
-  };
-
-  // STOCK
-  const addStockIn = (stockIn: Omit<StockIn, "id" | "createdAt">) => {
-    const newStockIn: StockIn = {
-      ...stockIn,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-
-    setStockIns([...stockIns, newStockIn]);
-
-    const product = getProductById(stockIn.productId);
-    if (product) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === stockIn.productId
-            ? { ...p, stock: p.stock + stockIn.quantity }
-            : p
-        )
-      );
-    }
-  };
-
-  const addStockOut = (stockOut: Omit<StockOut, "id" | "createdAt">) => {
-    const newStockOut: StockOut = {
-      ...stockOut,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-
-    setStockOuts([...stockOuts, newStockOut]);
-
-    const product = getProductById(stockOut.productId);
-    if (product) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === stockOut.productId
-            ? { ...p, stock: p.stock - stockOut.quantity }
-            : p
-        )
-      );
-    }
-  };
-
-  const deleteStockIn = (id: string) => {
-    setStockIns(stockIns.filter((s) => s.id !== id));
-  };
-
-  const deleteStockOut = (id: string) => {
-    setStockOuts(stockOuts.filter((s) => s.id !== id));
-  };
-
-  const getStockInByDate = (date: Date) => {
-    return stockIns.filter((s) => {
-      const sDate = new Date(s.date);
-      return sDate.toDateString() === date.toDateString();
-    });
-  };
-
-  const getStockOutByDate = (date: Date) => {
-    return stockOuts.filter((s) => {
-      const sDate = new Date(s.date);
-      return sDate.toDateString() === date.toDateString();
-    });
   };
 
   const value: BusinessContextType = {
@@ -537,11 +639,7 @@ const getExpensesByCategory = (category: string) => {
     getDailySalesRecapByDateRange,
   };
 
-  return (
-    <BusinessContext.Provider value={value}>
-      {children}
-    </BusinessContext.Provider>
-  );
+  return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }
 
 export function useBusinessContext() {

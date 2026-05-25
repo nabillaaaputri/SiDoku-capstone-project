@@ -32,6 +32,7 @@ export interface Expense {
   category: "restock" | "operasional" | "lain-lain";
   date: Date;
   description?: string;
+  createdAt?: string;
 }
 
 // Stock Movement Types

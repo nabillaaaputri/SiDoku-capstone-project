@@ -1,4 +1,5 @@
-import { authApiClient } from './api';
+import axios from 'axios';
+import apiClient, { authApiClient, clearStoredAuthTokens } from './api';
 
 interface LoginCredentials {
   email: string;
@@ -7,76 +8,166 @@ interface LoginCredentials {
 
 interface RegisterCredentials extends LoginCredentials {
   storeName: string;
+  confirmPassword: string;
 }
 
-interface AuthResponse {
+interface ApiResponse<T> {
   status: string;
   message: string;
-  data: {
-    accessToken?: string;
-    id?: string;
-    email?: string;
-    storeName?: string;
-  };
+  data: T;
 }
+
+interface LoginResponseData {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface RegisterResponseData {
+  id: string;
+  email: string;
+  storeName: string;
+}
+
+interface ProfileResponseData {
+  id: string;
+  ownerName: string;
+  email: string;
+}
+
+interface StoreAccountResponseData {
+  id: string;
+  storeName: string;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  name: string;
+  storeName?: string;
+}
+
+const ACCESS_TOKEN_KEY = 'authToken';
+const REFRESH_TOKEN_KEY = 'refreshToken';
+
+const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
+  if (axios.isAxiosError(error)) {
+    return (
+      error.response?.data?.message ||
+      error.message ||
+      fallbackMessage
+    );
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallbackMessage;
+  }
+
+  return fallbackMessage;
+};
 
 export const authService = {
   // LOGIN
-login: async (
-  credentials: LoginCredentials
-): Promise<AuthResponse> => {
-  const response = await authApiClient.post<AuthResponse>(
-    '/auth/login',
-    credentials
-  );
+  login: async (
+    credentials: LoginCredentials,
+  ): Promise<ApiResponse<LoginResponseData>> => {
+    const response = await authApiClient.post<ApiResponse<LoginResponseData>>(
+      '/auth/login',
+      credentials,
+    );
 
-  console.log("FULL LOGIN RESPONSE:", response.data);
+    const { accessToken, refreshToken } = response.data.data;
 
-  const token = response.data.data.accessToken;
+    if (accessToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    }
 
-  console.log("TOKEN DARI BACKEND:", token);
+    if (refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    }
 
-  if (token) {
-    localStorage.setItem('authToken', token);
-  }
-
-  return response.data;
-},
+    return response.data;
+  },
 
   // REGISTER
   register: async (
-    credentials: RegisterCredentials
-  ): Promise<AuthResponse> => {
-    const response = await authApiClient.post<AuthResponse>(
+    credentials: RegisterCredentials,
+  ): Promise<ApiResponse<RegisterResponseData>> => {
+    const response = await authApiClient.post<ApiResponse<RegisterResponseData>>(
       '/auth/register',
-      credentials
+      credentials,
     );
 
     return response.data;
   },
 
-  // LOGOUT
-  logout: (): void => {
-    // hapus semua data local storage
-    localStorage.clear();
+  refreshAccessToken: async (): Promise<string | null> => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
-    // redirect ke login
-    window.location.href = '/login';
+    if (!refreshToken) {
+      return null;
+    }
+
+    const response = await authApiClient.put<ApiResponse<{ accessToken: string }>>(
+      '/auth/refresh',
+      { refreshToken },
+    );
+
+    const accessToken = response.data.data.accessToken;
+
+    if (accessToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    }
+
+    return accessToken || null;
+  },
+
+  // LOGOUT
+  logout: async (): Promise<void> => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    try {
+      if (refreshToken) {
+        await authApiClient.post<ApiResponse<null>>('/auth/logout', {
+          refreshToken,
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      clearStoredAuthTokens();
+    }
   },
 
   // GET CURRENT USER
-  getCurrentUser: async () => {
+  getCurrentUser: async (): Promise<CurrentUser | null> => {
     try {
-      const response = await authApiClient.get('/auth/me');
-      return response.data;
+      const [profileResponse, storeAccountResponse] = await Promise.all([
+        apiClient.get<ApiResponse<ProfileResponseData>>('/settings/profile'),
+        apiClient.get<ApiResponse<StoreAccountResponseData>>('/settings/store-account'),
+      ]);
+
+      const profile = profileResponse.data.data;
+      const storeAccount = storeAccountResponse.data.data;
+
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: profile.ownerName || profile.email.split('@')[0] || 'User',
+        storeName: storeAccount.storeName,
+      };
     } catch (error) {
       console.error('Get current user error:', error);
+      clearStoredAuthTokens();
       return null;
     }
   },
 
+  getErrorMessage: (error: unknown, fallbackMessage = 'Terjadi kesalahan pada server.') => {
+    return getApiErrorMessage(error, fallbackMessage);
+  },
+
   // CHECK AUTH
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('authToken');
+    return !!localStorage.getItem(ACCESS_TOKEN_KEY);
   },
 };

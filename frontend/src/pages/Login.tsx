@@ -3,10 +3,12 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth.service";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,12 +21,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await authService.login({
-        email,
-        password,
-      });
-
-      console.log("Login success:", response);
+      await login(email, password);
 
       alert("Login berhasil ✅");
 
@@ -32,7 +29,7 @@ export default function Login() {
     } catch (error) {
       console.error("Login gagal:", error);
 
-      alert("Email atau password salah ❌");
+      alert(authService.getErrorMessage(error, "Email atau password salah ❌"));
     } finally {
       setLoading(false);
     }
