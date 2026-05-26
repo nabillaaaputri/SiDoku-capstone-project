@@ -1,0 +1,262 @@
+
+{"intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "halo", "hai", "selamat pagi", "selamat siang", "selamat sore", "selamat malam", 
+        "asisten", "perkenalkan", "nama", "siapa", "tes", "p", "oy", "halo sidoku", 
+        "ada orang ga", "bot", "halo bot", "assalamualaikum", "permisi", "ping",
+        "hi", "hola", "halo admin", "min", "mimin", "test doang", "coba chat",
+        "halo asisten", "selamat beraktivitas"
+      ],
+      "responses": [
+        "Halo, asisten SiDoku di sini! Ada data penjualan atau stok yang ingin dicek hari ini?",
+        "Selamat datang! Saya siap membantu mengelola catatan warung dan toko Anda.",
+        "Halo, bos! Ada yang bisa saya bantu terkait laporan keuangan atau stok barang?",
+        "Hai! SiDoku siap membantu. Mau cek omset atau lihat sisa stok barang hari ini?",
+        "Halo! Semoga dagangan hari ini laris manis ya. Ada data yang perlu saya tarik?"
+      ],
+      "action": ""
+    },
+    {
+      "tag": "smalltalk_condition",
+      "patterns": [
+        "lagi apa", "apa kabar", "gimana kabarnya", "kamu lagi ngapain", 
+        "udah makan belum", "sibuk ga", "halo apa kabar", "gimana harimu", 
+        "sehat min", "lagi sibuk ya", "bisa ngobrol bentar", "masih aktif ga"
+      ],
+      "responses": [
+        "Kabar baik! Saya selalu standby 24/7 untuk bantu pantau bisnis Anda. Mau cek omset hari ini?",
+        "Saya selalu siap sedia menganalisis data keuangan Anda! Ada yang mau dicek?",
+        "Selalu semangat membantu UMKM! Bagaimana dengan toko Anda hari ini, sudah banyak yang laku?",
+        "Saya 100% online dan siap bekerja. Mari kita cek catatan keuangan Anda hari ini!"
+      ],
+      "action": ""
+    },
+    {
+      "tag": "bot_identity",
+      "patterns": [
+        "kamu siapa", "kamu manusia atau robot", "yang bikin kamu siapa",
+        "ini admin ya", "kamu bot ya", "kamu ai kan", "asisten virtual ya",
+        "identitas kamu siapa", "robot atau orang asli", "sidoku itu apa", "nama kamu siapa", "nama", "siapa nama kamu"
+      ],
+      "responses": [
+        "Saya adalah AI Asisten SiDoku, program cerdas yang dirancang khusus untuk membantu Anda mengelola data warung dan toko.",
+        "Saya adalah asisten virtual berbasis kecerdasan buatan dari SiDoku. Tugas saya adalah menghitung laba, mencatat stok, dan memprediksi penjualan Anda!",
+        "Saya robot asisten pintar dari SiDoku! Jangan khawatir, meskipun saya AI, saya ahli dalam menjaga catatan keuangan Anda tetap rapi."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "daily_encouragement",
+      "patterns": [
+        "doain laris ya", "bismillah buka toko", "semoga hari ini berkah", 
+        "semoga jualan laku banyak", "doain target capai", "buka warung dulu", 
+        "hari ini sepi banget", "capek jualan", "lelah jaga warung", "semangat jualan"
+      ],
+      "responses": [
+        "Amin! Bismillah, semoga hari ini dagangan Anda laris manis dan omsetnya meroket!",
+        "Tetap semangat, bos! Setiap usaha pasti membuahkan hasil. Mari kita pantau terus penjualan Anda di SiDoku.",
+        "Pasti laris! Jangan lupa senyum ke pelanggan dan pastikan stok barang selalu terpantau dari SiDoku ya.",
+        "Semangat! Sepi hari ini belum tentu sepi besok. Saya bantu siapkan laporan agar Anda bisa merancang strategi besok ya."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "check_profit_loss",
+      "patterns": [
+        "berapa laba bersih bulan ini", "apakah toko kita untung", "cek total keuntungan", 
+        "laporan laba rugi hari ini", "hari ini cuan berapa", "kita untung atau rugi", 
+        "dapat duit berapa bulan ini", "cek laba dong", "profit kita berapa", 
+        "tolong hitung laba bersih", "cek untung rugi", "bulan ini boncos ga", 
+        "rekap keuntungan", "laba kotor dan laba bersih", "cek pemasukan bersih",
+        "hasil bersih hari ini", "cek saldo untung", "kita profit brp", 
+        "itungin laba warung dong", "selisih untung ruginya"
+      ],
+      "responses": [
+        "Sedang menghitung selisih pendapatan dan pengeluaran Anda...",
+        "Mari kita lihat performa keuangan Anda. Ini kalkulasi labanya:",
+        "Siap, bos! Berikut adalah laporan keuntungan bersih dari usaha Anda:",
+        "Menarik data dari buku kas Anda... Berikut ringkasan laba rugi saat ini:"
+      ],
+      "action": "fetch_profit_loss"
+    },
+    {
+      "tag": "check_expenses",
+      "patterns": [
+        "berapa total pengeluaran bulan ini", "cek biaya operasional", "hari ini keluar uang berapa", 
+        "total belanja modal", "bulan ini habis uang berapa", "pengeluaran toko", 
+        "cek biaya listrik dan gaji", "tagihan bulan ini berapa", "uang yang keluar hari ini", 
+        "cek total belanja kulakan", "rinciin pengeluaran dong", "biaya pengeluaran",
+        "hari ini belanja apa aja", "duit keluar buat apa aja", "total uang keluar",
+        "cek boncos", "ongkos operasional", "rekap biaya harian", "modal yang kepake"
+      ],
+      "responses": [
+        "Berikut adalah rincian pengeluaran operasional dan belanja usaha Anda:",
+        "Tunggu sebentar, saya sedang merekap data uang keluar dari kas toko Anda.",
+        "Ini dia laporan total biaya dan belanja yang telah Anda keluarkan:",
+        "Sedang menyusun daftar pengeluaran Anda. Berikut adalah rinciannya:"
+      ],
+      "action": "fetch_expenses"
+    },
+    {
+      "tag": "check_daily_sales",
+      "patterns": [
+        "berapa penjualan hari ini", "cek omzet hari ini", "laporan harian", 
+        "berapa barang yang terjual", "hari ini laku berapa", "closingan hari ini", 
+        "total pemasukan harian", "rekap jualan hari ini", "ada pemasukan berapa", 
+        "jualan laris ga hari ini", "cek pendapatan hari ini", "lihat omset",
+        "omset warung hari ini", "hari ini dapet duit brp", "cek uang masuk", 
+        "laporan kasir hari ini", "total transaksi hari ini", "cek omset harian"
+      ],
+      "responses": [
+        "Tunggu sebentar, saya sedang menarik data penjualan Anda hari ini.",
+        "Baik, berikut adalah ringkasan omzet dan total barang yang terjual hari ini.",
+        "Siap! Ini rekapitulasi pemasukan kas dari transaksi hari ini:",
+        "Sedang membuka laporan penjualan... Berikut angka omset Anda sejauh ini:"
+      ],
+      "action": "fetch_daily_sales"
+    },
+    {
+      "tag": "check_inventory",
+      "patterns": [
+        "cek stok", "lihat daftar barang", "stok di gudang ada berapa", 
+        "sisa barang tinggal berapa", "cek inventaris toko", "tampilin semua stok", 
+        "barang apa aja yang ada", "informasi stok", "cek ketersediaan barang",
+        "lihat sisa dagangan", "cek gudang dong", "barang di etalase sisa brp", 
+        "laporan barang masuk keluar", "stok aman ga", "ada barang apa aja"
+      ],
+      "responses": [
+        "Sedang membuka sistem inventaris Anda. Berikut adalah daftar stok saat ini:",
+        "Ini adalah laporan ketersediaan barang Anda di etalase dan gudang:",
+        "Siap! Ini daftar lengkap sisa produk yang Anda miliki saat ini:",
+        "Tunggu sebentar, saya sedang memuat data inventaris toko Anda..."
+      ],
+      "action": "fetch_inventory"
+    },
+    {
+      "tag": "predict_inventory_depletion",
+      "patterns": [
+        "barang apa yang hampir habis", "apa yang harus saya restock", "cek stok menipis", 
+        "barang apa yang mau abis", "perlu kulakan apa aja", "stok kritis", 
+        "peringatan stok", "barang yang wajib dibeli", "daftar barang habis", 
+        "tolong cek barang yang sisa dikit", "saatnya kulakan apa nih", 
+        "produk yang udah tiris", "kapan harus restock barang", "info barang kosong"
+      ],
+      "responses": [
+        "Berikut adalah daftar barang yang diprediksi akan habis dalam waktu dekat:",
+        "Anda perlu segera melakukan pemesanan ulang (kulakan) untuk produk-produk berikut:",
+        "Sistem mendeteksi beberapa barang mulai menipis. Ini daftar produk yang perlu Anda restock:",
+        "Perhatian! Stok untuk produk di bawah ini sudah memasuki batas minimum:"
+      ],
+      "action": "predict_inventory_depletion"
+    },
+    {
+      "tag": "predict_future_sales",
+      "patterns": [
+        "bagaimana prediksi penjualan bulan depan", "ramalkan omzet minggu depan", 
+        "berapa proyeksi pendapatan kita", "prediksi sales", "kira kira besok laku berapa", 
+        "estimasi omset bulan depan", "target jualan minggu depan", "prediksi jualan", 
+        "forecast penjualan", "bisa tebak besok dapet berapa", "omset besok kira kira brp",
+        "prediksi transaksi hari esok", "trend jualan kita gimana", "proyeksi bisnis ke depan"
+      ],
+      "responses": [
+        "Berdasarkan model AI pada riwayat transaksi, berikut proyeksi pendapatan Anda:",
+        "Model prediksi penjualan telah berjalan. Ini estimasi omzet untuk periode berikutnya:",
+        "Menganalisis tren penjualan Anda dari data historis... Berikut adalah angka prediksinya:",
+        "Tunggu sebentar, AI SiDoku sedang memproyeksikan potensi penjualan Anda di masa depan:"
+      ],
+      "action": "predict_future_sales"
+    },
+    {
+      "tag": "recommend_business_strategy",
+      "patterns": [
+        "gimana biar jualan laris", "saran strategi bisnis", "rekomendasi produk", 
+        "barang apa yang paling laku", "apa yang harus saya lakukan biar untung", 
+        "minta saran dong", "cara naikin omset gimana", "kasih masukan buat toko", 
+        "strategi bulan depan bagusnya gimana", "produk apa yang banyak untungnya",
+        "tips jualan dong min", "biar toko rame harus gimana", "insight bisnis"
+      ],
+      "responses": [
+        "Berdasarkan performa penjualan, sebaiknya Anda fokus mempromosikan produk terlaris Anda dan segera me-restock barang yang perputarannya cepat.",
+        "Untuk menaikkan omset, perhatikan produk dengan margin keuntungan tertinggi. Ingin saya tampilkan produk apa saja itu?",
+        "Saran dari sistem: Kurangi biaya operasional yang tidak perlu dan perbanyak stok untuk barang-barang yang sering habis terjual di akhir pekan.",
+        "Analisis data menunjukkan tren pembelian pelanggan Anda. Coba buat promo bundling/paket untuk barang yang kurang laku dengan barang yang paling laris."
+      ],
+      "action": "generate_strategy_recommendation"
+    },
+    {
+      "tag": "loan_inquiry",
+      "patterns": [
+        "cara pinjam uang gimana", "info kur", "tempat gadai barang",
+        "bisa pinjam modal ga disini", "mau ngajuin pinjaman", "butuh tambahan modal",
+        "cara dapet kredit usaha", "pinjaman umkm", "bantu pinjam dana"
+      ],
+      "responses": [
+        "Mohon maaf, saat ini SiDoku hanya fokus pada pencatatan keuangan dan manajemen stok. Kami belum menyediakan layanan pinjaman atau kredit modal usaha.",
+        "Maaf, fitur pengajuan modal usaha belum tersedia. Saya hanya asisten untuk menganalisis data pembukuan toko Anda."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "system_help",
+      "patterns": [
+        "apa saja yang bisa kamu lakukan", "bantuan", "jelaskan fiturmu", 
+        "cara menggunakan aplikasi", "kamu bisa ngapain aja", "panduan penggunaan", 
+        "tolong ajarin pake aplikasi ini", "help", "menu bantuan", "fungsi kamu apa",
+        "aplikasi ini buat apa", "gak ngerti cara pakenya", "tolong panduannya"
+      ],
+      "responses": [
+        "Sebagai asisten SiDoku, saya dapat membantu Anda memantau laba/rugi, mengecek pengeluaran operasional, memprediksi penjualan, serta mengingatkan stok barang yang hampir habis. Cukup ketik saja apa yang ingin Anda cari!",
+        "Anda bisa mengetik pertanyaan seperti 'Cek omset hari ini', 'Apa saja stok yang mau habis?', atau 'Berapa laba bersih bulan ini?'. Saya akan langsung menarik datanya untuk Anda."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "system_complaint",
+      "patterns": [
+        "kok error", "aplikasinya lemot", "saya ga ngerti pakenya", 
+        "aduh pusing", "ini gimana sih error terus", "bot nya bodoh", 
+        "sistem bermasalah", "ngaco nih jawabannya", "jawabannya ga nyambung",
+        "kacau nih botnya", "gagal terus dari tadi", "ga bisa diakses"
+      ],
+      "responses": [
+        "Mohon maaf atas ketidaknyamanannya. Pastikan koneksi internet Anda stabil, atau Anda bisa menghubungi tim admin SiDoku untuk bantuan teknis.",
+        "Maaf jika saya kurang mengerti atau sistem terasa lambat. Coba gunakan kata kunci yang lebih spesifik, seperti 'cek omset' atau 'cek pengeluaran'."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "user_appreciation",
+      "patterns": [
+        "keren banget", "mantap", "bagus", "terima kasih banyak", 
+        "wah ngebantu banget", "good job", "pintar juga kamu", 
+        "sangat membantu", "aplikasinya bagus", "top markotop", 
+        "makasih banyak lho min", "sangat bermanfaat", "hebat"
+      ],
+      "responses": [
+        "Terima kasih atas pujiannya! Kesuksesan bisnis UMKM Anda adalah prioritas SiDoku.",
+        "Senang bisa membantu bisnis Anda jadi lebih rapi dan menguntungkan!",
+        "Sama-sama bos! Jangan ragu-ragu untuk panggil saya lagi kalau butuh rekap data.",
+        "Wah, terima kasih! Saya jadi makin semangat bantu hitung catatan keuangan warung Anda."
+      ],
+      "action": ""
+    },
+    {
+      "tag": "farewell",
+      "patterns": [
+        "terima kasih", "sudah cukup", "tutup", "keluar", 
+        "makasih ya", "ok sip", "oke deh", "sampai jumpa", 
+        "dadah", "bye", "pamit dulu", "udahan dulu", 
+        "off dulu ya", "nanti balik lagi", "makasih sidoku"
+      ],
+      "responses": [
+        "Sama-sama. Semoga target penjualan Anda tercapai hari ini!",
+        "Senang bisa membantu. Jangan ragu memanggil saya jika butuh analisis data lagi.",
+        "Baik, sampai jumpa! Semoga warungnya selalu ramai pembeli ya.",
+        "Sama-sama! SiDoku akan selalu di sini untuk mencatat data keuangan Anda."
+      ],
+      "action": ""
+    }
+  ]
+}

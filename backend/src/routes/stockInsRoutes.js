@@ -6,11 +6,20 @@ import {
 } from '../controllers/stockInController.js';
 import authenticateToken from '../middlewares/auth.js';
 import validatePayload from '../middlewares/validatePayload.js';
-import { StockInPayloadSchema } from '../validators/stockInValidator.js';
+import validateQuery from '../middlewares/validateQuery.js';
+import {
+  StockInPayloadSchema,
+  StockInQuerySchema,
+} from '../validators/stockInValidator.js';
 
 const stockInRouter = express.Router();
 
-stockInRouter.get('/', authenticateToken, getStockIns);
+stockInRouter.get(
+  '/',
+  authenticateToken,
+  validateQuery(StockInQuerySchema, 'Query stok masuk tidak valid.'),
+  getStockIns,
+);
 
 stockInRouter.post(
   '/',

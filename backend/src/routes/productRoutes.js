@@ -9,16 +9,23 @@ import {
 } from '../controllers/productController.js';
 import authenticateToken from '../middlewares/auth.js';
 import validatePayload from '../middlewares/validatePayload.js';
+import validateQuery from '../middlewares/validateQuery.js';
 import {
   ProductPayloadSchema,
   ProductUpdatePayloadSchema,
+  ProductQuerySchema,
 } from '../validators/productValidator.js';
 
 const productRouter = express.Router();
 
 productRouter.get('/categories', authenticateToken, getProductCategories);
 
-productRouter.get('/', authenticateToken, getProducts);
+productRouter.get(
+  '/',
+  authenticateToken,
+  validateQuery(ProductQuerySchema, 'Query produk tidak valid.'),
+  getProducts,
+);
 
 productRouter.post(
   '/',

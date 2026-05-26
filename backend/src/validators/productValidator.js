@@ -19,3 +19,8 @@ export const ProductUpdatePayloadSchema = Joi.object({
   sellingPrice: Joi.number().integer().min(1).required(),
   minimumStock: Joi.number().integer().min(0).required(),
 });
+
+export const ProductQuerySchema = Joi.object({
+  status: Joi.string().valid('active', 'archived').optional(),
+  category: Joi.string().valid(...productCategories).optional(),
+});
