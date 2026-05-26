@@ -4,12 +4,17 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+
+type AlertState = {
+  title: string;
+  description: string;
+  tone: "success" | "error";
+} | null;
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { toast } = useToast();
+  const [alertState, setAlertState] = useState<AlertState>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,21 +30,22 @@ export default function Login() {
     try {
       await login(email, password);
 
-      toast({
+      setAlertState({
         title: "Login berhasil!",
         description: "Selamat datang kembali 👋",
+        tone: "success",
       });
 
       setTimeout(() => {
         navigate("/dashboard");
-      }, 50);
+      }, 1100);
     } catch (error) {
       console.error("Login gagal:", error);
 
-      toast({
+      setAlertState({
         title: "Login gagal",
         description: "Periksa email dan password.",
-        variant: "destructive",
+        tone: "error",
       });
     } finally {
       setLoading(false);
@@ -49,6 +55,14 @@ export default function Login() {
   return (
     <Layout showSkip={false}>
       <div className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center justify-center">
+        {alertState && (
+          <div className="fixed left-1/2 top-5 z-[60] w-[min(92vw,420px)] -translate-x-1/2">
+            <div className={`rounded-2xl border px-4 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl ${alertState.tone === "success" ? "border-emerald-200 bg-emerald-50/95 text-emerald-900" : "border-rose-200 bg-rose-50/95 text-rose-900"}`}>
+              <p className="font-bold">{alertState.title}</p>
+              <p className="mt-0.5 text-sm">{alertState.description}</p>
+            </div>
+          </div>
+        )}
         {/* Background */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_20%,rgba(14,165,233,0.18),transparent_35%),radial-gradient(circle_at_0%_100%,rgba(16,185,129,0.2),transparent_42%)]" />
 

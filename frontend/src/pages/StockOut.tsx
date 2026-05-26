@@ -20,6 +20,7 @@ import {
 } from "@/ui/dropdown-menu";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
+import { useNavigate } from "react-router-dom";
 
 const getLocalDateString = () => {
   const date = new Date();
@@ -31,8 +32,10 @@ const getLocalDateString = () => {
 export default function StockOut() {
   const { products, stockOuts, addStockOut, deleteStockOut } = useBusinessContext();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [isStockOutModalOpen, setIsStockOutModalOpen] = useState(false);
+  const [isNoProductDialogOpen, setIsNoProductDialogOpen] = useState(false);
   const [historyProductQuery, setHistoryProductQuery] = useState("");
   const [historySelectedProductId, setHistorySelectedProductId] = useState<string>("");
   const [showHistoryProductDropdown, setShowHistoryProductDropdown] = useState(false);
@@ -281,9 +284,15 @@ export default function StockOut() {
             </div>
 
             <Button
-              onClick={() => setIsStockOutModalOpen(true)}
+              onClick={() => {
+                if (products.length === 0) {
+                  setIsNoProductDialogOpen(true);
+                  return;
+                }
+
+                setIsStockOutModalOpen(true);
+              }}
               className="h-11 w-full rounded-xl bg-red-600 px-4 text-white shadow-sm hover:bg-red-700 sm:w-auto"
-              disabled={products.length === 0}
             >
               <Plus size={18} />
               Catat Stok Keluar
@@ -623,6 +632,37 @@ export default function StockOut() {
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isNoProductDialogOpen} onOpenChange={setIsNoProductDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Belum ada produk</DialogTitle>
+            <DialogDescription>
+              Belum ada produk. Silakan tambahkan produk terlebih dahulu sebelum mencatat stok.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsNoProductDialogOpen(false)}
+              className="rounded-xl"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsNoProductDialogOpen(false);
+                navigate("/products");
+              }}
+              className="rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Tambah Produk
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

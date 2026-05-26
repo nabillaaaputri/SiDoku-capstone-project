@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import apiClient from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 import {
   Product,
   SalesRecord,
@@ -294,11 +295,20 @@ const buildDailyRecap = (
 };
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [salesRecords, setSalesRecords] = useState<SalesRecord[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
+
+  const resetBusinessState = () => {
+    setProducts([]);
+    setSalesRecords([]);
+    setExpenses([]);
+    setStockIns([]);
+    setStockOuts([]);
+  };
 
   const refreshData = async () => {
     try {
@@ -330,8 +340,14 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      resetBusinessState();
+      return;
+    }
+
+    resetBusinessState();
     refreshData();
-  }, []);
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     setSalesRecords(buildSalesRecords(products, stockOuts));
