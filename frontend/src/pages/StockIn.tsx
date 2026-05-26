@@ -51,6 +51,10 @@ export default function StockIn() {
     notes: "",
   });
 
+  useEffect(() => {
+    setIsNoProductDialogOpen(products.length === 0);
+  }, [products.length]);
+
   const todayStockIns = useMemo(() => {
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
@@ -291,22 +295,6 @@ export default function StockIn() {
           </div>
         </section>
 
-        {products.length === 0 && (
-          <div className="section-shell border-amber-100 bg-gradient-to-br from-amber-50 to-white p-6">
-            <p className="mb-4 text-center text-sm text-slate-600">
-              Belum ada produk. Produk harus ditambahkan di Daftar Produk terlebih dahulu.
-            </p>
-            <div className="flex justify-center">
-              <a
-                href="/products"
-                className="rounded-xl bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                Tambah Produk
-              </a>
-            </div>
-          </div>
-        )}
-
         <div className="grid gap-3 md:grid-cols-3">
           <div className="section-shell border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
             <div className="flex items-start justify-between gap-3">
@@ -498,8 +486,8 @@ export default function StockIn() {
           </DialogHeader>
 
           {products.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-8 text-center text-sm text-slate-600">
-              Belum ada produk. Tambahkan produk baru terlebih dahulu.
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-6 text-center text-sm text-slate-600">
+              Silakan tambahkan produk terlebih dahulu sebelum mencatat stok masuk atau stok keluar.
             </div>
           ) : (
             <form onSubmit={handleStockInSubmit} className="space-y-4">
@@ -630,7 +618,7 @@ export default function StockIn() {
           <DialogHeader>
             <DialogTitle>Belum ada produk</DialogTitle>
             <DialogDescription>
-              Belum ada produk. Silakan tambahkan produk terlebih dahulu sebelum mencatat stok masuk.
+              Silakan tambahkan produk terlebih dahulu sebelum mencatat stok masuk atau stok keluar.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

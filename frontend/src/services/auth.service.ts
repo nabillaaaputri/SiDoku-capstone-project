@@ -207,7 +207,6 @@ export const authService = {
       ownerName: string;
       email: string;
       phoneNumber: string;
-      profileImage: string;
     },
   ): Promise<ApiResponse<ProfileResponseData>> => {
     const response = await apiClient.put<ApiResponse<ProfileResponseData>>('/settings/profile', payload);

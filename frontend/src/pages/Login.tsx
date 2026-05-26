@@ -1,5 +1,5 @@
 import Layout from "@/components/layout/Layout";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
@@ -22,6 +22,18 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!alertState) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setAlertState(null);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [alertState]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -38,7 +50,7 @@ export default function Login() {
 
       setTimeout(() => {
         navigate("/dashboard");
-      }, 1100);
+      }, 900);
     } catch (error) {
       console.error("Login gagal:", error);
 
@@ -56,10 +68,13 @@ export default function Login() {
     <Layout showSkip={false}>
       <div className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-center justify-center">
         {alertState && (
-          <div className="fixed left-1/2 top-5 z-[60] w-[min(92vw,420px)] -translate-x-1/2">
-            <div className={`rounded-2xl border px-4 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl ${alertState.tone === "success" ? "border-emerald-200 bg-emerald-50/95 text-emerald-900" : "border-rose-200 bg-rose-50/95 text-rose-900"}`}>
-              <p className="font-bold">{alertState.title}</p>
-              <p className="mt-0.5 text-sm">{alertState.description}</p>
+          <div className="fixed left-1/2 top-4 z-[60] w-[min(92vw,450px)] -translate-x-1/2">
+            <div
+              role="alert"
+              className={`rounded-2xl border px-4 py-3.5 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ${alertState.tone === "success" ? "border-emerald-200 bg-emerald-50/95 text-emerald-900" : "border-rose-200 bg-rose-50/95 text-rose-900"}`}
+            >
+              <p className="text-sm font-semibold leading-5">{alertState.title}</p>
+              <p className="mt-0.5 text-sm leading-5">{alertState.description}</p>
             </div>
           </div>
         )}

@@ -6,6 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { authService, getPreferredUserName } from "@/services/auth.service";
 import { Camera, Lock, Shield, Store, User } from "lucide-react";
 
+const MAX_PROFILE_IMAGE_SIZE = 1 * 1024 * 1024;
+
 interface ProfileData {
   ownerName: string;
   email: string;
@@ -80,6 +82,26 @@ export default function Account() {
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Hanya file gambar yang diperbolehkan.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      toast({
+        title: "Error",
+        description: "Ukuran foto terlalu besar. Maksimal 1MB.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
@@ -98,11 +120,12 @@ export default function Account() {
 
     try {
       if (activeTab === "profile") {
+        const { profileImage: _profileImage, ...profilePayload } = formData;
+
         await authService.updateProfile({
-          ownerName: formData.ownerName,
-          email: formData.email,
-          phoneNumber: formData.phone,
-          profileImage: formData.profileImage,
+          ownerName: profilePayload.ownerName,
+          email: profilePayload.email,
+          phoneNumber: profilePayload.phone,
         });
       }
 
@@ -334,7 +357,7 @@ export default function Account() {
                   className={inputClass}
                 />
                 <p className="mt-2 text-xs text-slate-500">
-                  Upload foto akan disimpan ke backend sebagai data gambar.
+                  Foto hanya dipakai sebagai preview sementara di frontend.
                 </p>
               </div>
             </div>
