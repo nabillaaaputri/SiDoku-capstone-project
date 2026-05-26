@@ -46,6 +46,14 @@ export interface CurrentUser {
   storeName?: string;
 }
 
+export const getPreferredUserName = (user?: Pick<CurrentUser, 'storeName' | 'name' | 'email'> | null) => {
+  const storeName = user?.storeName?.trim();
+  const name = user?.name?.trim();
+  const emailPrefix = user?.email?.split('@')[0]?.trim();
+
+  return storeName || name || emailPrefix || 'User';
+};
+
 const ACCESS_TOKEN_KEY = 'authToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -96,6 +104,32 @@ export const authService = {
       '/auth/register',
       credentials,
     );
+
+    return response.data;
+  },
+
+  updateProfile: async (
+    payload: {
+      ownerName: string;
+      email: string;
+      phoneNumber: string;
+      profileImage: string;
+    },
+  ): Promise<ApiResponse<ProfileResponseData>> => {
+    const response = await apiClient.put<ApiResponse<ProfileResponseData>>('/settings/profile', payload);
+
+    return response.data;
+  },
+
+  updateStoreAccount: async (
+    payload: {
+      storeName: string;
+      storeCategory: string;
+      storeAddress: string;
+      storeDescription: string;
+    },
+  ): Promise<ApiResponse<StoreAccountResponseData>> => {
+    const response = await apiClient.put<ApiResponse<StoreAccountResponseData>>('/settings/store-account', payload);
 
     return response.data;
   },

@@ -2,7 +2,7 @@ import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
-import { authService } from "@/services/auth.service";
+import { authService, getPreferredUserName } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
 
 interface DashboardLayoutProps {
@@ -19,9 +19,15 @@ export default function DashboardLayout({
 
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const displayName = user?.name || user?.email?.split('@')[0] || "User";
-  const storeName = user?.storeName || "Toko Saya";
+
+  const displayName = getPreferredUserName(user);
+  const avatarInitials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   // HANDLE LOGOUT
   const handleLogout = async () => {
@@ -88,11 +94,14 @@ export default function DashboardLayout({
                 className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm hover:border-blue-200 hover:shadow-md transition"
               >
                 <div className="h-9 w-9 rounded-full bg-[linear-gradient(135deg,_#1d4ed8,_#60a5fa)] flex items-center justify-center text-white shadow-inner shadow-blue-500/30">
-                  <span className="text-sm font-black tracking-wide">NB</span>
+                    <span className="text-sm font-black tracking-wide">{avatarInitials}</span>
                 </div>
                 <div className="hidden lg:block text-left leading-tight min-w-0">
                   <p className="font-semibold text-slate-900 truncate">{displayName}</p>
-                  <p className="text-xs text-slate-500 truncate flex items-center gap-1"><Store size={12} />{storeName}</p>
+                    <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                      <Store size={12} />
+                      {user?.email || "Akun aktif"}
+                    </p>
                 </div>
                 <ChevronDown size={15} className="text-slate-400 hidden sm:block" />
               </button>
@@ -103,7 +112,10 @@ export default function DashboardLayout({
                   <div className="px-4 py-4 bg-gradient-to-br from-blue-50 to-white border-b border-slate-100">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Akun Aktif</p>
                     <p className="mt-1 font-bold text-slate-900">{displayName}</p>
-                    <p className="text-sm text-slate-500 flex items-center gap-1"><Store size={13} /> {storeName}</p>
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
+                      <Store size={13} />
+                      {user?.email || "Akun aktif"}
+                    </p>
                   </div>
 
                   {/* Edit Profile */}

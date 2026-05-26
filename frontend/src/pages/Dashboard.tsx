@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
@@ -5,6 +6,9 @@ import SalesChart from "@/components/SalesChart";
 import { Badge } from "@/ui/badge";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
+import apiClient from "@/services/api";
+import { getPreferredUserName } from "@/services/auth.service";
+import { formatRupiahCompact } from "@/lib/utils";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -17,11 +21,101 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+interface ApiResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
+interface DashboardSummary {
+  income: number;
+  expense: number;
+  profit: number;
+  roi: number;
+}
+
+interface DashboardTrendItem {
+  day: string;
+  income: number;
+  expense: number;
+}
+
+interface DashboardTrends {
+  period: string;
+  items: DashboardTrendItem[];
+  totalIncome: number;
+  totalExpense: number;
+}
+
+interface ChartPoint {
+  label: string;
+  income: number;
+  expense: number;
+  profit: number;
+}
+
 export default function Dashboard() {
   const { products } = useBusinessContext();
   const { user } = useAuth();
-  
-  const displayName = user?.name || user?.email?.split('@')[0] || "User";
+  const displayName = getPreferredUserName(user);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      setIsLoadingDashboard(true);
+
+      try {
+        const [summaryResponse, trendsResponse] = await Promise.all([
+          apiClient.get<ApiResponse<DashboardSummary>>("/dashboard/summary"),
+          apiClient.get<ApiResponse<DashboardTrends>>("/dashboard/trends"),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSummary(summaryResponse.data.data || null);
+        setTrends(trendsResponse.data.data?.items || []);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+
+        if (isMounted) {
+          setSummary(null);
+          setTrends([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingDashboard(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const chartData = useMemo<ChartPoint[]>(() => {
+    return trends.map((item) => ({
+      label: item.day,
+      income: Number(item.income) || 0,
+      expense: Number(item.expense) || 0,
+      profit: (Number(item.income) || 0) - (Number(item.expense) || 0),
+    }));
+  }, [trends]);
+
+  const financialSummary = summary || {
+    income: 0,
+    expense: 0,
+    profit: 0,
+    roi: 0,
+  };
 
   // Get low stock products from actual data (max 3)
   const lowStockProducts = products.filter(p => p.stock <= p.minimumStock).slice(0, 3);
@@ -86,13 +180,27 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+          {isLoadingDashboard ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={`summary-skeleton-${index}`}
+                  className="rounded-[28px] border border-slate-200 bg-white p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+                >
+                  <div className="h-3 w-24 rounded-full bg-slate-100 animate-pulse" />
+                  <div className="mt-4 h-8 w-32 rounded-full bg-slate-100 animate-pulse" />
+                  <div className="mt-3 h-3 w-20 rounded-full bg-slate-100 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
             <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 2.4jt" : "Rp 0"}</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.income)}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">dari penjualan</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
@@ -109,7 +217,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 750rb" : "Rp 0"}</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.expense)}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-slate-200">
@@ -126,7 +234,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-600/80">Keuntungan</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "Rp 1.65jt" : "Rp 0"}</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.profit)}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-sky-100">
@@ -143,7 +251,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-600/80">Tingkat Keuntungan</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{hasProducts ? "220%" : "0%"}</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-cyan-100">
@@ -154,7 +262,8 @@ export default function Dashboard() {
                 <div className="h-full w-[88%] rounded-full bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]" />
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </section>
 
         <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
@@ -246,7 +355,7 @@ export default function Dashboard() {
           <div className="hidden">
             {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
           </div>
-          <SalesChart />
+          <SalesChart data={chartData} isLoading={isLoadingDashboard} />
         </section>
       </div>
     </DashboardLayout>

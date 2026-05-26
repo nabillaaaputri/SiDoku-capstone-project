@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 import { Camera, Lock, Shield, Store, User } from "lucide-react";
 
 interface ProfileData {
@@ -13,16 +14,17 @@ interface ProfileData {
   shopCategory: string;
   shopAddress: string;
   shopDescription: string;
-  profileImage?: string;
+  profileImage: string;
 }
 
 export default function Account() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
   );
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<ProfileData>({
     ownerName: user?.name || "Nama Pemilik Toko",
     email: user?.email || "pemilik@sidoku.id",
@@ -31,6 +33,7 @@ export default function Account() {
     shopCategory: "Retail",
     shopAddress: "Jl. Contoh No. 123, Jakarta",
     shopDescription: "Toko online yang menjual berbagai produk berkualitas",
+    profileImage: "https://example.com/profile.png",
   });
 
   // Update form data when user changes
@@ -63,12 +66,46 @@ export default function Account() {
     setPasswordData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
-    toast({
-      title: "Berhasil",
-      description: "Profil Anda telah diperbarui",
-    });
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+
+    try {
+      if (activeTab === "profile") {
+        await authService.updateProfile({
+          ownerName: formData.ownerName,
+          email: formData.email,
+          phoneNumber: formData.phone,
+          profileImage: formData.profileImage,
+        });
+      }
+
+      if (activeTab === "shop") {
+        await authService.updateStoreAccount({
+          storeName: formData.shopName,
+          storeCategory: formData.shopCategory,
+          storeAddress: formData.shopAddress,
+          storeDescription: formData.shopDescription,
+        });
+      }
+
+      await refreshUser();
+      setIsEditing(false);
+
+      toast({
+        title: "Berhasil",
+        description: activeTab === "profile"
+          ? "Profil Anda telah diperbarui"
+          : "Data toko Anda telah diperbarui",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: authService.getErrorMessage(error, "Gagal memperbarui data akun."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleChangePassword = () => {
@@ -250,9 +287,10 @@ export default function Account() {
                 <>
                   <Button
                     onClick={handleSaveProfile}
+                    disabled={isSaving}
                     className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
                   >
-                    Simpan Perubahan
+                    {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                   </Button>
                   <Button
                     onClick={() => setIsEditing(false)}
@@ -353,9 +391,10 @@ export default function Account() {
                 <>
                   <Button
                     onClick={handleSaveProfile}
+                    disabled={isSaving}
                     className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
                   >
-                    Simpan Perubahan
+                    {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                   </Button>
                   <Button
                     onClick={() => setIsEditing(false)}
