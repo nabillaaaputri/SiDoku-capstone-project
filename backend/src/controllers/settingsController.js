@@ -28,22 +28,28 @@ const createDefaultSettings = async (user) => {
   return settingsRepository.addDefaultSettings({
     id: nanoid(),
     userId: user.id,
-    ownerName: 'Pirak',
+    ownerName: user.store_name || 'Pemilik Toko',
     email: user.email,
-    phoneNumber: '+62 812 3456 7890',
-    profileImage: 'https://example.com/profile.png',
-    storeName: user.storeName || user.store_name || 'Peara Store',
-    storeCategory: 'Grosir',
-    storeAddress: 'Jl. Danau Cikur 17, No. 15',
-    storeDescription: 'Toko online yang menjual berbagai produk berkualitas dan original.',
+    phoneNumber: '',
+    profileImage: '',
+    storeName: user.store_name || 'Toko Saya',
+    storeCategory: '',
+    storeAddress: '',
+    storeDescription: '',
   });
 };
 
-const getOrCreateSettings = async (user) => {
-  const existingSettings = await settingsRepository.getSettingsByUserId(user.id);
+const getOrCreateSettings = async (userId) => {
+  const existingSettings = await settingsRepository.getSettingsByUserId(userId);
 
   if (existingSettings) {
     return existingSettings;
+  }
+
+  const user = await userRepository.getUserById(userId);
+
+  if (!user) {
+    throw new NotFoundError('Akun tidak ditemukan.');
   }
 
   return createDefaultSettings(user);
@@ -51,7 +57,7 @@ const getOrCreateSettings = async (user) => {
 
 export const getProfile = async (req, res, next) => {
   try {
-    const settings = await getOrCreateSettings(req.user);
+    const settings = await getOrCreateSettings(req.user.id);
 
     return response(
       res,
@@ -66,7 +72,7 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    await getOrCreateSettings(req.user);
+    await getOrCreateSettings(req.user.id);
 
     const {
       ownerName,
@@ -96,7 +102,7 @@ export const updateProfile = async (req, res, next) => {
 
 export const getStoreAccount = async (req, res, next) => {
   try {
-    const settings = await getOrCreateSettings(req.user);
+    const settings = await getOrCreateSettings(req.user.id);
 
     return response(
       res,
@@ -111,7 +117,7 @@ export const getStoreAccount = async (req, res, next) => {
 
 export const updateStoreAccount = async (req, res, next) => {
   try {
-    await getOrCreateSettings(req.user);
+    await getOrCreateSettings(req.user.id);
 
     const {
       storeName,
@@ -126,6 +132,11 @@ export const updateStoreAccount = async (req, res, next) => {
       storeCategory,
       storeAddress,
       storeDescription,
+    });
+
+    await userRepository.updateUserStoreNameById({
+      userId: req.user.id,
+      storeName,
     });
 
     return response(

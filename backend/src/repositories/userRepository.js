@@ -73,3 +73,23 @@ export const updateUserPasswordById = async ({
 
   return result.rows[0];
 };
+
+export const updateUserStoreNameById = async ({
+  userId,
+  storeName,
+}) => {
+  const result = await query(
+    `UPDATE users
+     SET
+      store_name = $1,
+      updated_at = NOW()
+     WHERE id = $2
+     RETURNING *`,
+    [
+      storeName,
+      userId,
+    ],
+  );
+
+  return result.rows[0];
+};

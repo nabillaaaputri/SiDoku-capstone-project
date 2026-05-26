@@ -10,6 +10,7 @@ import expenseRoutes from './routes/expenseRoutes.js';
 import sellingRecapRoutes from './routes/sellingRecapRoutes.js';
 import aiChatbotRoutes from './routes/aiChatbotRoutes.js';
 import ErrorHandler from './middlewares/error.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/v1/stocks-out', stockOutRoutes);
 app.use('/v1/expenses', expenseRoutes);
 app.use('/v1/selling-recap', sellingRecapRoutes);
 app.use('/v1/ai-chatbot', aiChatbotRoutes);
+app.use('/v1/ai', aiRoutes);
 
 app.get('/', (request, response) => {
   response.status(200).json({

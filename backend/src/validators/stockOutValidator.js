@@ -9,6 +9,7 @@ export const StockOutPayloadSchema = Joi.object({
 
 export const StockOutQuerySchema = Joi.object({
   productId: Joi.string().trim().optional(),
+  date: Joi.string().isoDate().optional(),
   startDate: Joi.string().isoDate().optional(),
   endDate: Joi.string().isoDate().optional(),
 });
