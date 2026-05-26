@@ -15,12 +15,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Desktop and Mobile Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Mobile Header with Menu Button */}
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center">
           <button
@@ -33,8 +33,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <span className="ml-3 font-semibold text-slate-900">SiDoku</span>
         </div>
 
-        {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Content Area */}
+        <main className="flex-1">
           <div className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
             {children}
           </div>
