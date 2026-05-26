@@ -42,6 +42,7 @@ export default function StockIn() {
   const [historyDateFilter, setHistoryDateFilter] = useState(getLocalDateString());
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const modalProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const historyProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const [stockInForm, setStockInForm] = useState({
@@ -177,59 +178,64 @@ export default function StockIn() {
     setHistoryDateFilter(getLocalDateString());
   };
 
-  const handleStockInSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleStockInSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (!stockInForm.productId) {
-      toast({
-        title: "Error",
-        description: "Pilih produk terlebih dahulu",
-        variant: "destructive",
+    try {
+      if (!stockInForm.productId) {
+        toast({
+          title: "Error",
+          description: "Pilih produk terlebih dahulu",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (stockInForm.quantity <= 0) {
+        toast({
+          title: "Error",
+          description: "Jumlah masuk harus lebih dari 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const product = products.find((p) => p.id === stockInForm.productId);
+      if (!product) {
+        toast({
+          title: "Error",
+          description: "Produk tidak ditemukan",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await addStockIn({
+        productId: stockInForm.productId,
+        productName: product.name,
+        quantity: stockInForm.quantity,
+        date: new Date(stockInForm.date),
+        notes: stockInForm.notes || undefined,
       });
-      return;
-    }
 
-    if (stockInForm.quantity <= 0) {
       toast({
-        title: "Error",
-        description: "Jumlah masuk harus lebih dari 0",
-        variant: "destructive",
+        title: "Berhasil",
+        description: `${stockInForm.quantity} unit ${product.name} berhasil dicatat`,
       });
-      return;
-    }
 
-    const product = products.find((p) => p.id === stockInForm.productId);
-    if (!product) {
-      toast({
-        title: "Error",
-        description: "Produk tidak ditemukan",
-        variant: "destructive",
+      setStockInForm({
+        productId: "",
+        quantity: 0,
+        date: getLocalDateString(),
+        notes: "",
       });
-      return;
+      setProductSearchQuery("");
+      setShowProductDropdown(false);
+      setIsStockInModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    addStockIn({
-      productId: stockInForm.productId,
-      productName: product.name,
-      quantity: stockInForm.quantity,
-      date: new Date(stockInForm.date),
-      notes: stockInForm.notes || undefined,
-    });
-
-    toast({
-      title: "Berhasil",
-      description: `${stockInForm.quantity} unit ${product.name} berhasil dicatat`,
-    });
-
-    setStockInForm({
-      productId: "",
-      quantity: 0,
-      date: getLocalDateString(),
-      notes: "",
-    });
-    setProductSearchQuery("");
-    setShowProductDropdown(false);
-    setIsStockInModalOpen(false);
   };
 
   const handleDeleteStockIn = (id: string) => {
@@ -484,6 +490,13 @@ export default function StockIn() {
               Isi data stok masuk secara singkat agar stok bisa langsung diperbarui.
             </DialogDescription>
           </DialogHeader>
+
+          {isSubmitting && (
+            <div className="flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+              <div className="h-3 w-3 animate-pulse rounded-full bg-sky-500" />
+              Memperbarui riwayat stok masuk...
+            </div>
+          )}
 
           {products.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-6 text-center text-sm text-slate-600">

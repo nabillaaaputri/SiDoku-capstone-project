@@ -42,6 +42,7 @@ export default function StockOut() {
   const [historyDateFilter, setHistoryDateFilter] = useState(getLocalDateString());
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const modalProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const historyProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const [stockOutForm, setStockOutForm] = useState({
@@ -177,68 +178,73 @@ export default function StockOut() {
     setHistoryDateFilter(getLocalDateString());
   };
 
-  const handleStockOutSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleStockOutSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (!stockOutForm.productId) {
-      toast({
-        title: "Error",
-        description: "Pilih produk terlebih dahulu",
-        variant: "destructive",
+    try {
+      if (!stockOutForm.productId) {
+        toast({
+          title: "Error",
+          description: "Pilih produk terlebih dahulu",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (stockOutForm.quantity <= 0) {
+        toast({
+          title: "Error",
+          description: "Jumlah keluar harus lebih dari 0",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const product = products.find((p) => p.id === stockOutForm.productId);
+      if (!product) {
+        toast({
+          title: "Error",
+          description: "Produk tidak ditemukan",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (product.stock < stockOutForm.quantity) {
+        toast({
+          title: "Error",
+          description: `Stok ${product.name} tidak mencukupi. Stok tersedia: ${product.stock} unit`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await addStockOut({
+        productId: stockOutForm.productId,
+        productName: product.name,
+        quantity: stockOutForm.quantity,
+        date: new Date(stockOutForm.date),
+        notes: stockOutForm.notes || undefined,
       });
-      return;
-    }
 
-    if (stockOutForm.quantity <= 0) {
       toast({
-        title: "Error",
-        description: "Jumlah keluar harus lebih dari 0",
-        variant: "destructive",
+        title: "Berhasil",
+        description: `${stockOutForm.quantity} unit ${product.name} berhasil dicatat`,
       });
-      return;
-    }
 
-    const product = products.find((p) => p.id === stockOutForm.productId);
-    if (!product) {
-      toast({
-        title: "Error",
-        description: "Produk tidak ditemukan",
-        variant: "destructive",
+      setStockOutForm({
+        productId: "",
+        quantity: 0,
+        date: getLocalDateString(),
+        notes: "",
       });
-      return;
+      setProductSearchQuery("");
+      setShowProductDropdown(false);
+      setIsStockOutModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (product.stock < stockOutForm.quantity) {
-      toast({
-        title: "Error",
-        description: `Stok ${product.name} tidak mencukupi. Stok tersedia: ${product.stock} unit`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    addStockOut({
-      productId: stockOutForm.productId,
-      productName: product.name,
-      quantity: stockOutForm.quantity,
-      date: new Date(stockOutForm.date),
-      notes: stockOutForm.notes || undefined,
-    });
-
-    toast({
-      title: "Berhasil",
-      description: `${stockOutForm.quantity} unit ${product.name} berhasil dicatat`,
-    });
-
-    setStockOutForm({
-      productId: "",
-      quantity: 0,
-      date: getLocalDateString(),
-      notes: "",
-    });
-    setProductSearchQuery("");
-    setShowProductDropdown(false);
-    setIsStockOutModalOpen(false);
   };
 
   const handleDeleteStockOut = (id: string) => {
@@ -493,6 +499,13 @@ export default function StockOut() {
               Isi data stok keluar secara singkat agar stok gudang langsung diperbarui.
             </DialogDescription>
           </DialogHeader>
+
+          {isSubmitting && (
+            <div className="flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+              <div className="h-3 w-3 animate-pulse rounded-full bg-sky-500" />
+              Memperbarui riwayat stok keluar...
+            </div>
+          )}
 
           {products.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-6 text-center text-sm text-slate-600">

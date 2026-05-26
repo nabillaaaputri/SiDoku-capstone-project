@@ -134,7 +134,6 @@ const syncLegacySettingsFromFrontend = async (
       ownerName: preferredStoreName,
       email: profile.email,
       phoneNumber: profile.phoneNumber || '+62 812 3456 7890',
-      profileImage: profile.profileImage || '',
     }),
     apiClient.put<ApiResponse<StoreAccountResponseData>>('/settings/store-account', {
       storeName: preferredStoreName,

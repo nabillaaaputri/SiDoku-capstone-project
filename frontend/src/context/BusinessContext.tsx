@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import axios from "axios";
 import apiClient from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -11,6 +12,8 @@ import {
   DailySalesRecapSummary,
   DailySalesRecapDetail,
 } from "@/types";
+
+const STOCK_OUT_ENDPOINTS = ["/stocks-out", "/stock-out"];
 
 interface BackendResponse<T> {
   status: string;
@@ -184,6 +187,32 @@ const toApiDate = (date: Date) => {
   return localDate.toISOString().split("T")[0];
 };
 
+const isNotFoundError = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  return error.response?.status === 404;
+};
+
+const requestStockOut = async <T,>(request: (path: string) => Promise<T>) => {
+  let lastError: unknown = null;
+
+  for (const endpoint of STOCK_OUT_ENDPOINTS) {
+    try {
+      return await request(endpoint);
+    } catch (error) {
+      lastError = error;
+
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 const getStockStatus = (stock: number, minimumStock: number): "low" | "safe" => {
   return stock <= minimumStock ? "low" : "safe";
 };
@@ -316,7 +345,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
         apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
         apiClient.get<BackendResponse<BackendStockIn[]>>("/stocks-in"),
-        apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>("/stocks-out"),
+        requestStockOut((endpoint) => apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>(endpoint)),
       ]);
 
       if (productsResult.status === "fulfilled") {
@@ -481,12 +510,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
-    const response = await apiClient.post<BackendResponse<BackendStockOut>>("/stocks-out", {
+    const response = await requestStockOut((endpoint) => apiClient.post<BackendResponse<BackendStockOut>>(endpoint, {
       productId: stockOut.productId,
       quantity: stockOut.quantity,
       date: toApiDateTime(stockOut.date),
       note: stockOut.notes || undefined,
-    });
+    }));
 
     const mappedStockOut = mapStockOutResponse(response.data.data);
     setStockOuts((currentStockOuts) => [...currentStockOuts, mappedStockOut]);
@@ -530,7 +559,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const deleteStockOut = async (id: string) => {
     const stockOut = stockOuts.find((item) => item.id === id);
-    await apiClient.delete(`/stocks-out/${id}`);
+    await requestStockOut((endpoint) => apiClient.delete(`${endpoint}/${id}`));
 
     if (stockOut) {
       setProducts((currentProducts) =>
