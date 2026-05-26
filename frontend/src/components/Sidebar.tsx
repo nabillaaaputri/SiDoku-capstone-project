@@ -24,11 +24,27 @@ const menuItems = [
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+export default function Sidebar({
+  isOpen = true,
+  onClose,
+  isCollapsed: externalCollapsed,
+  onToggleCollapse,
+}: SidebarProps) {
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+
+  // Gunakan state eksternal jika ada (supaya layout parent bisa reaktif)
+  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+
+  const handleToggleCollapse = () => {
+    const next = !isCollapsed;
+    setInternalCollapsed(next);
+    onToggleCollapse?.(next);
+  };
 
   const renderMenuItem = (
     item: (typeof menuItems)[number],
@@ -44,16 +60,18 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         to={item.href}
         title={isCompact ? item.label : undefined}
         onClick={onClick}
-        className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 ${isActive
+        className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 ${
+          isActive
             ? "bg-[linear-gradient(135deg,_rgba(29,78,216,0.12),_rgba(56,189,248,0.10))] text-blue-700 shadow-sm ring-1 ring-blue-100"
             : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-          } ${isCompact ? "justify-center" : ""}`}
+        } ${isCompact ? "justify-center" : ""}`}
       >
         <span
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${isActive
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+            isActive
               ? "border-blue-200 bg-white text-blue-600 shadow-sm"
               : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-slate-300 group-hover:bg-white"
-            }`}
+          }`}
         >
           <IconComponent size={19} className="flex-shrink-0" />
         </span>
@@ -70,21 +88,29 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop Sidebar - Collapsible (always visible on desktop) */}
+      {/* =============================================
+          Desktop Sidebar — FIXED (tidak ikut scroll)
+          ============================================= */}
       <aside
-  className={`hidden md:sticky md:top-[88px] md:flex md:h-[calc(100vh-88px)] md:flex-col md:self-start md:overflow-y-auto flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${
-    isCollapsed ? "w-16" : "w-56"
-  }`}
->
+        className={`hidden md:fixed md:top-[88px] md:left-0 md:flex md:h-[calc(100vh-88px)] md:flex-col md:overflow-y-auto z-30 flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${
+          isCollapsed ? "w-16" : "w-56"
+        }`}
+      >
         <div className="border-b border-slate-200/80 px-4 py-4 flex items-center justify-between">
-          {!isCollapsed && <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Menu</span>}
+          {!isCollapsed && (
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              Menu
+            </span>
+          )}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700 transition ${isCollapsed ? 'mx-auto' : ''}`}
+            onClick={handleToggleCollapse}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700 transition ${
+              isCollapsed ? "mx-auto" : ""
+            }`}
             aria-label="Toggle sidebar"
           >
             {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          aside</button>
+          </button>
         </div>
 
         {/* Menu Items */}
@@ -93,18 +119,26 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </nav>
       </aside>
 
-      {/* Mobile Sidebar (Drawer) - only visible when isOpen is true */}
+      {/* =============================================
+          Mobile Sidebar (Drawer)
+          ============================================= */}
       {isOpen && (
         <div className="md:hidden fixed left-0 top-0 h-full w-[78vw] max-w-[288px] bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 flex flex-col shadow-[16px_0_40px_rgba(15,23,42,0.18)]">
           <div className="border-b border-slate-200/80 p-4">
             <div className="rounded-3xl bg-[linear-gradient(135deg,_rgba(29,78,216,0.08),_rgba(56,189,248,0.12))] p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-700">SiDoku</p>
-              <p className="mt-1 text-base font-semibold text-slate-900">Business dashboard</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-700">
+                SiDoku
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-900">
+                Business dashboard
+              </p>
               <p className="mt-0.5 text-xs text-slate-500">Menu navigasi cepat</p>
             </div>
 
             <div className="mt-4 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Navigasi</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Navigasi
+              </span>
               <button
                 onClick={onClose}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700"
