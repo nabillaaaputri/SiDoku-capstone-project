@@ -143,13 +143,7 @@ export default function Dashboard() {
                     Pantau ringkasan usaha, insight penting, stok menipis, dan tren performa dalam satu tampilan.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  {!hasProducts && (
-                    <Badge className="rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 text-xs font-semibold shadow-sm">
-                      Data Contoh
-                    </Badge>
-                  )}
-                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:justify-end">

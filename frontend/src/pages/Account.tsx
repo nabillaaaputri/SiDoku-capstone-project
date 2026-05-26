@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,7 @@ interface ProfileData {
 export default function Account() {
   const { toast } = useToast();
   const { user, refreshUser } = useAuth();
+  const profileImageInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
   );
@@ -36,6 +37,7 @@ export default function Account() {
     shopDescription: "Toko online yang menjual berbagai produk berkualitas",
     profileImage: "https://example.com/profile.png",
   });
+  const [profileImagePreview, setProfileImagePreview] = useState(formData.profileImage);
 
   // Update form data when user changes
   useEffect(() => {
@@ -48,6 +50,10 @@ export default function Account() {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    setProfileImagePreview(formData.profileImage);
+  }, [formData.profileImage]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -65,6 +71,26 @@ export default function Account() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (!result) {
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, profileImage: result }));
+      setProfileImagePreview(result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveProfile = async () => {
@@ -210,27 +236,50 @@ export default function Account() {
 
             {/* Profile Picture Section */}
             <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white shadow-md">
-                {initials}
-              </div>
+              <button
+                type="button"
+                onClick={() => profileImageInputRef.current?.click()}
+                className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white shadow-md"
+              >
+                {profileImagePreview ? (
+                  <img
+                    src={profileImagePreview}
+                    alt="Foto profil"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-slate-900/0 text-xs font-semibold text-white opacity-0 transition group-hover:bg-slate-900/35 group-hover:opacity-100">
+                  Ubah
+                </span>
+              </button>
               <div className="space-y-1.5">
-                {isEditing ? (
+                <p className="text-sm font-semibold text-slate-900">{formData.ownerName}</p>
+                <p className="text-xs text-slate-500">
+                  Gunakan foto yang jelas agar profil mudah dikenali.
+                </p>
+                {isEditing && (
                   <Button
                     type="button"
                     variant="outline"
                     className="h-9 rounded-lg border-slate-200 px-3 text-sm"
+                    onClick={() => profileImageInputRef.current?.click()}
                   >
                     <Camera size={14} className="mr-1.5" />
                     Ubah Foto
                   </Button>
-                ) : (
-                  <p className="text-sm font-semibold text-slate-900">{formData.ownerName}</p>
                 )}
-                <p className="text-xs text-slate-500">
-                  Gunakan foto yang jelas agar profil mudah dikenali.
-                </p>
               </div>
             </div>
+
+            <input
+              ref={profileImageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfileImageSelect}
+              className="hidden"
+            />
 
             {/* Form Fields */}
             <div className="space-y-4">
@@ -272,6 +321,21 @@ export default function Account() {
                   disabled={!isEditing}
                   className={inputClass}
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Foto Profil / Warung
+                </label>
+                <input
+                  type="text"
+                  value={formData.profileImage}
+                  readOnly
+                  className={inputClass}
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  Upload foto akan disimpan ke backend sebagai data gambar.
+                </p>
               </div>
             </div>
 

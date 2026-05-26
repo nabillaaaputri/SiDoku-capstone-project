@@ -30,7 +30,9 @@ export default function Login() {
         description: "Selamat datang kembali 👋",
       });
 
-      navigate("/dashboard");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 50);
     } catch (error) {
       console.error("Login gagal:", error);
 

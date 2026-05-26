@@ -72,7 +72,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     <>
       {/* Desktop Sidebar - Collapsible (always visible on desktop) */}
       <aside
-        className={`hidden md:flex md:flex-col flex-shrink-0 md:sticky md:top-[73px] md:h-[calc(100vh-73px)] transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${isCollapsed ? "w-16" : "w-56"
+        className={`hidden md:flex md:flex-col flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${isCollapsed ? "w-16" : "w-56"
           }`}
       >
         <div className="border-b border-slate-200/80 px-4 py-4 flex items-center justify-between">
