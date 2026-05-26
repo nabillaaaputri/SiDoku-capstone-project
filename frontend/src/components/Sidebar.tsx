@@ -24,27 +24,11 @@ const menuItems = [
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({
-  isOpen = true,
-  onClose,
-  isCollapsed: externalCollapsed,
-  onToggleCollapse,
-}: SidebarProps) {
+export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const location = useLocation();
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-
-  // Gunakan state eksternal jika ada (supaya layout parent bisa reaktif)
-  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
-
-  const handleToggleCollapse = () => {
-    const next = !isCollapsed;
-    setInternalCollapsed(next);
-    onToggleCollapse?.(next);
-  };
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const renderMenuItem = (
     item: (typeof menuItems)[number],
@@ -89,12 +73,21 @@ export default function Sidebar({
   return (
     <>
       {/* =============================================
-          Desktop Sidebar — FIXED (tidak ikut scroll)
+          Desktop Sidebar
+          - sticky + self-start supaya ikut posisi
+            scroll relatif terhadap flex container,
+            bukan terhadap halaman
           ============================================= */}
       <aside
-        className={`hidden md:fixed md:top-[88px] md:left-0 md:flex md:h-[calc(100vh-88px)] md:flex-col md:overflow-y-auto z-30 flex-shrink-0 transition-all duration-300 border-r border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)] ${
-          isCollapsed ? "w-16" : "w-56"
-        }`}
+        className={`
+          hidden md:flex md:flex-col flex-shrink-0
+          sticky top-[73px] self-start
+          h-[calc(100vh-73px)] overflow-y-auto
+          border-r border-slate-200/80 bg-white/90
+          backdrop-blur-xl shadow-[8px_0_30px_rgba(15,23,42,0.04)]
+          transition-all duration-300
+          ${isCollapsed ? "w-16" : "w-56"}
+        `}
       >
         <div className="border-b border-slate-200/80 px-4 py-4 flex items-center justify-between">
           {!isCollapsed && (
@@ -103,7 +96,7 @@ export default function Sidebar({
             </span>
           )}
           <button
-            onClick={handleToggleCollapse}
+            onClick={() => setIsCollapsed(!isCollapsed)}
             className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700 transition ${
               isCollapsed ? "mx-auto" : ""
             }`}

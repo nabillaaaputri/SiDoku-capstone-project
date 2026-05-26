@@ -9,9 +9,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({
-  children,
-}: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -21,15 +19,15 @@ export default function DashboardLayout({
   const { user } = useAuth();
 
   const displayName = getPreferredUserName(user);
-  const avatarInitials = displayName
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const avatarInitials =
+    displayName
+      .split(" ")
+      .map((part) => part[0])
+      .filter(Boolean)
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
-  // HANDLE LOGOUT
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -47,16 +45,13 @@ export default function DashboardLayout({
         setIsProfileMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_transparent_26%),linear-gradient(180deg,_#f8fbff_0%,_#f5f8fc_48%,_#eef4fb_100%)] flex flex-col text-slate-900">
-      
+
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[0_8px_24px_rgba(15,23,42,0.035)] overflow-visible">
         <nav className="w-full px-3 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4">
@@ -64,7 +59,7 @@ export default function DashboardLayout({
           {/* Left */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 min-w-0">
 
-            {/* Hamburger Menu */}
+            {/* Hamburger — mobile only */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="md:hidden inline-flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-blue-200 hover:text-blue-700 hover:bg-blue-50"
@@ -87,21 +82,20 @@ export default function DashboardLayout({
 
           {/* Right */}
           <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm justify-end min-w-0">
-
             <div className="relative flex-shrink-0 overflow-visible" ref={profileMenuRef}>
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm hover:border-blue-200 hover:shadow-md transition"
               >
                 <div className="h-9 w-9 rounded-full bg-[linear-gradient(135deg,_#1d4ed8,_#60a5fa)] flex items-center justify-center text-white shadow-inner shadow-blue-500/30">
-                    <span className="text-sm font-black tracking-wide">{avatarInitials}</span>
+                  <span className="text-sm font-black tracking-wide">{avatarInitials}</span>
                 </div>
                 <div className="hidden lg:block text-left leading-tight min-w-0">
                   <p className="font-semibold text-slate-900 truncate">{displayName}</p>
-                    <p className="text-xs text-slate-500 truncate flex items-center gap-1">
-                      <Store size={12} />
-                      {user?.email || "Akun aktif"}
-                    </p>
+                  <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                    <Store size={12} />
+                    {user?.email || "Akun aktif"}
+                  </p>
                 </div>
                 <ChevronDown size={15} className="text-slate-400 hidden sm:block" />
               </button>
@@ -117,8 +111,6 @@ export default function DashboardLayout({
                       {user?.email || "Akun aktif"}
                     </p>
                   </div>
-
-                  {/* Edit Profile */}
                   <Link
                     to="/account"
                     className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
@@ -127,8 +119,6 @@ export default function DashboardLayout({
                     <Settings size={16} className="text-blue-600" />
                     Edit Profil
                   </Link>
-
-                  {/* Logout */}
                   <button
                     onClick={() => {
                       setIsProfileMenuOpen(false);
@@ -154,8 +144,10 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Main Content */}
-      <div className="flex flex-1 w-full overflow-x-hidden">
+      {/* Body: sidebar + konten
+          PENTING: tidak boleh ada overflow-hidden di sini,
+          supaya sticky pada sidebar bisa bekerja dengan benar */}
+      <div className="flex flex-1 w-full">
 
         {/* Sidebar */}
         <Sidebar
@@ -163,8 +155,8 @@ export default function DashboardLayout({
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Content */}
-        <main className="flex-1 w-full px-3 py-4 sm:p-4 md:p-6 overflow-x-hidden">
+        {/* Konten utama — overflow-x-hidden hanya di sini, bukan di parent */}
+        <main className="flex-1 min-w-0 px-3 py-4 sm:p-4 md:p-6 overflow-x-hidden">
           <div className="mx-auto w-full max-w-[1220px] space-y-4 sm:space-y-5">
             {children}
           </div>
