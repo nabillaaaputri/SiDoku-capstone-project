@@ -32,11 +32,16 @@ interface ProfileResponseData {
   id: string;
   ownerName: string;
   email: string;
+  phoneNumber?: string;
+  profileImage?: string;
 }
 
 interface StoreAccountResponseData {
   id: string;
   storeName: string;
+  storeCategory?: string;
+  storeAddress?: string;
+  storeDescription?: string;
 }
 
 export interface CurrentUser {
@@ -56,6 +61,93 @@ export const getPreferredUserName = (user?: Pick<CurrentUser, 'storeName' | 'nam
 
 const ACCESS_TOKEN_KEY = 'authToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
+const LAST_REGISTERED_STORE_KEY = 'sidokuLastRegisteredStore';
+const LEGACY_SETTINGS_VALUES = new Set(['Pirak', 'Peara Store', 'pearastore@gmail.com']);
+
+interface StoredRegisteredStore {
+  email: string;
+  storeName: string;
+}
+
+const getStoredRegisteredStore = (email: string) => {
+  try {
+    const raw = localStorage.getItem(LAST_REGISTERED_STORE_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as StoredRegisteredStore;
+
+    if (!parsed?.email || parsed.email.toLowerCase() !== email.toLowerCase()) {
+      return null;
+    }
+
+    const storeName = parsed.storeName?.trim();
+
+    return storeName ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const setStoredRegisteredStore = (email: string, storeName: string) => {
+  localStorage.setItem(
+    LAST_REGISTERED_STORE_KEY,
+    JSON.stringify({ email, storeName }),
+  );
+};
+
+const clearStoredRegisteredStore = (email: string) => {
+  const stored = getStoredRegisteredStore(email);
+
+  if (stored) {
+    localStorage.removeItem(LAST_REGISTERED_STORE_KEY);
+  }
+};
+
+const isLegacySettingValue = (value?: string | null) => {
+  const normalizedValue = value?.trim();
+
+  return !!normalizedValue && LEGACY_SETTINGS_VALUES.has(normalizedValue);
+};
+
+const syncLegacySettingsFromFrontend = async (
+  profile: ProfileResponseData,
+  storeAccount: StoreAccountResponseData,
+) => {
+  const storedRegisteredStore = getStoredRegisteredStore(profile.email);
+  const emailPrefix = profile.email.split('@')[0]?.trim();
+  const preferredStoreName = storedRegisteredStore?.storeName || emailPrefix || profile.ownerName || storeAccount.storeName || 'User';
+  const needsSync = (
+    isLegacySettingValue(profile.ownerName) ||
+    isLegacySettingValue(profile.email) ||
+    isLegacySettingValue(storeAccount.storeName)
+  );
+
+  if (!needsSync && profile.ownerName?.trim() === preferredStoreName && storeAccount.storeName?.trim() === preferredStoreName) {
+    return preferredStoreName;
+  }
+
+  await Promise.all([
+    apiClient.put<ApiResponse<ProfileResponseData>>('/settings/profile', {
+      ownerName: preferredStoreName,
+      email: profile.email,
+      phoneNumber: profile.phoneNumber || '+62 812 3456 7890',
+      profileImage: profile.profileImage || '',
+    }),
+    apiClient.put<ApiResponse<StoreAccountResponseData>>('/settings/store-account', {
+      storeName: preferredStoreName,
+      storeCategory: storeAccount.storeCategory || 'Grosir',
+      storeAddress: storeAccount.storeAddress || 'Jl. Danau Cikur 17, No. 15',
+      storeDescription: storeAccount.storeDescription || 'Toko online yang menjual berbagai produk berkualitas dan original.',
+    }),
+  ]);
+
+  clearStoredRegisteredStore(profile.email);
+
+  return preferredStoreName;
+};
 
 const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
   if (axios.isAxiosError(error)) {
@@ -104,6 +196,8 @@ export const authService = {
       '/auth/register',
       credentials,
     );
+
+    setStoredRegisteredStore(credentials.email, credentials.storeName);
 
     return response.data;
   },
@@ -182,12 +276,13 @@ export const authService = {
 
       const profile = profileResponse.data.data;
       const storeAccount = storeAccountResponse.data.data;
+      const normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
 
       return {
         id: profile.id,
         email: profile.email,
-        name: profile.ownerName || profile.email.split('@')[0] || 'User',
-        storeName: storeAccount.storeName,
+        name: normalizedStoreName || profile.ownerName || profile.email.split('@')[0] || 'User',
+        storeName: normalizedStoreName || storeAccount.storeName,
       };
     } catch (error) {
       console.error('Get current user error:', error);
