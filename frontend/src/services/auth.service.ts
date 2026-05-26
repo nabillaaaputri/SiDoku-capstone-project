@@ -44,6 +44,23 @@ interface StoreAccountResponseData {
   storeDescription?: string;
 }
 
+const FRONTEND_PROFILE_IMAGE_PLACEHOLDER = 'frontend-preview';
+
+const getSafeProfileImagePayload = (profileImage?: string | null) => {
+  const normalized = profileImage?.trim();
+
+  if (!normalized) {
+    return FRONTEND_PROFILE_IMAGE_PLACEHOLDER;
+  }
+
+  // Prevent sending large local data URLs to backend while keeping schema compatibility.
+  if (normalized.startsWith('data:image/')) {
+    return FRONTEND_PROFILE_IMAGE_PLACEHOLDER;
+  }
+
+  return normalized;
+};
+
 export interface CurrentUser {
   id: string;
   email: string;
@@ -134,6 +151,7 @@ const syncLegacySettingsFromFrontend = async (
       ownerName: preferredStoreName,
       email: profile.email,
       phoneNumber: profile.phoneNumber || '+62 812 3456 7890',
+      profileImage: getSafeProfileImagePayload(profile.profileImage),
     }),
     apiClient.put<ApiResponse<StoreAccountResponseData>>('/settings/store-account', {
       storeName: preferredStoreName,
@@ -206,9 +224,13 @@ export const authService = {
       ownerName: string;
       email: string;
       phoneNumber: string;
+      profileImage?: string;
     },
   ): Promise<ApiResponse<ProfileResponseData>> => {
-    const response = await apiClient.put<ApiResponse<ProfileResponseData>>('/settings/profile', payload);
+    const response = await apiClient.put<ApiResponse<ProfileResponseData>>('/settings/profile', {
+      ...payload,
+      profileImage: getSafeProfileImagePayload(payload.profileImage),
+    });
 
     return response.data;
   },

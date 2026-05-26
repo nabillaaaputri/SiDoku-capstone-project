@@ -120,12 +120,11 @@ export default function Account() {
 
     try {
       if (activeTab === "profile") {
-        const { profileImage: _profileImage, ...profilePayload } = formData;
-
         await authService.updateProfile({
-          ownerName: profilePayload.ownerName,
-          email: profilePayload.email,
-          phoneNumber: profilePayload.phone,
+          ownerName: formData.ownerName,
+          email: formData.email,
+          phoneNumber: formData.phone,
+          profileImage: formData.profileImage,
         });
       }
 
@@ -350,12 +349,11 @@ export default function Account() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Foto Profil / Warung
                 </label>
-                <input
-                  type="text"
-                  value={formData.profileImage}
-                  readOnly
-                  className={inputClass}
-                />
+                <div className="flex h-11 items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                  {formData.profileImage?.startsWith("data:image/")
+                    ? "Foto lokal terpilih (tidak ditampilkan sebagai teks base64)."
+                    : formData.profileImage || "Belum ada foto"}
+                </div>
                 <p className="mt-2 text-xs text-slate-500">
                   Foto hanya dipakai sebagai preview sementara di frontend.
                 </p>
