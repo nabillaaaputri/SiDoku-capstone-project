@@ -2,16 +2,18 @@ import Layout from "@/components/layout/Layout";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { authService } from "@/services/auth.service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { toast } = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -23,13 +25,20 @@ export default function Login() {
     try {
       await login(email, password);
 
-      alert("Login berhasil ✅");
+      toast({
+        title: "Login berhasil!",
+        description: "Selamat datang kembali 👋",
+      });
 
       navigate("/dashboard");
     } catch (error) {
       console.error("Login gagal:", error);
 
-      alert(authService.getErrorMessage(error, "Email atau password salah ❌"));
+      toast({
+        title: "Login gagal",
+        description: "Periksa email dan password.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -84,14 +93,24 @@ export default function Login() {
                   Kata Sandi
                 </label>
 
-                <input
-                  type="password"
-                  placeholder="Masukkan kata sandi"
-                  className="w-full border border-slate-300 bg-white px-3.5 py-3 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Masukkan kata sandi"
+                    className="w-full border border-slate-300 bg-white px-3.5 py-3 pr-11 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               {/* Button */}

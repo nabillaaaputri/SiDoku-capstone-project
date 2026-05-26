@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Clock3, MoreVertical, Package, Plus, Trash2, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
@@ -31,8 +32,10 @@ const getLocalDateString = () => {
 export default function StockIn() {
   const { products, stockIns, addStockIn, deleteStockIn } = useBusinessContext();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
+  const [isNoProductDialogOpen, setIsNoProductDialogOpen] = useState(false);
   const [historyProductQuery, setHistoryProductQuery] = useState("");
   const [historySelectedProductId, setHistorySelectedProductId] = useState<string>("");
   const [showHistoryProductDropdown, setShowHistoryProductDropdown] = useState(false);
@@ -272,9 +275,15 @@ export default function StockIn() {
             </div>
 
             <Button
-              onClick={() => setIsStockInModalOpen(true)}
+              onClick={() => {
+                if (products.length === 0) {
+                  setIsNoProductDialogOpen(true);
+                  return;
+                }
+
+                setIsStockInModalOpen(true);
+              }}
               className="h-11 w-full rounded-xl bg-blue-600 px-4 text-white shadow-sm hover:bg-blue-700 sm:w-auto"
-              disabled={products.length === 0}
             >
               <Plus size={18} />
               Catat Stok Masuk
@@ -613,6 +622,37 @@ export default function StockIn() {
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isNoProductDialogOpen} onOpenChange={setIsNoProductDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Belum ada produk</DialogTitle>
+            <DialogDescription>
+              Belum ada produk. Silakan tambahkan produk terlebih dahulu sebelum mencatat stok masuk.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsNoProductDialogOpen(false)}
+              className="rounded-xl"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsNoProductDialogOpen(false);
+                navigate("/products");
+              }}
+              className="rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Tambah Produk
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

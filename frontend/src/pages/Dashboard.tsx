@@ -116,6 +116,8 @@ export default function Dashboard() {
     profit: 0,
     roi: 0,
   };
+  const isProfitNegative = financialSummary.profit < 0;
+  const isRoiNegative = financialSummary.roi < 0;
 
   // Get low stock products from actual data (max 3)
   const lowStockProducts = products.filter(p => p.stock <= p.minimumStock).slice(0, 3);
@@ -229,37 +231,37 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]">
-              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]" />
+            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"}`}>
+              <div className={`absolute inset-x-0 top-0 h-1 ${isProfitNegative ? "bg-[linear-gradient(90deg,_#f59e0b,_#ea580c)]" : "bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-600/80">Keuntungan</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.profit)}</p>
+                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
+                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>{formatRupiahCompact(financialSummary.profit)}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-sky-100">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
                   <Package size={22} />
                 </div>
               </div>
-              <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-sky-100/80">
-                <div className="h-full w-[66%] rounded-full bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]" />
+              <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
+                <div className={`h-full rounded-full ${isProfitNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[66%] bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]">
-              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]" />
+            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"}`}>
+              <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-600/80">Tingkat Keuntungan</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
+                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
+                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-cyan-100">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
                   <ShieldAlert size={22} />
                 </div>
               </div>
-              <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-cyan-100/80">
-                <div className="h-full w-[88%] rounded-full bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]" />
+              <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
+                <div className={`h-full rounded-full ${isRoiNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[88%] bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
               </div>
             </div>
             </div>

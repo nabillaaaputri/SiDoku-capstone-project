@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { authService } from "@/services/auth.service";
+import { authService, getPreferredUserName } from "@/services/auth.service";
 import { Camera, Lock, Shield, Store, User } from "lucide-react";
 
 interface ProfileData {
@@ -25,11 +25,12 @@ export default function Account() {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const displayName = getPreferredUserName(user);
   const [formData, setFormData] = useState<ProfileData>({
-    ownerName: user?.name || "Nama Pemilik Toko",
+    ownerName: displayName,
     email: user?.email || "pemilik@sidoku.id",
     phone: "+62 812 3456 7890",
-    shopName: user?.storeName || "Toko Saya",
+    shopName: user?.storeName || displayName,
     shopCategory: "Retail",
     shopAddress: "Jl. Contoh No. 123, Jakarta",
     shopDescription: "Toko online yang menjual berbagai produk berkualitas",
@@ -41,9 +42,9 @@ export default function Account() {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        ownerName: user.name || prev.ownerName,
+        ownerName: getPreferredUserName(user),
         email: user.email || prev.email,
-        shopName: user.storeName || prev.shopName,
+        shopName: user.storeName || getPreferredUserName(user),
       }));
     }
   }, [user]);

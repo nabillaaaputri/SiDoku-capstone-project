@@ -1,17 +1,21 @@
 import Layout from "@/components/layout/Layout";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/ui/button";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { authService } from "@/services/auth.service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +25,11 @@ export default function Register() {
     }
 
     if (password !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak sama.");
+      toast({
+        title: "Registrasi gagal",
+        description: "Password dan konfirmasi password tidak sama.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -35,43 +43,23 @@ export default function Register() {
         confirmPassword,
       });
 
-      setIsSubmitted(true);
+      toast({
+        title: "Registrasi berhasil!",
+        description: "Silakan login untuk melanjutkan.",
+      });
+
+      navigate("/login");
     } catch (error) {
       console.error("Register gagal:", error);
-      alert(authService.getErrorMessage(error, "Gagal mendaftar. Coba lagi."));
+      toast({
+        title: "Registrasi gagal",
+        description: "Silakan coba lagi.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
-
-  if (isSubmitted) {
-    return (
-      <Layout showSkip={false}>
-        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4">
-          <div className="w-full max-w-md rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-[0_20px_45px_-35px_rgba(16,185,129,0.7)]">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mx-auto mb-5">
-              <CheckCircle2 className="w-9 h-9 text-emerald-600" />
-            </div>
-
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-3">
-              Akun Berhasil Dibuat
-            </h1>
-
-            <p className="text-slate-600 mb-6">
-              Silakan login untuk masuk ke aplikasi SiDoku.
-            </p>
-
-            <Link to="/login">
-              <Button className="w-full bg-slate-900 text-white py-3 font-bold hover:bg-slate-800 rounded-xl transition inline-flex items-center justify-center gap-2">
-                Ke Login
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout showSkip={false}>
@@ -139,14 +127,24 @@ export default function Register() {
                 Kata Sandi
               </label>
 
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-slate-300 bg-white px-4 py-3 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
-                placeholder="Buat kata sandi"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-slate-300 bg-white px-4 py-3 pr-11 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                  placeholder="Buat kata sandi"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {/* Confirm Password */}
@@ -155,14 +153,24 @@ export default function Register() {
                 Konfirmasi Kata Sandi
               </label>
 
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border border-slate-300 bg-white px-4 py-3 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
-                placeholder="Konfirmasi kata sandi"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full border border-slate-300 bg-white px-4 py-3 pr-11 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                  placeholder="Konfirmasi kata sandi"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                  aria-label={showConfirmPassword ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {/* Button */}
