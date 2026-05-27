@@ -11,6 +11,13 @@ import {
 } from '../services/aiService.js';
 
 const handleAiServiceError = (res, error) => {
+  console.error('AI FORECAST SERVICE ERROR:', {
+    aiServiceUrl: process.env.AI_SERVICE_URL,
+    message: error.message,
+    status: error.response?.status,
+    data: error.response?.data,
+  });
+
   const statusCode = error.response?.status || 502;
   const message =
     error.response?.data?.detail ||

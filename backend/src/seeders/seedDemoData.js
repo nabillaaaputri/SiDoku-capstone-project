@@ -18,8 +18,8 @@ const PRODUCTS = [
     unit: 'karung',
     purchasePrice: 65000,
     sellingPrice: 72000,
-    initialStock: 45,
-    minimumStock: 8,
+    initialStock: 55,
+    minimumStock: 10,
   },
   {
     id: 'demo-product-minyak-1l',
@@ -28,8 +28,8 @@ const PRODUCTS = [
     unit: 'botol',
     purchasePrice: 15500,
     sellingPrice: 18000,
-    initialStock: 80,
-    minimumStock: 15,
+    initialStock: 95,
+    minimumStock: 18,
   },
   {
     id: 'demo-product-mie-instan',
@@ -38,8 +38,8 @@ const PRODUCTS = [
     unit: 'pcs',
     purchasePrice: 2800,
     sellingPrice: 3500,
-    initialStock: 220,
-    minimumStock: 40,
+    initialStock: 260,
+    minimumStock: 45,
   },
   {
     id: 'demo-product-gula-1kg',
@@ -48,8 +48,8 @@ const PRODUCTS = [
     unit: 'pack',
     purchasePrice: 15000,
     sellingPrice: 17000,
-    initialStock: 65,
-    minimumStock: 12,
+    initialStock: 75,
+    minimumStock: 15,
   },
   {
     id: 'demo-product-air-mineral',
@@ -58,8 +58,8 @@ const PRODUCTS = [
     unit: 'botol',
     purchasePrice: 2500,
     sellingPrice: 3500,
-    initialStock: 160,
-    minimumStock: 30,
+    initialStock: 190,
+    minimumStock: 35,
   },
   {
     id: 'demo-product-telur-ayam',
@@ -68,26 +68,20 @@ const PRODUCTS = [
     unit: 'kg',
     purchasePrice: 26000,
     sellingPrice: 30000,
-    initialStock: 35,
-    minimumStock: 7,
+    initialStock: 45,
+    minimumStock: 8,
   },
 ];
 
-const EXPENSES = [
-  {
-    expenseName: 'Belanja stok sembako',
-    category: 'restock',
-    categoryLabel: 'Restock',
-    amount: 350000,
-    description: 'Pembelian stok sembako dari supplier.',
-  },
-  {
-    expenseName: 'Biaya listrik warung',
-    category: 'operational',
-    categoryLabel: 'Operasional',
-    amount: 75000,
-    description: 'Biaya operasional listrik warung.',
-  },
+const RESTOCK_EXPENSE = {
+  expenseName: 'Belanja stok sembako',
+  category: 'restock',
+  categoryLabel: 'Restock',
+  amount: 320000,
+  description: 'Pembelian stok sembako dari supplier.',
+};
+
+const DAILY_EXPENSES = [
   {
     expenseName: 'Biaya transport belanja',
     category: 'operational',
@@ -96,11 +90,25 @@ const EXPENSES = [
     description: 'Biaya transport untuk mengambil barang dagangan.',
   },
   {
+    expenseName: 'Biaya operasional harian',
+    category: 'operational',
+    categoryLabel: 'Operasional',
+    amount: 25000,
+    description: 'Biaya operasional harian warung.',
+  },
+  {
     expenseName: 'Perlengkapan warung',
     category: 'others',
     categoryLabel: 'Lainnya',
-    amount: 25000,
+    amount: 15000,
     description: 'Pembelian plastik, nota, dan perlengkapan kecil lainnya.',
+  },
+  {
+    expenseName: 'Biaya kebersihan dan kemasan',
+    category: 'others',
+    categoryLabel: 'Lainnya',
+    amount: 18000,
+    description: 'Biaya kebutuhan kebersihan dan kemasan sederhana.',
   },
 ];
 
@@ -123,18 +131,58 @@ const getMargin = (sellingPrice, purchasePrice) => {
 
 const getDailySoldQuantity = (productIndex, dayIndex) => {
   const baseSales = [2, 5, 14, 4, 10, 3][productIndex] || 4;
+
   const weeklyPattern = dayIndex % 7;
-  const weekendBonus = weeklyPattern === 5 || weeklyPattern === 6 ? 2 : 0;
-  const trend = Math.floor(dayIndex / 15);
+  const isWeekend = weeklyPattern === 5 || weeklyPattern === 6;
+
+  const weekendBonus = isWeekend
+    ? ([1, 3, 6, 2, 4, 1][productIndex] || 2)
+    : 0;
+
+  const dayOfMonth = dayIndex % 30;
+  const isMonthlyShoppingPeriod = dayOfMonth >= 24 || dayOfMonth <= 3;
+
+  const monthlyShoppingBonus = isMonthlyShoppingPeriod
+    ? ([1, 2, 4, 2, 3, 1][productIndex] || 1)
+    : 0;
+
+  const trend = Math.floor(dayIndex / 20);
   const variation = (dayIndex + productIndex) % 3;
 
-  return baseSales + weekendBonus + trend + variation;
+  return baseSales + weekendBonus + monthlyShoppingBonus + trend + variation;
 };
 
 const getWeeklyRestockQuantity = (productIndex) => {
-  const restockQuantities = [18, 35, 90, 25, 70, 16];
+  const restockQuantities = [22, 40, 110, 30, 85, 18];
 
   return restockQuantities[productIndex] || 30;
+};
+
+const getDailyExpense = (dayIndex) => {
+  const isWeeklyRestockDay = dayIndex % 7 === 0;
+
+  if (isWeeklyRestockDay) {
+    return RESTOCK_EXPENSE;
+  }
+
+  return DAILY_EXPENSES[dayIndex % DAILY_EXPENSES.length];
+};
+
+const getDailyExpenseAmount = (expense, dayIndex) => {
+  const weeklyPattern = dayIndex % 7;
+  const isWeekend = weeklyPattern === 5 || weeklyPattern === 6;
+  const weekendOperationalBonus = isWeekend ? 15000 : 0;
+
+  const dayOfMonth = dayIndex % 30;
+  const isMajorRestockPeriod = dayOfMonth === 0 || dayOfMonth === 15;
+
+  const restockBonus = expense.category === 'restock' && isMajorRestockPeriod
+    ? 120000
+    : 0;
+
+  const variation = (dayIndex % 5) * 5000;
+
+  return expense.amount + weekendOperationalBonus + restockBonus + variation;
 };
 
 const clearDemoData = async () => {
@@ -263,6 +311,7 @@ const seedStockMovements = async () => {
 
     for (let day = 59; day >= 0; day -= 1) {
       const date = getDateDaysAgo(day);
+      const dayIndex = 59 - day;
 
       if (day % 7 === 0) {
         const stockInQuantity = getWeeklyRestockQuantity(productIndex);
@@ -290,13 +339,13 @@ const seedStockMovements = async () => {
             stockInQuantity,
             product.unit,
             date,
-            'Seed restock mingguan untuk data historis AI warung retail.',
+            'Restock berkala warung retail untuk data historis AI.',
             currentStock,
           ],
         );
       }
 
-      const soldQuantity = getDailySoldQuantity(productIndex, 59 - day);
+      const soldQuantity = getDailySoldQuantity(productIndex, dayIndex);
       currentStock = Math.max(0, currentStock - soldQuantity);
 
       await query(
@@ -322,7 +371,7 @@ const seedStockMovements = async () => {
           product.unit,
           date,
           '15:00',
-          'Seed penjualan harian untuk data historis AI warung retail.',
+          'Penjualan harian warung retail untuk data historis AI.',
           currentStock,
         ],
       );
@@ -351,34 +400,33 @@ const seedStockMovements = async () => {
 const seedExpenses = async () => {
   for (let day = 59; day >= 0; day -= 1) {
     const date = getDateDaysAgo(day);
+    const dayIndex = 59 - day;
+    const expense = getDailyExpense(dayIndex);
+    const amount = getDailyExpenseAmount(expense, dayIndex);
 
-    if (day % 3 === 0) {
-      const expense = EXPENSES[day % EXPENSES.length];
-
-      await query(
-        `INSERT INTO expenses (
-          id,
-          user_id,
-          expense_name,
-          category,
-          category_label,
-          amount,
-          date,
-          description
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          randomUUID(),
-          DEMO_USER.id,
-          expense.expenseName,
-          expense.category,
-          expense.categoryLabel,
-          expense.amount + (day % 5) * 10000,
-          date,
-          expense.description,
-        ],
-      );
-    }
+    await query(
+      `INSERT INTO expenses (
+        id,
+        user_id,
+        expense_name,
+        category,
+        category_label,
+        amount,
+        date,
+        description
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        randomUUID(),
+        DEMO_USER.id,
+        expense.expenseName,
+        expense.category,
+        expense.categoryLabel,
+        amount,
+        date,
+        expense.description,
+      ],
+    );
   }
 };
 
@@ -396,7 +444,7 @@ const runSeeder = async () => {
     console.log('Creating 60 days stock movements...');
     await seedStockMovements();
 
-    console.log('Creating demo expenses...');
+    console.log('Creating 60 days daily expenses...');
     await seedExpenses();
 
     console.log('Seed demo AI data completed.');

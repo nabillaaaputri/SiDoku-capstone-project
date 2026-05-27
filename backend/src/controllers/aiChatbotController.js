@@ -16,6 +16,13 @@ import {
 const HISTORY_DAYS = 60;
 
 const handleAiServiceError = (res, error) => {
+  console.error('AI CHATBOT SERVICE ERROR:', {
+    aiServiceUrl: process.env.AI_SERVICE_URL,
+    message: error.message,
+    status: error.response?.status,
+    data: error.response?.data,
+  });
+
   const statusCode = error.response?.status || 502;
   const message =
     error.response?.data?.detail ||
