@@ -256,15 +256,3 @@ Hasil dari project ini meliputi:
 - preprocessing pipeline yang konsisten
 
 ---
-
-# 🔮 Future Development
-
-Pengembangan selanjutnya yang direncanakan:
-
-- machine learning modeling
-- time series forecasting
-- dashboard interaktif
-- deployment web application
-- integrasi backend dan frontend
-
----
