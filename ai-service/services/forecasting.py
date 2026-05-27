@@ -244,7 +244,10 @@ def _infer(window: np.ndarray, product_name: str) -> float:
     X_seq  = window_scaled[np.newaxis, ...]              # (1, 28, n_features)
     X_prod = np.array([[product_id]], dtype=np.float32)  # (1, 1)
 
-    raw_pred = _model.predict([X_seq, X_prod], verbose=0)  # (1, 1) — scaled log space
+    # Gunakan pemanggilan model langsung alih-alih .predict() untuk mencegah memory leak
+    # .predict() dirancang untuk iterasi batch besar dan membuat tf.data.Dataset baru tiap dipanggil.
+    raw_pred_tensor = _model([X_seq, X_prod], training=False)
+    raw_pred = raw_pred_tensor.numpy()
 
     # Two-stage inverse transform (matches README):
     #   1. inverse_transform: scaled space → log space
