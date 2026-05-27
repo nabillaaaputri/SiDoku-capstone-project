@@ -44,18 +44,11 @@ interface StoreAccountResponseData {
   storeDescription?: string;
 }
 
-const FRONTEND_PROFILE_IMAGE_PLACEHOLDER = 'frontend-preview';
-
 const getSafeProfileImagePayload = (profileImage?: string | null) => {
   const normalized = profileImage?.trim();
 
   if (!normalized) {
-    return FRONTEND_PROFILE_IMAGE_PLACEHOLDER;
-  }
-
-  // Prevent sending large local data URLs to backend while keeping schema compatibility.
-  if (normalized.startsWith('data:image/')) {
-    return FRONTEND_PROFILE_IMAGE_PLACEHOLDER;
+    return '';
   }
 
   return normalized;
@@ -66,14 +59,14 @@ export interface CurrentUser {
   email: string;
   name: string;
   storeName?: string;
+  profileImage?: string;
 }
 
 export const getPreferredUserName = (user?: Pick<CurrentUser, 'storeName' | 'name' | 'email'> | null) => {
   const storeName = user?.storeName?.trim();
   const name = user?.name?.trim();
-  const emailPrefix = user?.email?.split('@')[0]?.trim();
 
-  return storeName || name || emailPrefix || 'User';
+  return name || storeName || 'User';
 };
 
 const ACCESS_TOKEN_KEY = 'authToken';
@@ -134,8 +127,7 @@ const syncLegacySettingsFromFrontend = async (
   storeAccount: StoreAccountResponseData,
 ) => {
   const storedRegisteredStore = getStoredRegisteredStore(profile.email);
-  const emailPrefix = profile.email.split('@')[0]?.trim();
-  const preferredStoreName = storedRegisteredStore?.storeName || emailPrefix || profile.ownerName || storeAccount.storeName || 'User';
+  const preferredStoreName = storedRegisteredStore?.storeName || profile.ownerName || storeAccount.storeName || 'User';
   const needsSync = (
     isLegacySettingValue(profile.ownerName) ||
     isLegacySettingValue(profile.email) ||
@@ -301,8 +293,9 @@ export const authService = {
       return {
         id: profile.id,
         email: profile.email,
-        name: normalizedStoreName || profile.ownerName || profile.email.split('@')[0] || 'User',
+        name: normalizedStoreName || profile.ownerName || storeAccount.storeName || 'User',
         storeName: normalizedStoreName || storeAccount.storeName,
+        profileImage: profile.profileImage,
       };
     } catch (error) {
       console.error('Get current user error:', error);

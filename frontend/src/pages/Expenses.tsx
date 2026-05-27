@@ -3,6 +3,7 @@ import { CircleDollarSign, MoreVertical, Package, Plus, Trash2, Wallet, Zap, Mor
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
 import { useToast } from "@/hooks/use-toast";
+import { formatJakartaDate, formatJakartaTime, getJakartaDateInputValue } from "@/lib/timezone";
 import { Button } from "@/ui/button";
 import {
   Dialog,
@@ -36,10 +37,7 @@ const categoryLabels: Record<ExpenseCategory, string> = {
 };
 
 const getLocalDateString = () => {
-  const date = new Date();
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .split("T")[0];
+  return getJakartaDateInputValue();
 };
 
 export default function Expenses() {
@@ -345,17 +343,10 @@ export default function Expenses() {
                         <td className="px-5 py-4 align-top text-sm text-slate-600">
                           <div className="space-y-1">
                             <p className="font-semibold text-slate-900">
-                              {new Date(expense.date).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })}
+                              {formatJakartaDate(expense.date)}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {expense.createdAt ? new Date(expense.createdAt).toLocaleTimeString("id-ID", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }) : "-"}
+                              {expense.createdAt ? formatJakartaTime(expense.createdAt) : "-"}
                             </p>
                           </div>
                         </td>

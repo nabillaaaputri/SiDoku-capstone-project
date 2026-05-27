@@ -37,7 +37,7 @@ export default function Account() {
     shopCategory: "Retail",
     shopAddress: "Jl. Contoh No. 123, Jakarta",
     shopDescription: "Toko online yang menjual berbagai produk berkualitas",
-    profileImage: "https://example.com/profile.png",
+    profileImage: user?.profileImage || "",
   });
   const [profileImagePreview, setProfileImagePreview] = useState(formData.profileImage);
 
@@ -49,6 +49,7 @@ export default function Account() {
         ownerName: getPreferredUserName(user),
         email: user.email || prev.email,
         shopName: user.storeName || getPreferredUserName(user),
+        profileImage: user.profileImage || prev.profileImage,
       }));
     }
   }, [user]);
@@ -350,12 +351,10 @@ export default function Account() {
                   Foto Profil / Warung
                 </label>
                 <div className="flex h-11 items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
-                  {formData.profileImage?.startsWith("data:image/")
-                    ? "Foto lokal terpilih (tidak ditampilkan sebagai teks base64)."
-                    : formData.profileImage || "Belum ada foto"}
+                  {formData.profileImage ? "Foto profil tersimpan" : "Belum ada foto"}
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
-                  Foto hanya dipakai sebagai preview sementara di frontend.
+                  Foto akan dipreview di frontend dan disimpan ke pengaturan akun.
                 </p>
               </div>
             </div>

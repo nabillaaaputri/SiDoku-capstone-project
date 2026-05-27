@@ -3,6 +3,7 @@ import { Clock3, MoreVertical, Package, Plus, Trash2, TrendingDown } from "lucid
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
 import { useToast } from "@/hooks/use-toast";
+import { formatJakartaDate, formatJakartaTime, getJakartaDateInputValue } from "@/lib/timezone";
 import { Button } from "@/ui/button";
 import {
   Dialog,
@@ -23,10 +24,7 @@ import { Textarea } from "@/ui/textarea";
 import { useNavigate } from "react-router-dom";
 
 const getLocalDateString = () => {
-  const date = new Date();
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .split("T")[0];
+  return getJakartaDateInputValue();
 };
 
 export default function StockOut() {
@@ -446,17 +444,10 @@ export default function StockOut() {
                           <td className="px-5 py-4 align-top text-sm text-slate-600">
                             <div className="space-y-1">
                               <p className="font-semibold text-slate-900">
-                                {new Date(item.createdAt).toLocaleDateString("id-ID", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                })}
+                                {formatJakartaDate(item.createdAt)}
                               </p>
                               <p className="text-xs text-slate-500">
-                                {new Date(item.createdAt).toLocaleTimeString("id-ID", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {formatJakartaTime(item.createdAt)}
                               </p>
                             </div>
                           </td>

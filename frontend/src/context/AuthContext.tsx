@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   storeName?: string;
+  profileImage?: string;
 }
 
 interface AuthContextType {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({
       id: '',
       email,
-      name: email.split('@')[0] || 'User',
+      name: 'User',
     });
   };
 

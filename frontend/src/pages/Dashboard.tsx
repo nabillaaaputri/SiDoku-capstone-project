@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Insights } from "@/components";
 import SalesChart from "@/components/SalesChart";
-import ForecastTrendChart from "@/components/ForecastTrendChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
@@ -21,6 +19,9 @@ import {
   ShieldAlert,
   ChevronRight,
 } from "lucide-react";
+
+const Insights = lazy(() => import("@/components/Insights"));
+const ForecastTrendChart = lazy(() => import("@/components/ForecastTrendChart"));
 
 interface ApiResponse<T> {
   status: string;
@@ -276,6 +277,42 @@ export default function Dashboard() {
   const hasLowStock = lowStockProducts.length > 0;
   const hasProducts = products.length > 0;
 
+  const aiCardSkeleton = (
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="h-4 w-32 rounded-full bg-slate-100 animate-pulse" />
+                <div className="h-3 w-full rounded-full bg-slate-100 animate-pulse" />
+                <div className="h-3 w-4/5 rounded-full bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-4 shadow-sm mt-4">
+        <div className="h-5 w-40 rounded-full bg-slate-100 animate-pulse mb-3.5" />
+        <div className="flex flex-col gap-2.5">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="h-12 rounded-[14px] border border-blue-50 bg-white animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const forecastSkeleton = (
+    <div className="section-shell p-4 sm:p-4.5 lg:p-5">
+      <div className="h-5 w-64 rounded-full bg-slate-100 animate-pulse" />
+      <div className="mt-3 h-4 w-96 max-w-full rounded-full bg-slate-100 animate-pulse" />
+      <div className="mt-4 h-[320px] rounded-[24px] border border-slate-200 bg-slate-50 animate-pulse" />
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-3 sm:space-y-3.5 w-full max-w-full overflow-x-hidden">
@@ -421,16 +458,20 @@ export default function Dashboard() {
               <p className="mt-1 text-sm text-slate-500">Saran yang lebih ringkas dan lebih cepat dipindai.</p>
             </div>
           </div>
-          <Insights />
+          <Suspense fallback={aiCardSkeleton}>
+            <Insights />
+          </Suspense>
         </section>
 
         <section className="space-y-2.5 sm:space-y-3 w-full">
-          <ForecastTrendChart
-            data={forecastData}
-            isLoading={isForecastLoading}
-            error={forecastError}
-            sourceLabel={topForecastProducts.map((product) => product.productName).join(", ")}
-          />
+          <Suspense fallback={forecastSkeleton}>
+            <ForecastTrendChart
+              data={forecastData}
+              isLoading={isForecastLoading}
+              error={forecastError}
+              sourceLabel={topForecastProducts.map((product) => product.productName).join(", ")}
+            />
+          </Suspense>
         </section>
 
         <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
