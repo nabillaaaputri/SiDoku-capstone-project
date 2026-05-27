@@ -325,7 +325,8 @@ export default function Expenses() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="overflow-x-auto">
+              {/* Desktop / tablet table */}
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full border-collapse bg-white">
                   <thead>
                     <tr className="border-b border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -342,37 +343,47 @@ export default function Expenses() {
                       <tr key={expense.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
                         <td className="px-5 py-4 align-top text-sm text-slate-600">
                           <div className="space-y-1">
-                            <p className="font-semibold text-slate-900">
-                              {formatJakartaDate(expense.date)}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {expense.createdAt ? formatJakartaTime(expense.createdAt) : "-"}
-                            </p>
+                            <p className="font-semibold text-slate-900">{formatJakartaDate(expense.date)}</p>
+                            <p className="text-xs text-slate-500">{expense.createdAt ? formatJakartaTime(expense.createdAt) : "-"}</p>
                           </div>
                         </td>
                         <td className="px-5 py-4 align-top">
                           <p className="font-semibold text-slate-900">{expense.name}</p>
                         </td>
                         <td className="px-5 py-4 align-top text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase ${categoryColors[expense.category]}`}
-                          >
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase ${categoryColors[expense.category]}`}>
                             {categoryLabels[expense.category]}
                           </span>
                         </td>
-                        <td className="px-5 py-4 align-top text-right text-sm font-bold text-slate-900">
-                          Rp {expense.amount.toLocaleString("id-ID")}
-                        </td>
-                        <td className="px-5 py-4 align-top text-sm text-slate-500">
-                          {expense.description || "-"}
-                        </td>
-                        <td className="px-5 py-4 align-top text-center">
-                          {renderHistoryActionMenu(expense.id)}
-                        </td>
+                        <td className="px-5 py-4 align-top text-right text-sm font-bold text-slate-900">Rp {expense.amount.toLocaleString("id-ID")}</td>
+                        <td className="px-5 py-4 align-top text-sm text-slate-500">{expense.description || "-"}</td>
+                        <td className="px-5 py-4 align-top text-center">{renderHistoryActionMenu(expense.id)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile / tablet stacked cards */}
+              <div className="lg:hidden space-y-2 p-3">
+                {filteredHistoryExpenses.map((expense) => (
+                  <div key={expense.id} className="rounded-xl border border-slate-100 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900">{expense.name}</p>
+                        <p className="text-xs text-slate-500">{formatJakartaDate(expense.date)} {expense.createdAt ? `• ${formatJakartaTime(expense.createdAt)}` : ''}</p>
+                        <div className="mt-2">
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase ${categoryColors[expense.category]}`}>{categoryLabels[expense.category]}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-slate-900">Rp {expense.amount.toLocaleString("id-ID")}</p>
+                        <div className="mt-1">{renderHistoryActionMenu(expense.id)}</div>
+                      </div>
+                    </div>
+                    {expense.description && <p className="mt-2 text-sm text-slate-500">{expense.description}</p>}
+                  </div>
+                ))}
               </div>
             </div>
           )}
