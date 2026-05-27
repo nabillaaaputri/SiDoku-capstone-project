@@ -208,71 +208,81 @@ export default function SalesRecap() {
         {/* Summary Cards */}
         {recap.isComplete && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="section-shell border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+            <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
+              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Total Penjualan</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-blue-700">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Total Penjualan</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalPenjualan)}
                   </p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">nilai penjualan harian</p>
                 </div>
-                <div className="rounded-2xl bg-blue-600/10 p-3 text-blue-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
                   <CircleDollarSign size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="section-shell border-rose-100 bg-gradient-to-br from-rose-50 to-white p-4">
+            <div className="group relative overflow-hidden rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)]">
+              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#fda4af,_#e11d48)]" />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Total HPP</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-rose-700">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-600/80">Total HPP</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalHPP)}
                   </p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">harga pokok penjualan</p>
                 </div>
-                <div className="rounded-2xl bg-rose-600/10 p-3 text-rose-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-rose-100">
                   <TrendingDown size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="section-shell border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+            <div className="group relative overflow-hidden rounded-[28px] border border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)]">
+              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#86efac,_#16a34a)]" />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Laba Kotor</p>
-                  <p className={`mt-2 text-2xl font-bold tracking-tight ${labaKotor >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600/80">Laba Kotor</p>
+                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaKotor >= 0 ? "text-slate-900" : "text-rose-700"}`}>
                     {formatIDR(labaKotor)}
                   </p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">sebelum pengeluaran</p>
                 </div>
-                <div className="rounded-2xl bg-emerald-600/10 p-3 text-emerald-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-emerald-100">
                   <TrendingUp size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="section-shell border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
+            <div className="group relative overflow-hidden rounded-[28px] border border-orange-100 bg-[linear-gradient(180deg,_#ffffff,_#fff7ed)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(249,115,22,0.14)]">
+              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#fdba74,_#f97316)]" />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Pengeluaran</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-orange-700">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-600/80">Pengeluaran</p>
+                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalPengeluaran)}
                   </p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
                 </div>
-                <div className="rounded-2xl bg-orange-600/10 p-3 text-orange-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(249,115,22,0.16),_rgba(251,146,60,0.1))] text-orange-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-orange-100">
                   <ShoppingCart size={22} />
                 </div>
               </div>
             </div>
 
-            <div className={`section-shell p-4 ${labaBersihIsNegative ? "border-rose-100 bg-gradient-to-br from-rose-50 to-white" : "border-emerald-100 bg-gradient-to-br from-emerald-50 to-white"}`}>
+            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${labaBersihIsNegative ? "border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)]" : "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)]"}`}>
+              <div className={`absolute inset-x-0 top-0 h-1 ${labaBersihIsNegative ? "bg-[linear-gradient(90deg,_#fda4af,_#e11d48)]" : "bg-[linear-gradient(90deg,_#86efac,_#16a34a)]"}`} />
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Laba Bersih</p>
-                  <p className={`mt-2 text-2xl font-bold tracking-tight ${labaBersihIsNegative ? "text-rose-700" : "text-emerald-700"}`}>
+                <div className="min-w-0">
+                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${labaBersihIsNegative ? "text-rose-600/80" : "text-emerald-600/80"}`}>Laba Bersih</p>
+                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaBersihIsNegative ? "text-rose-700" : "text-slate-900"}`}>
                     {labaBersihDisplay}
                   </p>
+                  <p className="mt-1.5 text-xs font-medium text-slate-500">setelah pengeluaran</p>
                 </div>
-                <div className={`rounded-2xl p-3 ${labaBersihIsNegative ? "bg-rose-600/10 text-rose-700" : "bg-emerald-600/10 text-emerald-700"}`}>
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${labaBersihIsNegative ? "bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 ring-rose-100" : "bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 ring-emerald-100"}`}>
                   <BarChart3 size={22} />
                 </div>
               </div>
