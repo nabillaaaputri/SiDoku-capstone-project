@@ -118,14 +118,13 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {isOpen && (
         <div className="md:hidden fixed left-0 top-0 h-full w-[78vw] max-w-[288px] bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 flex flex-col shadow-[16px_0_40px_rgba(15,23,42,0.18)]">
           <div className="border-b border-slate-200/80 p-4">
-            <div className="rounded-3xl bg-[linear-gradient(135deg,_rgba(29,78,216,0.08),_rgba(56,189,248,0.12))] p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-700">
+            <div className="p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
                 SiDoku
               </p>
               <p className="mt-1 text-base font-semibold text-slate-900">
                 Business dashboard
               </p>
-              {/* caption removed for cleaner mobile header */}
             </div>
 
             <div className="mt-4 flex items-center justify-between">
