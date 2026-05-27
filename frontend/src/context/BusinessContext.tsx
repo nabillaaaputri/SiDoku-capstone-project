@@ -12,6 +12,7 @@ import {
   DailySalesRecapSummary,
   DailySalesRecapDetail,
 } from "@/types";
+import { toSafeDate } from "@/lib/timezone";
 
 const STOCK_OUT_ENDPOINTS = ["/stocks-out", "/stock-out"];
 
@@ -158,7 +159,7 @@ const mapExpenseResponse = (expense: BackendExpense): Expense => ({
   name: expense.expenseName,
   amount: Number(expense.amount),
   category: mapBackendCategoryToUi(expense.category) as Expense["category"],
-  date: new Date(expense.date),
+  date: toSafeDate(expense.date) || new Date(),
   description: expense.description || undefined,
   createdAt: expense.created_at || expense.date,
 });
@@ -168,8 +169,8 @@ const mapStockInResponse = (stockIn: BackendStockIn): StockIn => ({
   productId: stockIn.productId,
   productName: stockIn.productName,
   quantity: Number(stockIn.quantity),
-  date: new Date(stockIn.date),
-  createdAt: new Date(stockIn.created_at || stockIn.date),
+  date: toSafeDate(stockIn.date) || new Date(),
+  createdAt: toSafeDate(stockIn.created_at || stockIn.date) || new Date(),
   notes: stockIn.note || undefined,
 });
 
@@ -178,8 +179,8 @@ const mapStockOutResponse = (stockOut: BackendStockOut): StockOut => ({
   productId: stockOut.productId,
   productName: stockOut.productName,
   quantity: Number(stockOut.quantity),
-  date: new Date(stockOut.date),
-  createdAt: new Date(stockOut.created_at || `${stockOut.date}T${stockOut.time || "00:00:00"}`),
+  date: toSafeDate(stockOut.date) || new Date(),
+  createdAt: toSafeDate(stockOut.created_at || `${stockOut.date}T${stockOut.time || "00:00:00"}`) || new Date(),
   notes: stockOut.note || undefined,
 });
 
@@ -453,7 +454,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const getSalesRecordsByDateRange = (startDate: Date, endDate: Date) => {
     return salesRecords.filter((record) => {
-      const recordDate = new Date(record.date);
+      const recordDate = toSafeDate(record.date);
+      if (!recordDate) {
+        return false;
+      }
       return recordDate >= startDate && recordDate <= endDate;
     });
   };
@@ -477,7 +481,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   const getExpensesByDateRange = (startDate: Date, endDate: Date) => {
     return expenses.filter((expense) => {
-      const expenseDate = new Date(expense.date);
+      const expenseDate = toSafeDate(expense.date);
+      if (!expenseDate) {
+        return false;
+      }
       return expenseDate >= startDate && expenseDate <= endDate;
     });
   };
@@ -583,11 +590,17 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   const getStockInByDate = (date: Date) => {
-    return stockIns.filter((stockIn) => new Date(stockIn.date).toDateString() === date.toDateString());
+    return stockIns.filter((stockIn) => {
+      const stockInDate = toSafeDate(stockIn.date);
+      return stockInDate ? stockInDate.toDateString() === date.toDateString() : false;
+    });
   };
 
   const getStockOutByDate = (date: Date) => {
-    return stockOuts.filter((stockOut) => new Date(stockOut.date).toDateString() === date.toDateString());
+    return stockOuts.filter((stockOut) => {
+      const stockOutDate = toSafeDate(stockOut.date);
+      return stockOutDate ? stockOutDate.toDateString() === date.toDateString() : false;
+    });
   };
 
   const getSummary = (startDate?: Date, endDate?: Date): BusinessSummary => {

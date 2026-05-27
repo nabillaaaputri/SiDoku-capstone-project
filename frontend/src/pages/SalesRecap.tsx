@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
 import { formatIDR } from "@/lib/utils";
+import { toSafeDate } from "@/lib/timezone";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 
@@ -24,19 +25,24 @@ export default function SalesRecap() {
   );
 
   const selectedDateLabel = useMemo(
-    () =>
-      new Date(selectedDate).toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }),
+    () => {
+      const safeDate = toSafeDate(selectedDate);
+
+      return safeDate
+        ? safeDate.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })
+        : "-";
+    },
     [selectedDate],
   );
 
   // Get recap for selected date
   const recap = useMemo(() => {
-    return getDailySalesRecap(new Date(selectedDate));
+    return getDailySalesRecap(toSafeDate(selectedDate) || new Date());
   }, [selectedDate, getDailySalesRecap]);
 
   // Filter details by product search
@@ -85,7 +91,8 @@ export default function SalesRecap() {
   const handleExportExcel = () => {
     if (!recap.isComplete || recap.details.length === 0) return;
 
-    const dateStr = new Date(recap.date).toLocaleDateString("id-ID", {
+    const safeRecapDate = toSafeDate(recap.date) || new Date();
+    const dateStr = safeRecapDate.toLocaleDateString("id-ID", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -94,7 +101,7 @@ export default function SalesRecap() {
     // Prepare data for export
     const exportData = [
       ["REKAP PENJUALAN", "", "", "", "", "", "", ""],
-      [`Tanggal: ${new Date(recap.date).toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`, "", "", "", "", "", "", ""],
+      [`Tanggal: ${safeRecapDate.toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`, "", "", "", "", "", "", ""],
       [],
       ["RINGKASAN"],
       ["Total Penjualan", totalPenjualan],

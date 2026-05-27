@@ -27,6 +27,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       .join("")
       .toUpperCase()
       .slice(0, 2) || "U";
+  const hasProfileImage = Boolean(user?.profileImage);
 
   const handleLogout = async () => {
     try {
@@ -87,8 +88,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm hover:border-blue-200 hover:shadow-md transition"
               >
-                <div className="h-9 w-9 rounded-full bg-[linear-gradient(135deg,_#1d4ed8,_#60a5fa)] flex items-center justify-center text-white shadow-inner shadow-blue-500/30">
-                  <span className="text-sm font-black tracking-wide">{avatarInitials}</span>
+                <div className="h-9 w-9 rounded-full bg-[linear-gradient(135deg,_#1d4ed8,_#60a5fa)] flex items-center justify-center text-white shadow-inner shadow-blue-500/30 overflow-hidden">
+                  {hasProfileImage ? (
+                    <img
+                      src={user?.profileImage}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-black tracking-wide">{avatarInitials}</span>
+                  )}
                 </div>
                 <div className="hidden lg:block text-left leading-tight min-w-0">
                   <p className="font-semibold text-slate-900 truncate">{displayName}</p>

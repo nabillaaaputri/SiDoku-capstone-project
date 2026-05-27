@@ -1,5 +1,20 @@
 const JAKARTA_TIME_ZONE = "Asia/Jakarta";
 
+const INVALID_DATE_FALLBACK = "-";
+
+export const toSafeDate = (value: Date | string | number | null | undefined) => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const getDateParts = (date: Date) => {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: JAKARTA_TIME_ZONE,
@@ -24,7 +39,11 @@ export const getJakartaDateInputValue = (date: Date = new Date()) => {
 };
 
 export const formatJakartaDateTime = (value: Date | string | number) => {
-  const date = value instanceof Date ? value : new Date(value);
+  const date = toSafeDate(value);
+
+  if (!date) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: JAKARTA_TIME_ZONE,
@@ -38,7 +57,11 @@ export const formatJakartaDateTime = (value: Date | string | number) => {
 };
 
 export const formatJakartaDate = (value: Date | string | number) => {
-  const date = value instanceof Date ? value : new Date(value);
+  const date = toSafeDate(value);
+
+  if (!date) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: JAKARTA_TIME_ZONE,
@@ -49,7 +72,11 @@ export const formatJakartaDate = (value: Date | string | number) => {
 };
 
 export const formatJakartaTime = (value: Date | string | number) => {
-  const date = value instanceof Date ? value : new Date(value);
+  const date = toSafeDate(value);
+
+  if (!date) {
+    return INVALID_DATE_FALLBACK;
+  }
 
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: JAKARTA_TIME_ZONE,
