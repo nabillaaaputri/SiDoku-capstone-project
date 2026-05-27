@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               <p className="mt-1 text-base font-semibold text-slate-900">
                 Business dashboard
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">Menu navigasi cepat</p>
+              {/* caption removed for cleaner mobile header */}
             </div>
 
             <div className="mt-4 flex items-center justify-between">
