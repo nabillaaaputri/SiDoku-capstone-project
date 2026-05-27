@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import axios from "axios";
 import apiClient from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -108,13 +108,12 @@ interface BusinessContextType {
   ) => { current: BusinessSummary; previous: BusinessSummary; change: number };
 
   getDailySalesRecap: (date: Date) => DailySalesRecapSummary;
-  getDailySalesRecapByDateRange: (
-    startDate: Date,
-    endDate: Date,
-  ) => DailySalesRecapSummary[];
+  getDailySalesRecapByDateRange: (startDate: Date, endDate: Date) => DailySalesRecapSummary[];
 }
 
 const BusinessContext = createContext<BusinessContextType | undefined>(undefined);
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 const mapProductResponse = (product: BackendProduct): Product => ({
   id: product.id,
@@ -142,54 +141,54 @@ const mapBackendCategoryToUi = (category: string) => {
   return category;
 };
 
-const mapExpenseResponse = (expense: BackendExpense): Expense => ({
+/**
+ * Cek apakah string dari backend hanya berisi tanggal (YYYY-MM-DD)
+ * tanpa informasi jam. Kalau iya, parsing-nya tidak valid untuk jam.
+ */
+const isDateOnly = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+
+/**
+ * Ambil createdAt yang valid dari backend.
+ * Kembalikan null kalau tidak ada atau hanya format tanggal.
+ */
+const parseBackendCreatedAt = (raw: string | undefined): Date | null => {
+  if (!raw || isDateOnly(raw)) return null;
+  return toSafeDate(raw) || null;
+};
+
+const mapExpenseResponse = (expense: BackendExpense, knownCreatedAt?: Date): Expense => ({
   id: expense.id,
   name: expense.expenseName,
   amount: Number(expense.amount),
   category: mapBackendCategoryToUi(expense.category) as Expense["category"],
   date: toSafeDate(expense.date) || new Date(),
   description: expense.description || undefined,
-  createdAt: expense.created_at || expense.date,
+  // Pakai knownCreatedAt kalau ada, lalu coba dari backend, fallback ke date
+  createdAt: knownCreatedAt
+    ?? parseBackendCreatedAt(expense.created_at)
+    ?? toSafeDate(expense.date)
+    ?? new Date(),
 });
 
-/**
- * Cek apakah string dari backend hanya berisi tanggal (YYYY-MM-DD)
- * tanpa informasi jam. Kalau iya, jam-nya tidak valid (jadi 07:00 WIB
- * karena UTC+7), sehingga kita tidak bisa pakai nilainya.
- */
-const isDateOnly = (value: string): boolean => {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
-};
+const mapStockInResponse = (stockIn: BackendStockIn, knownCreatedAt?: Date): StockIn => ({
+  id: stockIn.id,
+  productId: stockIn.productId,
+  productName: stockIn.productName,
+  quantity: Number(stockIn.quantity),
+  date: toSafeDate(stockIn.date) || new Date(),
+  // Pakai knownCreatedAt kalau ada, lalu coba dari backend
+  createdAt: knownCreatedAt
+    ?? parseBackendCreatedAt(stockIn.created_at)
+    ?? new Date(),
+  notes: stockIn.note || undefined,
+});
 
-const mapStockInResponse = (stockIn: BackendStockIn, fallbackCreatedAt?: Date): StockIn => {
-  // Pakai created_at dari backend hanya jika ada dan bukan format tanggal saja
-  const rawCreatedAt = stockIn.created_at;
-  const createdAt =
-    rawCreatedAt && !isDateOnly(rawCreatedAt)
-      ? toSafeDate(rawCreatedAt) || fallbackCreatedAt || new Date()
-      : fallbackCreatedAt || new Date();
-
-  return {
-    id: stockIn.id,
-    productId: stockIn.productId,
-    productName: stockIn.productName,
-    quantity: Number(stockIn.quantity),
-    date: toSafeDate(stockIn.date) || new Date(),
-    createdAt,
-    notes: stockIn.note || undefined,
-  };
-};
-
-const mapStockOutResponse = (stockOut: BackendStockOut, fallbackCreatedAt?: Date): StockOut => {
-  const rawCreatedAt = stockOut.created_at;
-  const hasTime = stockOut.time && stockOut.time !== "00:00:00";
-
-  const createdAt =
-    rawCreatedAt && !isDateOnly(rawCreatedAt)
-      ? toSafeDate(rawCreatedAt) || fallbackCreatedAt || new Date()
-      : hasTime
-      ? toSafeDate(`${stockOut.date}T${stockOut.time}`) || fallbackCreatedAt || new Date()
-      : fallbackCreatedAt || new Date();
+const mapStockOutResponse = (stockOut: BackendStockOut, knownCreatedAt?: Date): StockOut => {
+  const fromBackend =
+    parseBackendCreatedAt(stockOut.created_at) ||
+    (stockOut.time && stockOut.time !== "00:00:00"
+      ? toSafeDate(`${stockOut.date}T${stockOut.time}`)
+      : null);
 
   return {
     id: stockOut.id,
@@ -197,7 +196,7 @@ const mapStockOutResponse = (stockOut: BackendStockOut, fallbackCreatedAt?: Date
     productName: stockOut.productName,
     quantity: Number(stockOut.quantity),
     date: toSafeDate(stockOut.date) || new Date(),
-    createdAt,
+    createdAt: knownCreatedAt ?? fromBackend ?? new Date(),
     notes: stockOut.note || undefined,
   };
 };
@@ -227,8 +226,8 @@ const requestStockOut = async <T,>(request: (path: string) => Promise<T>) => {
   throw lastError;
 };
 
-const buildSalesRecords = (products: Product[], stockOuts: StockOut[]): SalesRecord[] => {
-  return stockOuts.map((stockOut) => {
+const buildSalesRecords = (products: Product[], stockOuts: StockOut[]): SalesRecord[] =>
+  stockOuts.map((stockOut) => {
     const product = products.find((item) => item.id === stockOut.productId);
     const sellPrice = product?.sellPrice ?? 0;
     return {
@@ -241,7 +240,6 @@ const buildSalesRecords = (products: Product[], stockOuts: StockOut[]): SalesRec
       date: new Date(stockOut.date),
     };
   });
-};
 
 const buildDailyRecap = (
   date: Date,
@@ -252,40 +250,21 @@ const buildDailyRecap = (
   stockOuts: StockOut[],
 ): DailySalesRecapSummary => {
   const dateKey = toApiDate(date);
-
-  const dailySalesRecords = salesRecords.filter(
-    (record) => toApiDate(new Date(record.date)) === dateKey,
-  );
-  const dailyStockIns = stockIns.filter(
-    (stockIn) => toApiDate(new Date(stockIn.date)) === dateKey,
-  );
-  const dailyStockOuts = stockOuts.filter(
-    (stockOut) => toApiDate(new Date(stockOut.date)) === dateKey,
-  );
-  const dailyExpenses = expenses.filter(
-    (expense) => toApiDate(new Date(expense.date)) === dateKey,
-  );
+  const dailySalesRecords = salesRecords.filter((r) => toApiDate(new Date(r.date)) === dateKey);
+  const dailyStockIns = stockIns.filter((s) => toApiDate(new Date(s.date)) === dateKey);
+  const dailyStockOuts = stockOuts.filter((s) => toApiDate(new Date(s.date)) === dateKey);
+  const dailyExpenses = expenses.filter((e) => toApiDate(new Date(e.date)) === dateKey);
 
   const recapByProduct = new Map<string, DailySalesRecapDetail>();
-
   products.forEach((product) => {
-    const productSalesRecords = dailySalesRecords.filter(
-      (record) => record.productId === product.id,
-    );
-    const productStockIns = dailyStockIns.filter(
-      (stockIn) => stockIn.productId === product.id,
-    );
-    const productStockOuts = dailyStockOuts.filter(
-      (stockOut) => stockOut.productId === product.id,
-    );
+    const productSalesRecords = dailySalesRecords.filter((r) => r.productId === product.id);
+    const productStockIns = dailyStockIns.filter((s) => s.productId === product.id);
+    const productStockOuts = dailyStockOuts.filter((s) => s.productId === product.id);
 
     const stokMasuk = productStockIns.reduce((sum, item) => sum + item.quantity, 0);
     const stokKeluar = productStockOuts.reduce((sum, item) => sum + item.quantity, 0);
     const stokAkhir = product.stock;
-    const terjualDariCatatan = productSalesRecords.reduce(
-      (sum, item) => sum + item.quantity,
-      0,
-    );
+    const terjualDariCatatan = productSalesRecords.reduce((sum, item) => sum + item.quantity, 0);
     const stokAwal = Math.max(0, stokAkhir + stokKeluar + terjualDariCatatan - stokMasuk);
     const terjual = Math.max(0, stokAwal + stokMasuk - stokAkhir);
 
@@ -307,9 +286,9 @@ const buildDailyRecap = (
   });
 
   const details = Array.from(recapByProduct.values());
-  const totalUangMasuk = dailySalesRecords.reduce((sum, record) => sum + record.totalAmount, 0);
-  const totalUangKeluar = dailyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalTerjual = dailySalesRecords.reduce((sum, record) => sum + record.quantity, 0);
+  const totalUangMasuk = dailySalesRecords.reduce((sum, r) => sum + r.totalAmount, 0);
+  const totalUangKeluar = dailyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalTerjual = dailySalesRecords.reduce((sum, r) => sum + r.quantity, 0);
   const totalNilaiPenjualan = details.reduce((sum, item) => sum + item.nilaiPenjualan, 0);
   const totalHppTerpakai = details.reduce((sum, item) => sum + item.hppTerpakai, 0);
   const labaKotor = totalUangMasuk - totalHppTerpakai;
@@ -329,6 +308,8 @@ const buildDailyRecap = (
   };
 };
 
+// ─── Provider ───────────────────────────────────────────────────────────────
+
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -337,12 +318,21 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
 
+  // Simpan createdAt yang sudah kita tahu (dari waktu user klik simpan)
+  // supaya refreshData tidak menimpa jam yang benar dengan new Date()
+  const knownStockInCreatedAt = useRef<Map<string, Date>>(new Map());
+  const knownStockOutCreatedAt = useRef<Map<string, Date>>(new Map());
+  const knownExpenseCreatedAt = useRef<Map<string, Date>>(new Map());
+
   const resetBusinessState = () => {
     setProducts([]);
     setSalesRecords([]);
     setExpenses([]);
     setStockIns([]);
     setStockOuts([]);
+    knownStockInCreatedAt.current.clear();
+    knownStockOutCreatedAt.current.clear();
+    knownExpenseCreatedAt.current.clear();
   };
 
   const refreshData = async () => {
@@ -350,14 +340,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       const [productsResult, expensesResult, stockInsResult, stockOutsResult] =
         await Promise.allSettled([
           apiClient.get<BackendResponse<BackendProduct[]>>("/products"),
-          apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>(
-            "/expenses",
-          ),
+          apiClient.get<BackendResponse<{ summary: unknown; records: BackendExpense[] }>>("/expenses"),
           apiClient.get<BackendResponse<BackendStockIn[]>>("/stocks-in"),
           requestStockOut((endpoint) =>
-            apiClient.get<
-              BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>
-            >(endpoint),
+            apiClient.get<BackendResponse<{ totalStockOut: number; records: BackendStockOut[] }>>(endpoint),
           ),
         ]);
 
@@ -365,17 +351,25 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         setProducts(productsResult.value.data.data.map(mapProductResponse));
       }
       if (expensesResult.status === "fulfilled") {
-        setExpenses(expensesResult.value.data.data.records.map(mapExpenseResponse));
+        setExpenses(
+          expensesResult.value.data.data.records.map((e) =>
+            // Gunakan jam yang kita simpan kalau ada, supaya tidak berubah saat refresh
+            mapExpenseResponse(e, knownExpenseCreatedAt.current.get(e.id)),
+          ),
+        );
       }
       if (stockInsResult.status === "fulfilled") {
-        // Saat refresh (data lama dari backend), tidak ada fallbackCreatedAt
-        // sehingga kalau created_at-nya date-only, akan pakai new Date() —
-        // ini hanya terjadi untuk data historis, bukan yang baru dicatat.
-        setStockIns(stockInsResult.value.data.data.map((s) => mapStockInResponse(s)));
+        setStockIns(
+          stockInsResult.value.data.data.map((s) =>
+            mapStockInResponse(s, knownStockInCreatedAt.current.get(s.id)),
+          ),
+        );
       }
       if (stockOutsResult.status === "fulfilled") {
         setStockOuts(
-          stockOutsResult.value.data.data.records.map((s) => mapStockOutResponse(s)),
+          stockOutsResult.value.data.data.records.map((s) =>
+            mapStockOutResponse(s, knownStockOutCreatedAt.current.get(s.id)),
+          ),
         );
       }
     } catch (error) {
@@ -396,7 +390,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     setSalesRecords(buildSalesRecords(products, stockOuts));
   }, [products, stockOuts]);
 
-  const getProductById = (id: string) => products.find((product) => product.id === id);
+  const getProductById = (id: string) => products.find((p) => p.id === id);
 
   const addProduct = async (product: Omit<Product, "id" | "createdAt">) => {
     const response = await apiClient.post<BackendResponse<BackendProduct>>("/products", {
@@ -414,41 +408,30 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const updateProduct = async (id: string, updatedData: Partial<Product>) => {
     const currentProduct = getProductById(id);
     if (!currentProduct) return;
-
-    const response = await apiClient.put<BackendResponse<BackendProduct>>(
-      `/products/${id}`,
-      {
-        productName: updatedData.name ?? currentProduct.name,
-        purchasePrice: updatedData.costPrice ?? currentProduct.costPrice,
-        sellingPrice: updatedData.sellPrice ?? currentProduct.sellPrice,
-        minimumStock: updatedData.minimumStock ?? currentProduct.minimumStock,
-        category: updatedData.category ?? currentProduct.category,
-        unit: updatedData.unit ?? currentProduct.unit,
-      },
-    );
-    const mappedProduct = mapProductResponse(response.data.data);
+    const response = await apiClient.put<BackendResponse<BackendProduct>>(`/products/${id}`, {
+      productName: updatedData.name ?? currentProduct.name,
+      purchasePrice: updatedData.costPrice ?? currentProduct.costPrice,
+      sellingPrice: updatedData.sellPrice ?? currentProduct.sellPrice,
+      minimumStock: updatedData.minimumStock ?? currentProduct.minimumStock,
+      category: updatedData.category ?? currentProduct.category,
+      unit: updatedData.unit ?? currentProduct.unit,
+    });
     setProducts((current) =>
-      current.map((product) => (product.id === id ? mappedProduct : product)),
+      current.map((p) => (p.id === id ? mapProductResponse(response.data.data) : p)),
     );
   };
 
   const archiveProduct = async (id: string) => {
-    const response = await apiClient.patch<BackendResponse<BackendProduct>>(
-      `/products/${id}/archive`,
-    );
-    const mappedProduct = mapProductResponse(response.data.data);
+    const response = await apiClient.patch<BackendResponse<BackendProduct>>(`/products/${id}/archive`);
     setProducts((current) =>
-      current.map((product) => (product.id === id ? mappedProduct : product)),
+      current.map((p) => (p.id === id ? mapProductResponse(response.data.data) : p)),
     );
   };
 
   const restoreProduct = async (id: string) => {
-    const response = await apiClient.patch<BackendResponse<BackendProduct>>(
-      `/products/${id}/restore`,
-    );
-    const mappedProduct = mapProductResponse(response.data.data);
+    const response = await apiClient.patch<BackendResponse<BackendProduct>>(`/products/${id}/restore`);
     setProducts((current) =>
-      current.map((product) => (product.id === id ? mappedProduct : product)),
+      current.map((p) => (p.id === id ? mapProductResponse(response.data.data) : p)),
     );
   };
 
@@ -456,23 +439,17 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     await archiveProduct(id);
   };
 
-  const addSalesRecord = async (_salesRecord: Omit<SalesRecord, "id">) => {
-    return;
-  };
+  const addSalesRecord = async (_salesRecord: Omit<SalesRecord, "id">) => { return; };
+  const deleteSalesRecord = async (_id: string) => { return; };
 
-  const deleteSalesRecord = async (_id: string) => {
-    return;
-  };
-
-  const getSalesRecordsByDateRange = (startDate: Date, endDate: Date) => {
-    return salesRecords.filter((record) => {
-      const recordDate = toSafeDate(record.date);
-      if (!recordDate) return false;
-      return recordDate >= startDate && recordDate <= endDate;
+  const getSalesRecordsByDateRange = (startDate: Date, endDate: Date) =>
+    salesRecords.filter((record) => {
+      const d = toSafeDate(record.date);
+      return d ? d >= startDate && d <= endDate : false;
     });
-  };
 
   const addExpense = async (expense: Omit<Expense, "id">) => {
+    const submittedAt = new Date();
     const response = await apiClient.post<BackendResponse<BackendExpense>>("/expenses", {
       expenseName: expense.name,
       category: mapUiCategoryToBackend(expense.category),
@@ -480,59 +457,54 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       date: toApiDateTime(expense.date),
       description: expense.description || undefined,
     });
-    setExpenses((current) => [...current, mapExpenseResponse(response.data.data)]);
+    const id = response.data.data.id;
+    knownExpenseCreatedAt.current.set(id, submittedAt);
+    setExpenses((current) => [
+      ...current,
+      mapExpenseResponse(response.data.data, submittedAt),
+    ]);
   };
 
   const deleteExpense = async (id: string) => {
     await apiClient.delete(`/expenses/${id}`);
-    setExpenses((current) => current.filter((expense) => expense.id !== id));
+    knownExpenseCreatedAt.current.delete(id);
+    setExpenses((current) => current.filter((e) => e.id !== id));
   };
 
-  const getExpensesByDateRange = (startDate: Date, endDate: Date) => {
-    return expenses.filter((expense) => {
-      const expenseDate = toSafeDate(expense.date);
-      if (!expenseDate) return false;
-      return expenseDate >= startDate && expenseDate <= endDate;
+  const getExpensesByDateRange = (startDate: Date, endDate: Date) =>
+    expenses.filter((expense) => {
+      const d = toSafeDate(expense.date);
+      return d ? d >= startDate && d <= endDate : false;
     });
-  };
 
-  const getExpensesByCategory = (category: string) => {
-    return expenses.filter((expense) => expense.category === category);
-  };
+  const getExpensesByCategory = (category: string) =>
+    expenses.filter((e) => e.category === category);
 
   const addStockIn = async (stockIn: Omit<StockIn, "id" | "createdAt">) => {
-    // Catat waktu SEBELUM request — ini yang akan ditampilkan sebagai jam transaksi
     const submittedAt = new Date();
-
     const response = await apiClient.post<BackendResponse<BackendStockIn>>("/stocks-in", {
       productId: stockIn.productId,
       quantity: stockIn.quantity,
       date: toApiDateTime(stockIn.date),
       note: stockIn.notes || undefined,
     });
-
-    // Inject submittedAt sebagai fallback supaya jam yang tampil akurat
-    const mappedStockIn = mapStockInResponse(response.data.data, submittedAt);
-    setStockIns((current) => [...current, mappedStockIn]);
-
+    const id = response.data.data.id;
+    // Simpan jam ini supaya refreshData tidak menimpanya
+    knownStockInCreatedAt.current.set(id, submittedAt);
+    const mapped = mapStockInResponse(response.data.data, submittedAt);
+    setStockIns((current) => [...current, mapped]);
     setProducts((current) =>
-      current.map((product) =>
-        product.id === stockIn.productId
-          ? {
-              ...product,
-              stock: response.data.data.currentStock,
-              archived: product.archived ?? false,
-            }
-          : product,
+      current.map((p) =>
+        p.id === stockIn.productId
+          ? { ...p, stock: response.data.data.currentStock, archived: p.archived ?? false }
+          : p,
       ),
     );
-
     await refreshData();
   };
 
   const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
     const submittedAt = new Date();
-
     const response = await requestStockOut((endpoint) =>
       apiClient.post<BackendResponse<BackendStockOut>>(endpoint, {
         productId: stockOut.productId,
@@ -541,43 +513,33 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         note: stockOut.notes || undefined,
       }),
     );
-
-    const mappedStockOut = mapStockOutResponse(response.data.data, submittedAt);
-    setStockOuts((current) => [...current, mappedStockOut]);
-
+    const id = response.data.data.id;
+    knownStockOutCreatedAt.current.set(id, submittedAt);
+    const mapped = mapStockOutResponse(response.data.data, submittedAt);
+    setStockOuts((current) => [...current, mapped]);
     setProducts((current) =>
-      current.map((product) =>
-        product.id === stockOut.productId
-          ? {
-              ...product,
-              stock: response.data.data.currentStock,
-              archived: product.archived ?? false,
-            }
-          : product,
+      current.map((p) =>
+        p.id === stockOut.productId
+          ? { ...p, stock: response.data.data.currentStock, archived: p.archived ?? false }
+          : p,
       ),
     );
-
     await refreshData();
   };
 
   const deleteStockIn = async (id: string) => {
     const stockIn = stockIns.find((item) => item.id === id);
     await apiClient.delete(`/stocks-in/${id}`);
-
+    knownStockInCreatedAt.current.delete(id);
     if (stockIn) {
       setProducts((current) =>
-        current.map((product) =>
-          product.id === stockIn.productId
-            ? {
-                ...product,
-                stock: Math.max(0, product.stock - stockIn.quantity),
-                archived: product.archived ?? false,
-              }
-            : product,
+        current.map((p) =>
+          p.id === stockIn.productId
+            ? { ...p, stock: Math.max(0, p.stock - stockIn.quantity), archived: p.archived ?? false }
+            : p,
         ),
       );
     }
-
     setStockIns((current) => current.filter((item) => item.id !== id));
     await refreshData();
   };
@@ -585,62 +547,42 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const deleteStockOut = async (id: string) => {
     const stockOut = stockOuts.find((item) => item.id === id);
     await requestStockOut((endpoint) => apiClient.delete(`${endpoint}/${id}`));
-
+    knownStockOutCreatedAt.current.delete(id);
     if (stockOut) {
       setProducts((current) =>
-        current.map((product) =>
-          product.id === stockOut.productId
-            ? {
-                ...product,
-                stock: product.stock + stockOut.quantity,
-                archived: product.archived ?? false,
-              }
-            : product,
+        current.map((p) =>
+          p.id === stockOut.productId
+            ? { ...p, stock: p.stock + stockOut.quantity, archived: p.archived ?? false }
+            : p,
         ),
       );
     }
-
     setStockOuts((current) => current.filter((item) => item.id !== id));
     await refreshData();
   };
 
-  const getStockInByDate = (date: Date) => {
-    return stockIns.filter((stockIn) => {
-      const stockInDate = toSafeDate(stockIn.date);
-      return stockInDate ? stockInDate.toDateString() === date.toDateString() : false;
+  const getStockInByDate = (date: Date) =>
+    stockIns.filter((s) => {
+      const d = toSafeDate(s.date);
+      return d ? d.toDateString() === date.toDateString() : false;
     });
-  };
 
-  const getStockOutByDate = (date: Date) => {
-    return stockOuts.filter((stockOut) => {
-      const stockOutDate = toSafeDate(stockOut.date);
-      return stockOutDate ? stockOutDate.toDateString() === date.toDateString() : false;
+  const getStockOutByDate = (date: Date) =>
+    stockOuts.filter((s) => {
+      const d = toSafeDate(s.date);
+      return d ? d.toDateString() === date.toDateString() : false;
     });
-  };
 
   const getSummary = (startDate?: Date, endDate?: Date): BusinessSummary => {
     const relevantSalesRecords =
-      startDate && endDate
-        ? getSalesRecordsByDateRange(startDate, endDate)
-        : salesRecords;
+      startDate && endDate ? getSalesRecordsByDateRange(startDate, endDate) : salesRecords;
     const relevantExpenses =
       startDate && endDate ? getExpensesByDateRange(startDate, endDate) : expenses;
-
-    const totalIncome = relevantSalesRecords.reduce(
-      (sum, record) => sum + record.totalAmount,
-      0,
-    );
-    const totalExpense = relevantExpenses.reduce(
-      (sum, expense) => sum + expense.amount,
-      0,
-    );
+    const totalIncome = relevantSalesRecords.reduce((sum, r) => sum + r.totalAmount, 0);
+    const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
     const profit = totalIncome - totalExpense;
     const profitMargin = totalIncome > 0 ? (profit / totalIncome) * 100 : 0;
-    const totalProductsSold = relevantSalesRecords.reduce(
-      (sum, record) => sum + record.quantity,
-      0,
-    );
-
+    const totalProductsSold = relevantSalesRecords.reduce((sum, r) => sum + r.quantity, 0);
     return { totalIncome, totalExpense, profit, profitMargin, totalProductsSold };
   };
 
@@ -654,23 +596,15 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     const current = getSummaryByMonth(currentYear, currentMonth);
     let prevMonth = currentMonth - 1;
     let prevYear = currentYear;
-    if (prevMonth < 0) {
-      prevMonth = 11;
-      prevYear -= 1;
-    }
+    if (prevMonth < 0) { prevMonth = 11; prevYear -= 1; }
     const previous = getSummaryByMonth(prevYear, prevMonth);
-    const change = current.totalIncome - previous.totalIncome;
-    return { current, previous, change };
+    return { current, previous, change: current.totalIncome - previous.totalIncome };
   };
 
-  const getDailySalesRecap = (date: Date): DailySalesRecapSummary => {
-    return buildDailyRecap(date, products, salesRecords, expenses, stockIns, stockOuts);
-  };
+  const getDailySalesRecap = (date: Date): DailySalesRecapSummary =>
+    buildDailyRecap(date, products, salesRecords, expenses, stockIns, stockOuts);
 
-  const getDailySalesRecapByDateRange = (
-    startDate: Date,
-    endDate: Date,
-  ): DailySalesRecapSummary[] => {
+  const getDailySalesRecapByDateRange = (startDate: Date, endDate: Date): DailySalesRecapSummary[] => {
     const recaps: DailySalesRecapSummary[] = [];
     const current = new Date(startDate);
     while (current <= endDate) {
@@ -681,35 +615,13 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   const value: BusinessContextType = {
-    products,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    archiveProduct,
-    restoreProduct,
-    getProductById,
-    salesRecords,
-    addSalesRecord,
-    deleteSalesRecord,
-    getSalesRecordsByDateRange,
-    expenses,
-    addExpense,
-    deleteExpense,
-    getExpensesByDateRange,
-    getExpensesByCategory,
-    stockIns,
-    stockOuts,
-    addStockIn,
-    addStockOut,
-    deleteStockIn,
-    deleteStockOut,
-    getStockInByDate,
-    getStockOutByDate,
-    getSummary,
-    getSummaryByMonth,
-    getMonthlyComparison,
-    getDailySalesRecap,
-    getDailySalesRecapByDateRange,
+    products, addProduct, updateProduct, deleteProduct, archiveProduct, restoreProduct, getProductById,
+    salesRecords, addSalesRecord, deleteSalesRecord, getSalesRecordsByDateRange,
+    expenses, addExpense, deleteExpense, getExpensesByDateRange, getExpensesByCategory,
+    stockIns, stockOuts, addStockIn, addStockOut, deleteStockIn, deleteStockOut,
+    getStockInByDate, getStockOutByDate,
+    getSummary, getSummaryByMonth, getMonthlyComparison,
+    getDailySalesRecap, getDailySalesRecapByDateRange,
   };
 
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;

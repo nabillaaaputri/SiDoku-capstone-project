@@ -2,18 +2,18 @@
 export interface Product {
   id: string;
   name: string;
-  costPrice: number; // Harga beli
-  sellPrice: number; // Harga jual
+  costPrice: number;
+  sellPrice: number;
   margin?: number;
   stock: number;
   minimumStock: number;
-  category: string; // Kategori produk
-  unit: string; // Satuan produk (pcs, kg, ml, dll)
-  archived?: boolean; // Archived status
+  category: string;
+  unit: string;
+  archived?: boolean;
   createdAt: Date;
 }
 
-// Sales Record Types (Rekap Penjualan Harian)
+// Sales Record Types
 export interface SalesRecord {
   id: string;
   productId: string;
@@ -32,7 +32,7 @@ export interface Expense {
   category: "restock" | "operasional" | "lain-lain";
   date: Date;
   description?: string;
-  createdAt?: string;
+  createdAt?: Date; // diubah: string → Date (konsisten dengan StockIn/StockOut)
 }
 
 // Stock Movement Types
@@ -42,7 +42,7 @@ export interface StockIn {
   productName: string;
   quantity: number;
   date: Date;
-  createdAt: Date; // Timestamp saat user submit
+  createdAt: Date;
   notes?: string;
 }
 
@@ -52,7 +52,7 @@ export interface StockOut {
   productName: string;
   quantity: number;
   date: Date;
-  createdAt: Date; // Timestamp saat user submit
+  createdAt: Date;
   notes?: string;
 }
 
@@ -65,7 +65,7 @@ export interface BusinessSummary {
   totalProductsSold: number;
 }
 
-// Daily Sales Recap (Rekap Penjualan Harian)
+// Daily Sales Recap
 export interface DailySalesRecapDetail {
   productId: string;
   productName: string;
