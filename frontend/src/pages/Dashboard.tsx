@@ -112,6 +112,7 @@ export default function Dashboard() {
       .slice(0, 3);
   }, [productLookup, salesRecords]);
 
+  // Handle pemuatan data dasar bisnis (Ringkasan Keuangan) secara mandiri agar cepat muncul
   useEffect(() => {
     let isMounted = true;
 
@@ -162,6 +163,7 @@ export default function Dashboard() {
     };
   }, []);
 
+  // Handle pemuatan data prediksi AI secara real-time dari model
   useEffect(() => {
     let isCancelled = false;
 
@@ -272,10 +274,8 @@ export default function Dashboard() {
   const isProfitNegative = financialSummary.profit < 0;
   const isRoiNegative = financialSummary.roi < 0;
 
-  // Get low stock products from actual data (max 3)
   const lowStockProducts = products.filter(p => p.stock <= p.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
-  const hasProducts = products.length > 0;
 
   const aiCardSkeleton = (
     <div className="space-y-3">
@@ -332,7 +332,6 @@ export default function Dashboard() {
                     Pantau ringkasan usaha, insight penting, stok menipis, dan tren performa dalam satu tampilan.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:justify-end">
@@ -358,11 +357,9 @@ export default function Dashboard() {
         </section>
 
         <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="section-heading">Ringkasan Keuangan</h2>
-              <p className="mt-1 text-sm text-slate-500">Empat angka utama untuk membaca performa bisnis dengan cepat.</p>
-            </div>
+          <div>
+            <h2 className="section-heading">Ringkasan Keuangan</h2>
+            <p className="mt-1 text-sm text-slate-500">Empat angka utama untuk membaca performa bisnis dengan cepat.</p>
           </div>
 
           {isLoadingDashboard ? (
@@ -380,83 +377,81 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
-            <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
-              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.income)}</p>
-                  <p className="mt-1.5 text-xs font-medium text-slate-500">dari penjualan</p>
+              <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
+                <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
+                    <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.income)}</p>
+                    <p className="mt-1.5 text-xs font-medium text-slate-500">dari penjualan</p>
+                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
+                    <CircleDollarSign size={22} />
+                  </div>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
-                  <CircleDollarSign size={22} />
+                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-blue-100/80">
+                  <div className="h-full w-[78%] rounded-full bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
                 </div>
               </div>
-              <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-blue-100/80">
-                <div className="h-full w-[78%] rounded-full bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-              </div>
-            </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.11)]">
-              <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.expense)}</p>
-                  <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
+              <div className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.11)]">
+                <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
+                    <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.expense)}</p>
+                    <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
+                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-slate-200">
+                    <Banknote size={22} />
+                  </div>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-slate-200">
-                  <Banknote size={22} />
+                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-slate-200/80">
+                  <div className="h-full w-[42%] rounded-full bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
                 </div>
               </div>
-              <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-slate-200/80">
-                <div className="h-full w-[42%] rounded-full bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
-              </div>
-            </div>
 
-            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"}`}>
-              <div className={`absolute inset-x-0 top-0 h-1 ${isProfitNegative ? "bg-[linear-gradient(90deg,_#f59e0b,_#ea580c)]" : "bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
-                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>{formatRupiahCompact(financialSummary.profit)}</p>
-                  <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
+              <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"}`}>
+                <div className={`absolute inset-x-0 top-0 h-1 ${isProfitNegative ? "bg-[linear-gradient(90deg,_#f59e0b,_#ea580c)]" : "bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
+                    <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>{formatRupiahCompact(financialSummary.profit)}</p>
+                    <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
+                  </div>
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
+                    <Package size={22} />
+                  </div>
                 </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
-                  <Package size={22} />
+                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
+                  <div className={`h-full rounded-full ${isProfitNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[66%] bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
                 </div>
               </div>
-              <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
-                <div className={`h-full rounded-full ${isProfitNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[66%] bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
-              </div>
-            </div>
 
-            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"}`}>
-              <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
-                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
-                  <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
+              <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"}`}>
+                <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
+                    <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
+                    <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
+                  </div>
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
+                    <ShieldAlert size={22} />
+                  </div>
                 </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
-                  <ShieldAlert size={22} />
+                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
+                  <div className={`h-full rounded-full ${isRoiNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[88%] bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
                 </div>
               </div>
-              <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
-                <div className={`h-full rounded-full ${isRoiNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[88%] bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
-              </div>
-            </div>
             </div>
           )}
         </section>
 
         <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h2 className="section-heading">Insight Singkat</h2>
-              <p className="mt-1 text-sm text-slate-500">Saran yang lebih ringkas dan lebih cepat dipindai.</p>
-            </div>
+          <div>
+            <h2 className="section-heading">Insight Singkat</h2>
+            <p className="mt-1 text-sm text-slate-500">Saran yang lebih ringkas dan lebih cepat dipindai.</p>
           </div>
           <Suspense fallback={aiCardSkeleton}>
             <Insights />
@@ -550,9 +545,6 @@ export default function Dashboard() {
         </section>
 
         <section className="space-y-2.5 sm:space-y-3 w-full">
-          <div className="hidden">
-            {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
-          </div>
           <SalesChart data={chartData} isLoading={isLoadingDashboard} />
         </section>
       </div>
