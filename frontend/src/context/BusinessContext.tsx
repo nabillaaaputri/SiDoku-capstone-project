@@ -170,20 +170,29 @@ const mapExpenseResponse = (expense: BackendExpense, knownCreatedAt?: Date): Exp
     ?? new Date(),
 });
 
-const mapStockInResponse = (stockIn: BackendStockIn, knownCreatedAt?: Date): StockIn => ({
-  id: stockIn.id,
-  productId: stockIn.productId,
-  productName: stockIn.productName,
-  quantity: Number(stockIn.quantity),
-  date: toSafeDate(stockIn.date) || new Date(),
-  // Pakai knownCreatedAt kalau ada, lalu coba dari backend
-  createdAt: knownCreatedAt
-    ?? parseBackendCreatedAt(stockIn.created_at)
-    ?? new Date(),
-  notes: stockIn.note || undefined,
-});
+const mapStockInResponse = (stockIn: BackendStockIn, knownCreatedAt?: Date): StockIn => {
+  // Mengonversi string tanggal dari backend menjadi objek Date yang valid
+  const fallbackDate = toSafeDate(stockIn.date) || new Date();
+
+  return {
+    id: stockIn.id,
+    productId: stockIn.productId,
+    productName: stockIn.productName,
+    quantity: Number(stockIn.quantity),
+    date: fallbackDate,
+    // Kunci jam: utamakan waktu lokal saat klik, lalu backend created_at, 
+    // jika keduanya tidak ada, fallback ke jam asli yang melekat di data 'date'
+    createdAt: knownCreatedAt
+      ?? parseBackendCreatedAt(stockIn.created_at)
+      ?? fallbackDate, 
+    notes: stockIn.note || undefined,
+  };
+};
 
 const mapStockOutResponse = (stockOut: BackendStockOut, knownCreatedAt?: Date): StockOut => {
+  // Mengonversi string tanggal dari backend menjadi objek Date yang valid
+  const fallbackDate = toSafeDate(stockOut.date) || new Date();
+
   const fromBackend =
     parseBackendCreatedAt(stockOut.created_at) ||
     (stockOut.time && stockOut.time !== "00:00:00"
@@ -195,8 +204,9 @@ const mapStockOutResponse = (stockOut: BackendStockOut, knownCreatedAt?: Date): 
     productId: stockOut.productId,
     productName: stockOut.productName,
     quantity: Number(stockOut.quantity),
-    date: toSafeDate(stockOut.date) || new Date(),
-    createdAt: knownCreatedAt ?? fromBackend ?? new Date(),
+    date: fallbackDate,
+    // Jika backend tidak melempar info jam di 'created_at', gunakan 'fallbackDate' (jam dari properti date asli)
+    createdAt: knownCreatedAt ?? fromBackend ?? fallbackDate,
     notes: stockOut.note || undefined,
   };
 };
