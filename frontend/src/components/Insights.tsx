@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, Package, Star, TrendingDown, TrendingUp } from "lucide-react";
 import apiClient from "@/services/api";
 import { useBusinessContext } from "@/context";
+import { formatRupiahCompact } from "@/lib/utils";
 
 interface AiApiResponse<T> {
   status: string;
@@ -31,6 +32,30 @@ interface InsightCard {
   description: string;
   metric?: string;
   icon: ReactNode;
+}
+
+interface ProductSalesAggregate {
+  productId: string;
+  productName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+interface ForecastInsightCard {
+  id: string;
+  productName: string;
+  predictedDemand: number;
+  stock: number;
+  status: AiProductInsightItem["status"];
+}
+
+interface RestockInsightCard {
+  id: string;
+  productName: string;
+  currentStock: number;
+  predictedDemand: number;
+  reorderQty: number;
+  status: AiRecommendationItem["status"];
 }
 
 const statusMeta: Record<
@@ -93,8 +118,10 @@ const toRecommendationText = (item: AiRecommendationItem) => {
   return `${item.product_name} masih aman, pantau stok secara berkala dan pertahankan ritme penjualan.`;
 };
 
+const formatQuantity = (value: number) => `${Math.max(0, Math.round(value))} unit`;
+
 export default function Insights() {
-  const { products } = useBusinessContext();
+  const { salesRecords } = useBusinessContext();
   const [insightItems, setInsightItems] = useState<AiProductInsightItem[]>([]);
   const [recommendationItems, setRecommendationItems] = useState<AiRecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,28 +186,209 @@ export default function Insights() {
     return () => {
       isCancelled = true;
     };
-  }, [products]);
+  }, []);
 
-  const insights = useMemo<InsightCard[]>(() => {
-    return insightItems.slice(0, 4).map((item, index) => {
-      const meta = statusMeta[item.status];
+  const salesAggregates = useMemo<ProductSalesAggregate[]>(() => {
+    const aggregates = new Map<string, ProductSalesAggregate>();
 
-      return {
-        id: `${item.product_name}-${index}`,
-        type: meta.type,
-        title: meta.title,
-        description: meta.description(item),
-        metric: meta.metric(item),
-        icon: meta.icon,
-      };
+    for (const record of salesRecords) {
+      const existing = aggregates.get(record.productId);
+
+      if (existing) {
+        existing.totalQuantity += Number(record.quantity) || 0;
+        existing.totalRevenue += Number(record.totalAmount) || 0;
+        continue;
+      }
+
+      aggregates.set(record.productId, {
+        productId: record.productId,
+        productName: record.productName || "Produk tanpa nama",
+        totalQuantity: Number(record.quantity) || 0,
+        totalRevenue: Number(record.totalAmount) || 0,
+      });
+    }
+
+    return Array.from(aggregates.values()).sort((a, b) => {
+      if (b.totalQuantity !== a.totalQuantity) {
+        return b.totalQuantity - a.totalQuantity;
+      }
+
+      return b.totalRevenue - a.totalRevenue;
     });
+  }, [salesRecords]);
+
+  const topSellerCard = useMemo<InsightCard | null>(() => {
+    const topSeller = salesAggregates[0];
+
+    if (!topSeller) {
+      return null;
+    }
+
+    return {
+      id: `top-seller-${topSeller.productId}`,
+      type: "positive",
+      title: "Produk Paling Laris",
+      description: `${topSeller.productName} memimpin penjualan dengan ${formatQuantity(topSeller.totalQuantity)} dan omzet ${formatRupiahCompact(topSeller.totalRevenue)}.`,
+      metric: formatQuantity(topSeller.totalQuantity),
+      icon: <Star size={20} />,
+    };
+  }, [salesAggregates]);
+
+  const forecastCards = useMemo<ForecastInsightCard[]>(() => {
+    return [...insightItems]
+      .sort((a, b) => {
+        const statusPriority = (status: AiProductInsightItem["status"]) => {
+          if (status === "increasing") return 0;
+          if (status === "critical") return 1;
+          if (status === "normal") return 2;
+          return 3;
+        };
+
+        const priorityDiff = statusPriority(a.status) - statusPriority(b.status);
+
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+
+        return b.predicted_demand_7d - a.predicted_demand_7d;
+      })
+      .slice(0, 3)
+      .map((item, index) => ({
+        id: `forecast-${item.product_name}-${index}`,
+        productName: item.product_name,
+        predictedDemand: Number(item.predicted_demand_7d) || 0,
+        stock: Number(item.stok) || 0,
+        status: item.status,
+      }));
   }, [insightItems]);
+
+  const primaryForecastCard = useMemo<InsightCard | null>(() => {
+    const forecast = forecastCards[0];
+
+    if (!forecast) {
+      return null;
+    }
+
+    const isIncreasing = forecast.status === "increasing";
+    const isCritical = forecast.status === "critical";
+    const isOverstock = forecast.status === "overstock";
+
+    return {
+      id: forecast.id,
+      type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
+      title: isIncreasing
+        ? "Prediksi Tren Naik"
+        : isCritical
+          ? "Prediksi Demand Kritis"
+          : isOverstock
+            ? "Prediksi Demand Rendah"
+            : "Prediksi Tren Stabil",
+      description: isIncreasing
+        ? `${forecast.productName} diprediksi tumbuh ke ${formatQuantity(forecast.predictedDemand)} dalam 7 hari, dengan stok saat ini ${formatQuantity(forecast.stock)}.`
+        : isCritical
+          ? `${forecast.productName} diprediksi butuh ${formatQuantity(forecast.predictedDemand)} dalam 7 hari sementara stok sekarang hanya ${formatQuantity(forecast.stock)}.`
+          : isOverstock
+            ? `${forecast.productName} diprediksi hanya terserap ${formatQuantity(forecast.predictedDemand)} dalam 7 hari, stok saat ini ${formatQuantity(forecast.stock)}.`
+            : `${forecast.productName} diprediksi stabil di ${formatQuantity(forecast.predictedDemand)} dalam 7 hari dengan stok ${formatQuantity(forecast.stock)}.`,
+      metric: isIncreasing
+        ? `+${Math.max(0, Math.round(forecast.predictedDemand))}`
+        : formatQuantity(forecast.predictedDemand),
+      icon: isCritical ? <AlertCircle size={20} /> : isIncreasing ? <TrendingUp size={20} /> : isOverstock ? <TrendingDown size={20} /> : <Package size={20} />,
+    };
+  }, [forecastCards]);
+
+  const restockCards = useMemo<RestockInsightCard[]>(() => {
+    return [...recommendationItems]
+      .sort((a, b) => {
+        const statusPriority = (status: AiRecommendationItem["status"]) => {
+          if (status === "critical") return 0;
+          if (status === "increasing") return 1;
+          if (status === "normal") return 2;
+          return 3;
+        };
+
+        const priorityDiff = statusPriority(a.status) - statusPriority(b.status);
+
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+
+        return b.reorder_qty - a.reorder_qty;
+      })
+      .slice(0, 2)
+      .map((item, index) => ({
+        id: `restock-${item.product_name}-${index}`,
+        productName: item.product_name,
+        currentStock: Number(item.current_stock) || 0,
+        predictedDemand: Number(item.predicted_demand_7d) || 0,
+        reorderQty: Number(item.reorder_qty) || 0,
+        status: item.status,
+      }));
+  }, [recommendationItems]);
+
+  const primaryForecastName = forecastCards[0]?.productName;
+  const primaryRestockName = restockCards[0]?.productName;
+
+  const restockCard = useMemo<InsightCard | null>(() => {
+    const restock = restockCards[0];
+
+    if (!restock) {
+      return null;
+    }
+
+    const isCritical = restock.status === "critical";
+    const isIncreasing = restock.status === "increasing";
+
+    return {
+      id: restock.id,
+      type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
+      title: isCritical ? "Restock Prioritas" : "Rekomendasi Restock",
+      description: isCritical
+        ? `${restock.productName} perlu restock sekitar ${formatQuantity(restock.reorderQty)} agar tidak kehabisan stok.`
+        : `${restock.productName} disarankan tambah ${formatQuantity(restock.reorderQty)} berdasarkan stok ${formatQuantity(restock.currentStock)} dan prediksi ${formatQuantity(restock.predictedDemand)}.`,
+      metric: formatQuantity(restock.reorderQty),
+      icon: <Package size={20} />,
+    };
+  }, [restockCards]);
+
+  const supplementalCard = useMemo<InsightCard | null>(() => {
+    const usedNames = new Set<string>();
+
+    if (primaryForecastName) {
+      usedNames.add(primaryForecastName);
+    }
+
+    if (primaryRestockName) {
+      usedNames.add(primaryRestockName);
+    }
+
+    const extraForecast = forecastCards.find((item) => !usedNames.has(item.productName));
+
+    if (!extraForecast) {
+      return null;
+    }
+
+    return {
+      id: `supplemental-${extraForecast.id}`,
+      type: extraForecast.status === "critical" ? "warning" : extraForecast.status === "increasing" ? "positive" : "neutral",
+      title: "Sorotan AI Tambahan",
+      description: `${extraForecast.productName} masih relevan dipantau dengan prediksi ${formatQuantity(extraForecast.predictedDemand)} untuk 7 hari ke depan.`,
+      metric: formatQuantity(extraForecast.predictedDemand),
+      icon: extraForecast.status === "critical" ? <AlertCircle size={20} /> : extraForecast.status === "increasing" ? <TrendingUp size={20} /> : <Package size={20} />,
+    };
+  }, [forecastCards, primaryForecastName, primaryRestockName]);
+
+  const insightCards = useMemo(() => {
+    return [topSellerCard, primaryForecastCard, restockCard, supplementalCard].filter(
+      (card): card is InsightCard => Boolean(card),
+    );
+  }, [primaryForecastCard, restockCard, supplementalCard, topSellerCard]);
 
   const recommendations = useMemo(() => {
     return recommendationItems.slice(0, 3).map(toRecommendationText);
   }, [recommendationItems]);
 
-  const hasData = insights.length > 0;
+  const hasData = insightCards.length > 0;
   const hasRecommendations = recommendations.length > 0;
 
   if (isLoading) {
@@ -225,7 +433,7 @@ export default function Insights() {
     <div className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         {hasData ? (
-          insights.map((insight) => (
+          insightCards.slice(0, 4).map((insight) => (
             <div
               key={insight.id}
               className={`group rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
