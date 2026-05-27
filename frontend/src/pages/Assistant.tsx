@@ -8,24 +8,31 @@ import {
   TrendingUp,
   Package,
   Wallet,
+  AlertCircle,
 } from "lucide-react";
+import { askAiChatbot, getAiChatbotErrorMessage } from "@/services";
 
 interface Message {
-  id: number;
-  sender: "user" | "assistant";
-  text: string;
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  error?: string;
 }
 
 export default function Assistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
-      sender: "assistant",
-      text: "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
+      id: "1",
+      role: "assistant",
+      content: "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
+      timestamp: Date.now(),
     },
   ]);
 
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -47,28 +54,73 @@ export default function Assistant() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const generateMessageId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now(),
-      sender: "user",
-      text: input,
+      id: generateMessageId(),
+      role: "user",
+      content: input.trim(),
+      timestamp: Date.now(),
     };
 
-    const assistantResponse: Message = {
-      id: Date.now() + 1,
-      sender: "assistant",
-      text: "Berdasarkan data bisnis Anda, penjualan terlihat stabil minggu ini. Produk kategori minuman menjadi yang paling laku, sementara beberapa stok mulai menipis dan perlu segera restock.",
-    };
-
+    // Add user message dan loading placeholder
     setMessages((prev) => [
       ...prev,
       userMessage,
-      assistantResponse,
+      {
+        id: `loading-${Date.now()}`,
+        role: "assistant",
+        content: "Sedang memproses...",
+        timestamp: Date.now(),
+      },
     ]);
 
     setInput("");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Call backend AI service
+      const result = await askAiChatbot(input.trim());
+      
+      // Remove loading message dan add real response
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+        return [
+          ...filtered,
+          {
+            id: generateMessageId(),
+            role: "assistant",
+            content: result.answer,
+            timestamp: Date.now(),
+          },
+        ];
+      });
+    } catch (error) {
+      // Show error message
+      const errorMessage = getAiChatbotErrorMessage(error);
+
+      setError(errorMessage);
+
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+        return [
+          ...filtered,
+          {
+            id: generateMessageId(),
+            role: "assistant",
+            content: errorMessage,
+            timestamp: Date.now(),
+            error: errorMessage,
+          },
+        ];
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -296,12 +348,12 @@ export default function Assistant() {
               <div
                 key={message.id}
                 className={`flex ${
-                  message.sender === "user"
+                  message.role === "user"
                     ? "justify-end"
                     : "justify-start"
                 }`}
               >
-                {message.sender === "assistant" ? (
+                {message.role === "assistant" ? (
                   <div className="flex gap-3 max-w-[90%] md:max-w-[75%]">
                     <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0">
                       <Bot
@@ -310,16 +362,37 @@ export default function Assistant() {
                       />
                     </div>
 
-                    <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm">
-                      <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
-                        {message.text}
-                      </p>
+                    <div className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
+                      message.error
+                        ? "bg-red-50 border border-red-200"
+                        : message.content === "Sedang memproses..."
+                          ? "bg-slate-100 border border-slate-200"
+                          : "bg-white border border-slate-200"
+                    }`}>
+                      {message.content === "Sedang memproses..." ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                        </div>
+                      ) : message.error ? (
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">
+                            {message.content}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
+                          {message.content}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : (
                   <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
                     <p className="text-sm md:text-[15px] leading-relaxed">
-                      {message.text}
+                      {message.content}
                     </p>
                   </div>
                 )}
@@ -345,20 +418,22 @@ export default function Assistant() {
                       handleSendMessage();
                     }
                   }}
+                  disabled={isLoading}
                   placeholder="Tulis pertanyaan Anda..."
                   rows={2}
-                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 onClick={handleSendMessage}
-                className="h-11 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2"
+                disabled={isLoading || !input.trim()}
+                className="h-11 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <SendHorizonal size={18} />
 
                 <span className="hidden sm:inline">
-                  Kirim
+                  {isLoading ? "Mengirim..." : "Kirim"}
                 </span>
               </button>
             </div>

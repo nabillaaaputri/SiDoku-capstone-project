@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
 import SalesChart from "@/components/SalesChart";
+import ForecastTrendChart from "@/components/ForecastTrendChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
 import { getPreferredUserName } from "@/services/auth.service";
+import { getSalesForecast, getAiForecastErrorMessage } from "@/services";
 import { formatRupiahCompact } from "@/lib/utils";
 import {
   ArrowUpRight,
@@ -53,13 +55,61 @@ interface ChartPoint {
   profit: number;
 }
 
+interface ForecastTrendPoint {
+  label: string;
+  predictedRevenue: number;
+  predictedQuantity: number;
+}
+
+interface TopForecastProduct {
+  productId: string;
+  productName: string;
+  totalRevenue: number;
+}
+
 export default function Dashboard() {
-  const { products } = useBusinessContext();
+  const { products, salesRecords } = useBusinessContext();
   const { user } = useAuth();
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
+  const [forecastData, setForecastData] = useState<ForecastTrendPoint[]>([]);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+  const [isForecastLoading, setIsForecastLoading] = useState(false);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+
+  const productLookup = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products],
+  );
+
+  const topForecastProducts = useMemo<TopForecastProduct[]>(() => {
+    const totalsByProduct = new Map<string, TopForecastProduct>();
+
+    for (const record of salesRecords) {
+      const product = productLookup.get(record.productId);
+
+      if (!product) {
+        continue;
+      }
+
+      const existing = totalsByProduct.get(record.productId);
+
+      if (existing) {
+        existing.totalRevenue += record.totalAmount;
+      } else {
+        totalsByProduct.set(record.productId, {
+          productId: record.productId,
+          productName: record.productName || product.name,
+          totalRevenue: record.totalAmount,
+        });
+      }
+    }
+
+    return Array.from(totalsByProduct.values())
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 3);
+  }, [productLookup, salesRecords]);
 
   useEffect(() => {
     let isMounted = true;
@@ -68,7 +118,7 @@ export default function Dashboard() {
       setIsLoadingDashboard(true);
 
       try {
-        const [summaryResponse, trendsResponse] = await Promise.all([
+        const [summaryResponse, trendsResponse] = await Promise.allSettled([
           apiClient.get<ApiResponse<DashboardSummary>>("/dashboard/summary"),
           apiClient.get<ApiResponse<DashboardTrends>>("/dashboard/trends"),
         ]);
@@ -77,8 +127,19 @@ export default function Dashboard() {
           return;
         }
 
-        setSummary(summaryResponse.data.data || null);
-        setTrends(trendsResponse.data.data?.items || []);
+        if (summaryResponse.status === "fulfilled") {
+          setSummary(summaryResponse.value.data.data || null);
+        } else {
+          console.error("Failed to load dashboard summary:", summaryResponse.reason);
+          setSummary(null);
+        }
+
+        if (trendsResponse.status === "fulfilled") {
+          setTrends(trendsResponse.value.data.data?.items || []);
+        } else {
+          console.error("Failed to load dashboard trends:", trendsResponse.reason);
+          setTrends([]);
+        }
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
 
@@ -99,6 +160,98 @@ export default function Dashboard() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadForecast = async () => {
+      if (topForecastProducts.length === 0) {
+        setForecastData([]);
+        setForecastError(null);
+        setIsForecastLoading(false);
+        return;
+      }
+
+      setIsForecastLoading(true);
+      setForecastError(null);
+
+      try {
+        const settledForecasts = await Promise.allSettled(
+          topForecastProducts.map((product) =>
+            getSalesForecast(product.productId, {
+              daysAhead: 7,
+              historyDays: 60,
+            }),
+          ),
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        const successfulForecasts = settledForecasts
+          .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof getSalesForecast>>> => result.status === "fulfilled")
+          .map((result) => result.value);
+
+        if (successfulForecasts.length === 0) {
+          setForecastData([]);
+          setForecastError("Belum ada data forecast AI yang dapat ditampilkan.");
+          return;
+        }
+
+        const aggregatedByDate = new Map<
+          string,
+          ForecastTrendPoint & { sortValue: number }
+        >();
+
+        successfulForecasts.forEach((forecast) => {
+          const product = productLookup.get(forecast.productId);
+          const sellPrice = product?.sellPrice || 0;
+
+          forecast.predictions.forEach((prediction) => {
+            const sortValue = new Date(`${prediction.date}T00:00:00`).getTime();
+            const label = new Date(`${prediction.date}T00:00:00`).toLocaleDateString("id-ID", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+            });
+
+            const current = aggregatedByDate.get(prediction.date) || {
+              label,
+              predictedRevenue: 0,
+              predictedQuantity: 0,
+              sortValue,
+            };
+
+            current.predictedRevenue += prediction.predictedQty * sellPrice;
+            current.predictedQuantity += prediction.predictedQty;
+            aggregatedByDate.set(prediction.date, current);
+          });
+        });
+
+        const chartPoints = Array.from(aggregatedByDate.values())
+          .sort((a, b) => a.sortValue - b.sortValue)
+          .map(({ sortValue, ...point }) => point);
+
+        setForecastData(chartPoints);
+      } catch (error) {
+        if (!isCancelled) {
+          setForecastData([]);
+          setForecastError(getAiForecastErrorMessage(error));
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsForecastLoading(false);
+        }
+      }
+    };
+
+    loadForecast();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [productLookup, topForecastProducts]);
 
   const chartData = useMemo<ChartPoint[]>(() => {
     return trends.map((item) => ({
@@ -269,6 +422,15 @@ export default function Dashboard() {
             </div>
           </div>
           <Insights />
+        </section>
+
+        <section className="space-y-2.5 sm:space-y-3 w-full">
+          <ForecastTrendChart
+            data={forecastData}
+            isLoading={isForecastLoading}
+            error={forecastError}
+            sourceLabel={topForecastProducts.map((product) => product.productName).join(", ")}
+          />
         </section>
 
         <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">

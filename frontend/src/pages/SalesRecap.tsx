@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { BarChart3, CircleDollarSign, Download, Package, Search, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
+import { BarChart3, CircleDollarSign, Download, Package, Search, ShoppingCart, TrendingDown, TrendingUp, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
@@ -18,6 +18,21 @@ export default function SalesRecap() {
   const { getDailySalesRecap, products } = useBusinessContext();
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [productSearch, setProductSearch] = useState("");
+  const productLookup = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products],
+  );
+
+  const selectedDateLabel = useMemo(
+    () =>
+      new Date(selectedDate).toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+    [selectedDate],
+  );
 
   // Get recap for selected date
   const recap = useMemo(() => {
@@ -28,10 +43,34 @@ export default function SalesRecap() {
   const filteredDetails = useMemo(() => {
     const query = productSearch.trim().toLowerCase();
     if (!query) return recap.details;
-    return recap.details.filter((d) =>
-      d.productName.toLowerCase().includes(query)
-    );
-  }, [recap.details, productSearch]);
+
+    return recap.details.filter((detail) => {
+      const product = productLookup.get(detail.productId);
+      const searchableValues = [
+        detail.productName,
+        product?.category || "",
+        product?.unit || "",
+        selectedDate,
+        selectedDateLabel,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableValues.includes(query);
+    });
+  }, [productLookup, recap.details, productSearch, selectedDate, selectedDateLabel]);
+
+  const hasSearchQuery = productSearch.trim().length > 0;
+  const hasFilteredResults = filteredDetails.length > 0;
+  const isNoResultFromSearch = recap.details.length > 0 && !hasFilteredResults;
+
+  const formatProfitValue = (value: number) => {
+    if (value < 0) {
+      return `Rugi ${formatIDR(Math.abs(value))}`;
+    }
+
+    return formatIDR(value);
+  };
 
   // Calculate totals — all from the same details array that renders the table
   const totalPenjualan = recap.totalNilaiPenjualan;
@@ -39,6 +78,8 @@ export default function SalesRecap() {
   const labaKotor = totalPenjualan - totalHPP;
   const totalPengeluaran = recap.totalUangKeluar;
   const labaBersih = labaKotor - totalPengeluaran;
+  const labaBersihIsNegative = labaBersih < 0;
+  const labaBersihDisplay = formatProfitValue(labaBersih);
 
   // Export to Excel function
   const handleExportExcel = () => {
@@ -223,15 +264,15 @@ export default function SalesRecap() {
               </div>
             </div>
 
-            <div className={`section-shell p-4 ${labaBersih >= 0 ? "border-emerald-100 bg-emerald-900" : "border-red-100 bg-red-900"}`}>
+            <div className={`section-shell p-4 ${labaBersihIsNegative ? "border-rose-100 bg-gradient-to-br from-rose-50 to-white" : "border-emerald-100 bg-gradient-to-br from-emerald-50 to-white"}`}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-white/70">Laba Bersih</p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-white">
-                    {formatIDR(labaBersih)}
+                  <p className="text-sm font-medium text-slate-600">Laba Bersih</p>
+                  <p className={`mt-2 text-2xl font-bold tracking-tight ${labaBersihIsNegative ? "text-rose-700" : "text-emerald-700"}`}>
+                    {labaBersihDisplay}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-white/10 p-3 text-white">
+                <div className={`rounded-2xl p-3 ${labaBersihIsNegative ? "bg-rose-600/10 text-rose-700" : "bg-emerald-600/10 text-emerald-700"}`}>
                   <BarChart3 size={22} />
                 </div>
               </div>
@@ -242,43 +283,64 @@ export default function SalesRecap() {
         {/* Detail Table */}
         {recap.isComplete && (
           <section className="section-shell p-4 sm:p-5 space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl space-y-1">
                 <h2 className="text-lg font-bold text-slate-900">Detail Penjualan Per Produk</h2>
                 <p className="text-sm text-slate-600">
-                  Ringkasan penjualan pada{" "}
-                  {new Date(recap.date).toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  .
+                  Ringkasan penjualan pada {selectedDateLabel}.
                 </p>
               </div>
-            </div>
 
-            {/* Search */}
-            <div className="max-w-sm">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Cari produk..."
-                  className="h-11 w-full rounded-xl pl-9"
-                />
+              <div className="w-full lg:max-w-sm">
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Cari produk, kategori, atau tanggal..."
+                    className="h-11 w-full rounded-xl pl-9 pr-10"
+                  />
+                  {hasSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                      aria-label="Hapus pencarian"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {filteredDetails.length === 0 ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-slate-500">
+                {hasSearchQuery
+                  ? `Menampilkan ${filteredDetails.length} hasil untuk pencarian "${productSearch}".`
+                  : `Menampilkan ${filteredDetails.length} produk untuk tanggal ini.`}
+              </p>
+              {hasSearchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setProductSearch("")}
+                  className="h-8 rounded-lg text-slate-600 hover:text-slate-900"
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+
+            {isNoResultFromSearch ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
-                  <BarChart3 size={24} />
+                  <Search size={24} />
                 </div>
-                <p className="text-sm font-semibold text-slate-900">Belum ada data penjualan</p>
+                <p className="text-sm font-semibold text-slate-900">Tidak ada hasil yang cocok</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  Data akan muncul setelah ada stok keluar atau transaksi penjualan pada tanggal yang dipilih.
+                  Coba kata kunci lain seperti nama produk, kategori, atau tanggal transaksi.
                 </p>
               </div>
             ) : (

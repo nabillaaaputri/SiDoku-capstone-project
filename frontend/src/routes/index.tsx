@@ -22,9 +22,10 @@ export const routeConfig = {
   protected: [
     '/dashboard',
     '/products',
-    '/stock-in',
-    '/stock-out',
+    '/stok-masuk',
+    '/stok-keluar',
     '/expenses',
+    '/rekap-penjualan',
     '/reports',
     '/account',
   ],

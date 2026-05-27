@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/ui/tooltip";
 import { Toaster } from "@/ui/toaster";
 import { Toaster as Sonner } from "@/ui/sonner";
 import { BusinessProvider } from "@/context";
 import Landing from "./pages/Landing";
-import Introduction from "./pages/Introduction";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -31,16 +30,15 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/intro" element={<Introduction />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/stok-masuk" element={<StockIn />} />
               <Route path="/stok-keluar" element={<StockOut />} />
-              <Route path="/stock-in" element={<StockIn />} />
-              <Route path="/stock-out" element={<StockOut />} />
+              <Route path="/stock-in" element={<Navigate to="/stok-masuk" replace />} />
+              <Route path="/stock-out" element={<Navigate to="/stok-keluar" replace />} />
               <Route path="/rekap-penjualan" element={<SalesRecap />} />
-              <Route path="/sales-recap" element={<SalesRecap />} />
+              <Route path="/sales-recap" element={<Navigate to="/rekap-penjualan" replace />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/products" element={<Products />} />
               <Route path="/reports" element={<Reports />} />
