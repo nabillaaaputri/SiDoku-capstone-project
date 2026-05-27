@@ -90,6 +90,7 @@ def predict_intent(sentence):
         return None
 
     best_intent = None
+    max_common = 0
     max_score = 0.0
 
     for intent in processed_intents:
@@ -98,14 +99,18 @@ def predict_intent(sentence):
                 continue
 
             common_words = user_words.intersection(pattern_words)
-            score = len(common_words) / len(pattern_words)
+            num_common = len(common_words)
+            score = num_common / len(pattern_words)
 
-            if score > max_score:
+            # Prioritaskan pola dengan KATA COCOK LEBIH BANYAK (lebih spesifik)
+            # Jika jumlah kata cocok sama, pilih yang rasionya lebih besar
+            if num_common > max_common or (num_common == max_common and score > max_score):
+                max_common = num_common
                 max_score = score
                 best_intent = intent['tag']
 
     # Threshold: Minimal 40% kata dari pola dataset terpenuhi oleh input pengguna
-    if max_score >= 0.4:
+    if max_score >= 0.4 and max_common > 0:
         return best_intent
     return None
 

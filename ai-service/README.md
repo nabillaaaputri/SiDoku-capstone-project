@@ -137,6 +137,7 @@ Frontend kirim pesan
 | ---------------------------------- | ----------------------------------------------------------------------------------------- |
 | `""`                               | Langsung kembalikan `response` ke frontend                                                |
 | `fetch_daily_sales`                | Query total penjualan hari ini dari tabel `Stok_Keluar` (`tanggal_keluar = CURRENT_DATE`) |
+| `fetch_best_selling`               | Query produk dengan penjualan tertinggi (terlaris) dari DB (misal dalam 7 hari terakhir)  |
 | `fetch_expenses`                   | Query total pengeluaran dari tabel `Pengeluaran`                                          |
 | `fetch_profit_loss`                | Hitung laba = total pemasukan − total pengeluaran dari DB                                 |
 | `fetch_inventory`                  | Query semua produk beserta stok terkini dari tabel `Produk`                               |
@@ -164,6 +165,22 @@ switch (action) {
       [req.user.id],
     );
     data = result.rows[0];
+    break;
+  }
+
+  case "fetch_best_selling": {
+    const result = await db.query(
+      `SELECT p.nama_produk, SUM(sk.jumlah) AS total_terjual
+       FROM Stok_Keluar sk
+       JOIN Produk p ON sk.produk_id = p.produk_id
+       WHERE p.user_id = $1
+         AND sk.tanggal_keluar >= CURRENT_DATE - INTERVAL '7 days'
+       GROUP BY p.produk_id, p.nama_produk
+       ORDER BY total_terjual DESC
+       LIMIT 5`,
+      [req.user.id],
+    );
+    data = result.rows;
     break;
   }
 

@@ -311,7 +311,6 @@
         "gimana biar jualan laris",
         "saran strategi bisnis",
         "rekomendasi produk",
-        "barang apa yang paling laku",
         "apa yang harus saya lakukan biar untung",
         "minta saran dong",
         "cara naikin omset gimana",
@@ -324,14 +323,9 @@
         "memberikan saran pencatatan usaha sederhana",
         "apa saran buat bisnis saya",
         "produk mana yang harus dipromosiin",
-        "produk apa yang paling laku minggu ini",
-        "produk paling laris apa",
         "menjelaskan ringkasan usaha",
         "bagaimana kondisi usaha saya minggu ini",
-        "apa yang perlu saya perhatikan hari ini",
-        "produk apa yang paling laris?",
-        "produk mana yang laku keras",
-        "barang apa yang paling dicari orang"
+        "apa yang perlu saya perhatikan hari ini"
       ],
       "responses": [
         "Berdasarkan performa penjualan, sebaiknya Anda fokus mempromosikan produk terlaris Anda dan segera me-restock barang yang perputarannya cepat.",
@@ -456,6 +450,24 @@
         "Sama-sama! SiDoku akan selalu di sini untuk mencatat data keuangan Anda."
       ],
       "action": ""
+    },
+    {
+      "tag": "check_best_selling",
+      "patterns": [
+        "produk apa yang paling laku minggu ini",
+        "produk paling laris apa",
+        "produk apa yang paling laris?",
+        "produk mana yang laku keras",
+        "barang apa yang paling dicari orang",
+        "barang apa yang paling laku",
+        "produk paling laku"
+      ],
+      "responses": [
+        "Sedang menarik data produk terlaris Anda...",
+        "Mari kita lihat produk apa saja yang menjadi primadona saat ini.",
+        "Tunggu sebentar, saya akan menampilkan daftar barang paling laku di toko Anda."
+      ],
+      "action": "fetch_best_selling"
     }
   ]
 }
