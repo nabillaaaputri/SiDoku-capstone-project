@@ -48,7 +48,7 @@ const getSafeProfileImagePayload = (profileImage?: string | null) => {
   const normalized = profileImage?.trim();
 
   if (!normalized) {
-    return '';
+    return 'https://via.placeholder.com/256?text=SiDoku';
   }
 
   return normalized;

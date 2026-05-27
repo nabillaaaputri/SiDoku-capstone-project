@@ -38,6 +38,7 @@ interface BackendProduct {
 interface BackendExpense {
   id: string;
   date: string;
+  created_at?: string;
   expenseName: string;
   category: "restock" | "operational" | "others";
   amount: number;
@@ -51,6 +52,7 @@ interface BackendStockIn {
   quantity: number;
   unit: string;
   date: string;
+  created_at?: string;
   note?: string;
   currentStock: number;
 }
@@ -63,6 +65,7 @@ interface BackendStockOut {
   unit: string;
   date: string;
   time?: string;
+  created_at?: string;
   note?: string;
   currentStock: number;
 }
@@ -157,7 +160,7 @@ const mapExpenseResponse = (expense: BackendExpense): Expense => ({
   category: mapBackendCategoryToUi(expense.category) as Expense["category"],
   date: new Date(expense.date),
   description: expense.description || undefined,
-  createdAt: expense.date,
+  createdAt: expense.created_at || expense.date,
 });
 
 const mapStockInResponse = (stockIn: BackendStockIn): StockIn => ({
@@ -166,7 +169,7 @@ const mapStockInResponse = (stockIn: BackendStockIn): StockIn => ({
   productName: stockIn.productName,
   quantity: Number(stockIn.quantity),
   date: new Date(stockIn.date),
-  createdAt: new Date(stockIn.date),
+  createdAt: new Date(stockIn.created_at || stockIn.date),
   notes: stockIn.note || undefined,
 });
 
@@ -176,7 +179,7 @@ const mapStockOutResponse = (stockOut: BackendStockOut): StockOut => ({
   productName: stockOut.productName,
   quantity: Number(stockOut.quantity),
   date: new Date(stockOut.date),
-  createdAt: new Date(stockOut.date),
+  createdAt: new Date(stockOut.created_at || `${stockOut.date}T${stockOut.time || "00:00:00"}`),
   notes: stockOut.note || undefined,
 });
 

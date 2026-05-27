@@ -537,7 +537,7 @@ export default function StockIn() {
                           >
                             <span className="font-semibold text-slate-900">{product.name}</span>
                             <span className="text-xs text-slate-500">
-                              {product.category} · {product.unit}
+                              Stok tersedia: {product.stock} {product.unit} · {product.category}
                             </span>
                           </button>
                         ))
