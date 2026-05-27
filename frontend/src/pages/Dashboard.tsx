@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import Insights from "@/components/Insights";
+import { Insights } from "@/components";
 import SalesChart from "@/components/SalesChart";
 import ForecastTrendChart from "@/components/ForecastTrendChart";
 import { useBusinessContext } from "@/context";
