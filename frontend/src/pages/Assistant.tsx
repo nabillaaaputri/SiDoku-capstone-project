@@ -64,10 +64,9 @@ const loadStoredMessages = (): Message[] => {
 
 export default function Assistant() {
   const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
-
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isConversationFresh = messages.length <= 1;
@@ -147,7 +146,6 @@ export default function Assistant() {
       });
     } catch (error) {
       const errorMessage = getAiChatbotErrorMessage(error);
-
       setError(errorMessage);
 
       setMessages((prev) => {
@@ -169,9 +167,9 @@ export default function Assistant() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col overflow-x-hidden">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur shrink-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -193,7 +191,6 @@ export default function Assistant() {
                 <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
                   Asisten AI SiDoku
                 </h1>
-
                 <p className="text-xs md:text-sm text-slate-500">
                   Analisis bisnis otomatis & insight usaha
                 </p>
@@ -208,23 +205,23 @@ export default function Assistant() {
         </div>
       </header>
 
-      {/* CONTENT */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
-        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm">
+      {/* CONTENT CONTAINER */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col min-h-0">
+        {/* Banner Sapaan Atas */}
+        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm shrink-0">
           <p className="text-sm font-bold text-slate-900 leading-tight">Halo! Saya Asisten AI SiDoku 👋</p>
           <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
             Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
           </p>
         </div>
 
-        {/* Perubahan di wrapper utama halaman: ditambahkan h-[calc(100vh-210px)] untuk membatasi tinggi container agar scroll internal aktif */}
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch lg:h-[calc(100vh-210px)]">
+        {/* Flex Wrapper Utama Antara Sidebar & Chat Area */}
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 lg:items-stretch lg:max-h-[calc(100vh-190px)]">
           
-          {/* SIDEBAR */}
-          {/* PERUBAHAN: Menjadikan aside flex flex-col penuh */}
+          {/* SIDEBAR AREA */}
           <aside className="lg:w-[240px] xl:w-[260px] shrink-0 flex flex-col gap-3 min-h-0 lg:self-stretch">
-            {/* Box 1: Tentang Asisten */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+            {/* Box 1: Tentang Asisten AI */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 shrink-0">
               <div>
                 <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
                 <p className="mt-1 text-xs text-slate-500 leading-relaxed">
@@ -241,8 +238,7 @@ export default function Assistant() {
             </div>
 
             {/* Box 2: Menu Pintar */}
-            {/* PERUBAHAN: Ditambahkan `lg:flex-1 lg:overflow-y-auto` agar kotak ini memanjang kebawah mengikuti tinggi Chat Area */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm lg:flex-1 lg:overflow-y-auto space-y-3">
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm flex-1 lg:overflow-y-auto space-y-3">
               <div className="space-y-1">
                 <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -304,9 +300,9 @@ export default function Assistant() {
             </div>
           </aside>
 
-          {/* CHAT AREA */}
+          {/* CHAT CONTAINER AREA */}
           <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
-            {/* CHAT HEADER */}
+            {/* Chat Box Header */}
             <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -335,7 +331,7 @@ export default function Assistant() {
               </div>
             </div>
 
-            {/* MESSAGES */}
+            {/* Bubble Chat Messages list */}
             <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
               {isConversationFresh && (
                 <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
@@ -383,7 +379,7 @@ export default function Assistant() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT */}
+            {/* Form Input Message */}
             <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
               <div className="flex items-stretch gap-2.5">
                 <div className="flex-1">
