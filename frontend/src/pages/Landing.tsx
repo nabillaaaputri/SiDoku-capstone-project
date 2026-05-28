@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 
 const TEAM = [
-  { name: "Nabilla Putri Nuraini", role: "", initials: "NPN", color: "bg-blue-100 text-blue-700" },
-  { name: "Shafira Auliana Salsabila", role: "", initials: "SAS", color: "bg-purple-100 text-purple-700" },
-  { name: "Nayla Poetri Kurnia", role: "", initials: "NPK", color: "bg-emerald-100 text-emerald-700" },
-  { name: "Hikmal Arya Dwitama", role: "", initials: "HAD", color: "bg-orange-100 text-orange-700" },
-  { name: "Yolanda Wulandari", role: "", initials: "YW", color: "bg-pink-100 text-pink-700" },
-  { name: "Bella Azhar Kautsar", role: "", initials: "BAK", color: "bg-cyan-100 text-cyan-700" },
+  { name: "Nabilla Putri Nuraini", initials: "NPN" },
+  { name: "Shafira Auliana Salsabila", initials: "SAS" },
+  { name: "Nayla Poetri Kurnia", initials: "NPK" },
+  { name: "Hikmal Arya Dwitama", initials: "HAD" },
+  { name: "Yolanda Wulandari", initials: "YW" },
+  { name: "Bella Azhar Kautsar", initials: "BAK" },
 ];
 
 export default function Landing() {
@@ -342,18 +342,18 @@ export default function Landing() {
         {/* 7. OUR TEAM */}
         <section className="py-10 bg-white border-t border-slate-100">
           <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
-            <div className="mb-8">
+            <div className="mb-5">
               <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Dibangun oleh Tim SiDoku</h3>
+              <p className="mt-2 text-[13px] font-medium text-slate-500">Enam orang yang mengerjakan produk ini bersama.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-wrap justify-center gap-2.5">
               {TEAM.map((member, i) => (
-                <div key={i} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-colors cursor-default text-left">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black ${member.color}`}>
+                <div key={i} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white">
                     {member.initials}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900 leading-tight">{member.name}</p>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">{member.role}</p>
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">{member.name}</p>
                   </div>
                 </div>
               ))}

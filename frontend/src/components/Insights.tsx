@@ -82,10 +82,13 @@ const getRangeTotals = (
 };
 
 export default function Insights() {
-  const { salesRecords } = useBusinessContext();
+  const { products, salesRecords } = useBusinessContext();
   const [recommendationItems, setRecommendationItems] = useState<AiRecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
+  const activeProductIdSet = useMemo(() => new Set(activeProducts.map((product) => product.id)), [activeProducts]);
+  const activeProductNameSet = useMemo(() => new Set(activeProducts.map((product) => product.name.toLowerCase())), [activeProducts]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -128,7 +131,7 @@ export default function Insights() {
   const salesAggregates = useMemo<ProductSalesAggregate[]>(() => {
     const aggregates = new Map<string, ProductSalesAggregate>();
 
-    for (const record of salesRecords) {
+    for (const record of salesRecords.filter((item) => activeProductIdSet.has(item.productId))) {
       const existing = aggregates.get(record.productId);
 
       if (existing) {
@@ -152,7 +155,7 @@ export default function Insights() {
 
       return b.totalRevenue - a.totalRevenue;
     });
-  }, [salesRecords]);
+  }, [activeProductIdSet, salesRecords]);
 
   const topSellerCard = useMemo<InsightCard | null>(() => {
     const topSeller = salesAggregates[0];
@@ -173,6 +176,7 @@ export default function Insights() {
 
   const restockCards = useMemo<RestockInsightCard[]>(() => {
     return [...recommendationItems]
+      .filter((item) => activeProductNameSet.has(item.product_name.toLowerCase()))
       .sort((a, b) => {
         const statusPriority = (status: AiRecommendationItem["status"]) => {
           if (status === "critical") return 0;
@@ -198,7 +202,7 @@ export default function Insights() {
         reorderQty: Number(item.reorder_qty) || 0,
         status: item.status,
       }));
-  }, [recommendationItems]);
+  }, [activeProductNameSet, recommendationItems]);
 
   const restockCard = useMemo<InsightCard | null>(() => {
     const restock = restockCards[0];
@@ -238,8 +242,9 @@ export default function Insights() {
     previousWeekStart.setDate(previousWeekStart.getDate() - 6);
     previousWeekStart.setHours(0, 0, 0, 0);
 
-    const currentWeekTotals = getRangeTotals(salesRecords, currentWeekStart, currentWeekEnd);
-    const previousWeekTotals = getRangeTotals(salesRecords, previousWeekStart, previousWeekEnd);
+    const activeSalesRecords = salesRecords.filter((item) => activeProductIdSet.has(item.productId));
+    const currentWeekTotals = getRangeTotals(activeSalesRecords, currentWeekStart, currentWeekEnd);
+    const previousWeekTotals = getRangeTotals(activeSalesRecords, previousWeekStart, previousWeekEnd);
     const difference = currentWeekTotals.totalAmount - previousWeekTotals.totalAmount;
     const percentChange = previousWeekTotals.totalAmount > 0
       ? (difference / previousWeekTotals.totalAmount) * 100
@@ -258,7 +263,7 @@ export default function Insights() {
       metric: `${status} ${formatPercentChange(percentChange)}`.trim(),
       icon: <BarChart3 size={20} />,
     };
-  }, [salesRecords]);
+  }, [activeProductIdSet, salesRecords]);
 
   const insightCards = useMemo(() => {
     return [topSellerCard, restockCard, performanceCard].filter(

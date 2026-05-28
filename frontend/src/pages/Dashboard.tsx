@@ -126,6 +126,7 @@ export default function Dashboard() {
   const isRoiNegative = financialSummary.roi < 0;
 
   const activeProducts = products.filter((product) => product.archived !== true);
+  const activeProductIds = new Set(activeProducts.map((product) => product.id));
   const lowStockProducts = activeProducts.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
 
@@ -170,7 +171,7 @@ export default function Dashboard() {
 
     const pointMap = new Map(points.map((point) => [point.key, point]));
 
-    for (const record of salesRecords) {
+    for (const record of salesRecords.filter((item) => activeProductIds.has(item.productId))) {
       const recordDate = new Date(record.date);
       const key = getJakartaDateInputValue(recordDate);
       const targetPoint = pointMap.get(key);
@@ -184,7 +185,7 @@ export default function Dashboard() {
     }
 
     return points.map(({ key, date: _date, ...point }) => point);
-  }, [salesRecords]);
+  }, [activeProductIds, salesRecords]);
 
   return (
     <DashboardLayout>

@@ -43,6 +43,7 @@ export default function StockIn() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const historyProductComboboxRef = useRef<HTMLDivElement | null>(null);
+  const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
   const [stockInForm, setStockInForm] = useState({
     productId: "",
     quantity: 0,
@@ -51,8 +52,8 @@ export default function StockIn() {
   });
 
   useEffect(() => {
-    setIsNoProductDialogOpen(products.length === 0);
-  }, [products.length]);
+    setIsNoProductDialogOpen(activeProducts.length === 0);
+  }, [activeProducts.length]);
 
   const todayStockIns = useMemo(() => {
     const startDate = new Date();
@@ -91,30 +92,39 @@ export default function StockIn() {
   const totalTransactionsToday = todayStockIns.length;
   const latestProductToday = todayStockIns[0]?.productName || "-";
 
-  const selectedProduct = products.find((p) => p.id === stockInForm.productId);
+  const selectedProduct = activeProducts.find((p) => p.id === stockInForm.productId);
   const filteredProducts = useMemo(() => {
     const query = productSearchQuery.trim().toLowerCase();
 
     if (!query) {
-      return products;
+      return activeProducts;
     }
 
-    return products.filter((product) => product.name.toLowerCase().includes(query));
-  }, [productSearchQuery, products]);
+    return activeProducts.filter((product) => product.name.toLowerCase().includes(query));
+  }, [activeProducts, productSearchQuery]);
 
-  const selectedHistoryProduct = products.find((p) => p.id === historySelectedProductId);
+  const selectedHistoryProduct = activeProducts.find((p) => p.id === historySelectedProductId);
   const filteredHistoryProducts = useMemo(() => {
     const query = historyProductQuery.trim().toLowerCase();
 
     if (!query) {
-      return products;
+      return activeProducts;
     }
 
-    return products.filter((product) => product.name.toLowerCase().includes(query));
-  }, [historyProductQuery, products]);
+    return activeProducts.filter((product) => product.name.toLowerCase().includes(query));
+  }, [activeProducts, historyProductQuery]);
 
   const handleSelectProduct = (productId: string) => {
-    const product = products.find((item) => item.id === productId);
+    const product = activeProducts.find((item) => item.id === productId);
+
+    if (!product) {
+      toast({
+        title: "Produk tidak tersedia",
+        description: "Produk yang diarsipkan tidak bisa dipilih untuk stok masuk.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setStockInForm({ ...stockInForm, productId });
     setProductSearchQuery(product?.name || "");
@@ -128,7 +138,16 @@ export default function StockIn() {
   };
 
   const handleSelectHistoryProduct = (productId: string) => {
-    const product = products.find((item) => item.id === productId);
+    const product = activeProducts.find((item) => item.id === productId);
+
+    if (!product) {
+      toast({
+        title: "Produk tidak tersedia",
+        description: "Produk yang diarsipkan tidak bisa dipilih untuk filter riwayat.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setHistorySelectedProductId(productId);
     setHistoryProductQuery(product?.name || "");
@@ -169,13 +188,6 @@ export default function StockIn() {
     };
   }, [showHistoryProductDropdown, showProductDropdown]);
 
-  const resetHistoryFilters = () => {
-    setHistoryProductQuery("");
-    setHistorySelectedProductId("");
-    setShowHistoryProductDropdown(false);
-    setHistoryDateFilter(getLocalDateString());
-  };
-
   const handleStockInSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -199,11 +211,11 @@ export default function StockIn() {
         return;
       }
 
-      const product = products.find((p) => p.id === stockInForm.productId);
+      const product = activeProducts.find((p) => p.id === stockInForm.productId);
       if (!product) {
         toast({
-          title: "Error",
-          description: "Produk tidak ditemukan",
+          title: "Produk tidak tersedia",
+          description: "Produk ini sudah diarsipkan dan tidak bisa digunakan untuk stok masuk.",
           variant: "destructive",
         });
         return;
@@ -284,7 +296,7 @@ export default function StockIn() {
 
             <Button
               onClick={() => {
-                if (products.length === 0) {
+                if (activeProducts.length === 0) {
                   setIsNoProductDialogOpen(true);
                   return;
                 }
@@ -403,13 +415,6 @@ export default function StockIn() {
                 className="h-11 w-full rounded-xl"
               />
 
-              <Button
-                variant="outline"
-                onClick={resetHistoryFilters}
-                className="h-11 rounded-xl w-full"
-              >
-                Bersihkan Filter Riwayat
-              </Button>
             </div>
 
             {filteredHistoryStockIns.length === 0 ? (
@@ -499,7 +504,7 @@ export default function StockIn() {
             </div>
           )}
 
-          {products.length === 0 ? (
+          {activeProducts.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-6 text-center text-sm text-slate-600">
               Silakan tambahkan produk terlebih dahulu sebelum mencatat stok masuk atau stok keluar.
             </div>

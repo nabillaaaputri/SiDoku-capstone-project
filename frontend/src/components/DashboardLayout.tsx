@@ -1,10 +1,10 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import { LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
+import { CheckCircle2, LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
 import { getPreferredUserName } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,7 +18,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { toast } = useToast();
 
   const displayName = getPreferredUserName(user);
   const avatarInitials =
@@ -34,17 +33,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleLogout = async () => {
     try {
       await logout();
-      toast({
-        title: "Logout berhasil",
+      toast.success("Logout berhasil", {
         description: "Anda telah keluar dari akun SiDoku.",
+        icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />,
+        duration: 2500,
+        className: "border-emerald-200 bg-white text-slate-900 shadow-[0_20px_45px_rgba(16,185,129,0.12)]",
       });
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout failed:", error);
-      toast({
-        title: "Logout gagal",
+      toast.error("Logout gagal", {
         description: "Sesi tidak dapat ditutup saat ini.",
-        variant: "destructive",
+        duration: 2500,
       });
     }
   };
