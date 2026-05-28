@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Package,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { askAiChatbot, getAiChatbotErrorMessage } from "@/services";
 
@@ -19,24 +20,56 @@ interface Message {
   error?: string;
 }
 
+const CHAT_STORAGE_KEY = "sidoku_ai_chat_messages";
+
+const DEFAULT_MESSAGES: Message[] = [
+  {
+    id: "1",
+    role: "assistant",
+    content:
+      "Halo 👋 Saya Asisten AI SiDoku. Saya bisa bantu cek penjualan, stok, keuntungan, dan insight bisnis dengan cepat.",
+    timestamp: Date.now(),
+  },
+];
+
+const loadStoredMessages = (): Message[] => {
+  if (typeof window === "undefined") {
+    return DEFAULT_MESSAGES;
+  }
+
+  try {
+    const rawMessages = window.localStorage.getItem(CHAT_STORAGE_KEY);
+
+    if (!rawMessages) {
+      return DEFAULT_MESSAGES;
+    }
+
+    const parsedMessages = JSON.parse(rawMessages) as Message[];
+
+    if (!Array.isArray(parsedMessages) || parsedMessages.length === 0) {
+      return DEFAULT_MESSAGES;
+    }
+
+    return parsedMessages.filter(
+      (message): message is Message =>
+        typeof message?.id === "string" &&
+        (message.role === "user" || message.role === "assistant") &&
+        typeof message.content === "string" &&
+        typeof message.timestamp === "number",
+    );
+  } catch {
+    return DEFAULT_MESSAGES;
+  }
+};
+
 export default function Assistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
-      timestamp: Date.now(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // FIX AUTO SCROLL
-  const isFirstRender = useRef(true);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -45,15 +78,31 @@ export default function Assistant() {
   };
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // Ignore storage write failures so chat still works normally.
+    }
+  }, [messages]);
+
   const generateMessageId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const resetChat = () => {
+    try {
+      window.localStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch {
+      // Ignore storage removal errors.
+    }
+
+    setMessages(DEFAULT_MESSAGES);
+    setInput("");
+    setError(null);
+    setIsLoading(false);
+  };
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -163,85 +212,68 @@ export default function Assistant() {
       </header>
 
       {/* CONTENT */}
-      <div className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-5 py-4 md:py-5 space-y-4 md:space-y-5">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-4 md:py-5 space-y-4 md:space-y-5">
         {/* AI INTRO CARD */}
-        <div className="rounded-[28px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.95),_rgba(255,255,255,0.95))] shadow-sm p-4 md:p-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex items-start gap-3.5 max-w-3xl">
-              <div className="h-12 w-12 shrink-0 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Sparkles size={26} />
-              </div>
-              <div className="space-y-2.5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">AI Assistant</p>
-                  <h2 className="mt-1 text-lg md:text-xl font-black text-slate-900">Halo! Saya Asisten AI SiDoku 👋</h2>
-                  <p className="mt-1.5 text-sm md:text-[15px] text-slate-600 leading-relaxed max-w-2xl">
-                    Saya membantu Anda memahami kondisi usaha berdasarkan data yang dicatat di aplikasi.
-                  </p>
-                </div>
-
-                <div className="grid gap-2 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm">
-                    Saya bisa membantu:
-                    <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
-                      <li>• Menjelaskan ringkasan usaha</li>
-                      <li>• Memberikan insight pengeluaran</li>
-                      <li>• Mengecek produk paling laku</li>
-                      <li>• Mengecek stok yang hampir habis</li>
-                      <li>• Memberikan saran pencatatan usaha sederhana</li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm">
-                    Contoh pertanyaan:
-                    <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
-                      <li>• Produk apa yang paling laku?</li>
-                      <li>• Rekomendasi restock apa yang saya butuh?</li>
-                      <li>• Bisa prediksi penjualan minggu depan?</li>
-                      <li>• Bagaimana kondisi usaha saya minggu ini?</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  AI memberikan saran berdasarkan data yang tersedia di aplikasi, jadi hasilnya dapat berbeda sesuai kelengkapan data.
+        <div className="rounded-[24px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.88),_rgba(255,255,255,0.96))] shadow-sm px-4 py-4 md:px-5 md:py-4.5">
+          <div className="flex items-start gap-3.5">
+            <div className="h-11 w-11 shrink-0 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Sparkles size={24} />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">AI Assistant</p>
+                <h2 className="mt-1 text-base md:text-lg font-black text-slate-900">Halo! Saya Asisten AI SiDoku</h2>
+                <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-3xl">
+                  Fokus ke percakapan bisnis. Tanya apa saja soal stok, rekap penjualan, atau insight usaha Anda.
                 </p>
               </div>
-            </div>
 
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm">
-              <Bot size={14} />
-              Siap membantu
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium shadow-sm">
+                  <Sparkles size={12} />
+                  Solusi cepat
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium shadow-sm">
+                  <Bot size={12} />
+                  Bahasa Indonesia
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5">
+        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
           {/* SIDEBAR */}
-          <aside className="lg:w-[300px] space-y-4">
-          {/* INTRO */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mb-3">
+          <aside className="lg:w-[260px] xl:w-[280px] space-y-3.5 lg:sticky lg:top-24">
+          <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center mb-2.5">
               <Bot className="text-blue-600" size={28} />
             </div>
 
-            <h2 className="text-xl font-extrabold text-slate-900 leading-tight">
+            <h2 className="text-lg font-extrabold text-slate-900 leading-tight">
               Tanya Apa Saja Tentang Bisnis Kamu
             </h2>
 
-            <p className="text-sm text-slate-600 mt-2.5 leading-relaxed">
-              Dapatkan insight cepat mengenai stok, penjualan,
-              keuntungan, hingga rekomendasi bisnis otomatis.
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+              Chat singkat untuk cek stok, penjualan, dan insight bisnis tanpa banyak klik.
             </p>
           </div>
 
-          {/* QUICK QUESTIONS */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
-            <p className="text-sm font-bold text-slate-900 mb-4">
-              Contoh Pertanyaan
-            </p>
+          <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <p className="text-sm font-bold text-slate-900">Quick Actions</p>
+              <button
+                onClick={resetChat}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
+                type="button"
+                aria-label="Bersihkan chat"
+              >
+                <RotateCcw size={12} />
+                Bersihkan
+              </button>
+            </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <button
                 onClick={() =>
                   setInput("Produk apa yang paling laku?")
@@ -260,7 +292,7 @@ export default function Assistant() {
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Produk apa yang paling laku?”
+                      Lihat produk yang paling laku sekarang
                     </p>
                   </div>
                 </div>
@@ -284,7 +316,7 @@ export default function Assistant() {
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Rekomendasi restock apa yang saya butuh?”
+                      Cek barang yang perlu diisi ulang
                     </p>
                   </div>
                 </div>
@@ -308,7 +340,7 @@ export default function Assistant() {
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Bisa prediksi penjualan minggu depan?”
+                      Lihat perkiraan penjualan ke depan
                     </p>
                   </div>
                 </div>
@@ -318,10 +350,11 @@ export default function Assistant() {
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[620px]">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[680px] lg:min-h-[760px]">
           {/* CHAT HEADER */}
-          <div className="border-b border-slate-200 px-4 py-3.5 bg-slate-50">
-            <div className="flex items-center gap-3">
+          <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
                   <Bot size={22} />
@@ -339,11 +372,22 @@ export default function Assistant() {
                   Online • Membantu bisnis Anda
                 </p>
               </div>
+              </div>
+
+              <button
+                onClick={resetChat}
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-800 transition"
+                aria-label="Reset chat"
+              >
+                <RotateCcw size={13} />
+                Reset Chat
+              </button>
             </div>
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-5 py-5 space-y-4 bg-gradient-to-b from-slate-50 to-white">
+          <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-4 md:py-5 space-y-3.5 bg-gradient-to-b from-slate-50/70 to-white">
             {messages.map((message) => (
               <div
                 key={message.id}
