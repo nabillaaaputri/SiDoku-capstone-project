@@ -187,7 +187,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Floating AI Button */}
       <Link
         to="/ai-assistant"
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-3 sm:bottom-6 sm:right-6 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-3 sm:bottom-6 sm:right-6 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
         aria-label="Open AI Assistant"
       >
         <MessageCircle size={24} />

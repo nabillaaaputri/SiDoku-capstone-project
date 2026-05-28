@@ -279,33 +279,33 @@ export default function Insights() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
+            <div key={index} className="flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm sm:items-center sm:gap-3 sm:px-4">
+              <div className="h-10 w-10 shrink-0 rounded-2xl bg-slate-100 animate-pulse sm:h-11 sm:w-11" />
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-4 w-32 rounded-full bg-slate-100 animate-pulse" />
+                <div className="h-4 w-28 rounded-full bg-slate-100 animate-pulse sm:w-32" />
                 <div className="h-3 w-full rounded-full bg-slate-100 animate-pulse" />
                 <div className="h-3 w-4/5 rounded-full bg-slate-100 animate-pulse" />
               </div>
-              <div className="h-6 w-14 shrink-0 rounded-full bg-slate-100 animate-pulse" />
+              <div className="h-6 w-12 shrink-0 rounded-full bg-slate-100 animate-pulse sm:w-14" />
             </div>
           ))}
         </div>
 
-        <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-4 shadow-sm mt-4">
-          <div className="flex items-center gap-2.5 text-sm font-extrabold text-slate-900 mb-3.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
-              <AlertCircle size={18} />
+        <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-3.5 shadow-sm mt-3 sm:p-4 sm:mt-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-900 sm:gap-2.5 sm:mb-3.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200 sm:h-9 sm:w-9">
+              <AlertCircle size={16} className="sm:h-[18px] sm:w-[18px]" />
             </span>
             Apa yang bisa kamu lakukan?
           </div>
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
             {Array.from({ length: 2 }).map((_, index) => (
               <div
                 key={index}
-                className="h-12 rounded-[14px] border border-blue-50 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.02)] animate-pulse"
+                className="h-10 rounded-[14px] border border-blue-50 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.02)] animate-pulse sm:h-12"
               />
             ))}
           </div>
@@ -315,13 +315,13 @@ export default function Insights() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-3">
+    <div className="space-y-2.5 sm:space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
         {hasData ? (
           insightCards.slice(0, 3).map((insight) => (
             <div
               key={insight.id}
-              className={`group flex w-full items-start gap-3 rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+              className={`group flex w-full items-start gap-2.5 rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:gap-3 sm:p-4 ${
                 insight.type === "positive"
                   ? "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)]"
                   : insight.type === "warning"
@@ -330,7 +330,7 @@ export default function Insights() {
               }`}
             >
               <div
-                className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
+                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border sm:h-11 sm:w-11 ${
                   insight.type === "positive"
                     ? "border-emerald-100 bg-emerald-50 text-emerald-600"
                     : insight.type === "warning"
@@ -342,14 +342,16 @@ export default function Insights() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2.5 sm:gap-3">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-bold leading-tight text-slate-900">{insight.title}</h3>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{insight.description}</p>
+                    <h3 className="text-[13px] font-bold leading-tight text-slate-900 sm:text-sm">{insight.title}</h3>
+                    <p className="mt-1 text-[12px] leading-relaxed text-slate-600 sm:mt-1.5 sm:text-[13px]">
+                      {insight.description}
+                    </p>
                   </div>
                   {insight.metric && (
                     <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold sm:px-2.5 sm:py-1 sm:text-[11px] ${
                         insight.type === "positive"
                           ? "bg-emerald-100 text-emerald-700"
                           : insight.type === "warning"

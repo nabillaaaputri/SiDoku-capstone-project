@@ -211,36 +211,6 @@ export default function Assistant() {
       </header>
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 min-h-0 flex-col gap-3 px-3 py-3 sm:px-4 md:px-6 md:py-6">
-        <div className="grid gap-2 md:hidden">
-          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-            <p className="text-sm font-bold text-slate-900">Tentang Asisten SiDoku</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
-              Asisten AI SiDoku membantu membaca data usaha seperti produk paling laris, stok menipis, rekomendasi restock, dan ringkasan penjualan.
-            </p>
-          </div>
-
-          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
-                <p className="text-[11px] text-slate-500">Pilih pertanyaan cepat untuk mulai.</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {QUICK_QUESTIONS.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  onClick={() => void handleQuickQuestion(question)}
-                  className="inline-flex h-9 items-center rounded-full border border-blue-100 bg-blue-50 px-3 text-[11px] font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
         <div className="hidden px-1 pt-1 md:block">
           <p className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
@@ -346,6 +316,39 @@ export default function Assistant() {
                   <RotateCcw size={12} />
                   Reset Chat
                 </button>
+              </div>
+            </div>
+
+            <div className="border-b border-slate-200/70 bg-white/80 px-3 py-3 md:hidden">
+              <div className="space-y-2.5">
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50/80 px-3 py-3 shadow-sm">
+                  <p className="text-[12px] font-bold text-slate-900">Tentang Asisten SiDoku</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                    Membantu membaca data usaha seperti produk paling laris, stok menipis, rekomendasi restock, dan ringkasan penjualan.
+                  </p>
+                </div>
+
+                <div className="rounded-[18px] border border-slate-200 bg-slate-50/80 px-3 py-3 shadow-sm">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[12px] font-bold text-slate-900">Menu Pintar</p>
+                      <p className="text-[11px] text-slate-500">Tap salah satu untuk mulai.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_QUESTIONS.map((question) => (
+                      <button
+                        key={question}
+                        type="button"
+                        onClick={() => void handleQuickQuestion(question)}
+                        className="inline-flex h-8 items-center rounded-full border border-blue-100 bg-white px-3 text-[10px] font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-50"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
