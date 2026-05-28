@@ -356,7 +356,7 @@ export default function Reports() {
                                         <tr key={detail.productId} className="border-b border-gray-200 hover:bg-gray-50">
                                           <td className="py-2 px-2 font-medium">{detail.productName}</td>
                                           <td className="text-right py-2 px-2 hidden sm:table-cell text-xs">{detail.stokAwal}</td>
-                                          <td className="text-right py-2 px-2 text-xs text-red-600">−{detail.stokKeluar + detail.terjual}</td>
+                                          <td className="text-right py-2 px-2 text-xs text-red-600">−{detail.stokKeluar}</td>
                                           <td className="text-right py-2 px-2 hidden sm:table-cell text-xs">{detail.stokAkhir}</td>
                                           <td className="text-right py-2 px-2 font-bold">{detail.terjual}</td>
                                           <td className="text-right py-2 px-2 hidden md:table-cell text-xs">Rp {detail.nilaiPenjualan.toLocaleString("id-ID")}</td>

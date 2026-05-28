@@ -275,8 +275,8 @@ const buildDailyRecap = (
     const stokKeluar = productStockOuts.reduce((sum, item) => sum + item.quantity, 0);
     const stokAkhir = product.stock;
     const terjualDariCatatan = productSalesRecords.reduce((sum, item) => sum + item.quantity, 0);
-    const stokAwal = Math.max(0, stokAkhir + stokKeluar + terjualDariCatatan - stokMasuk);
-    const terjual = Math.max(0, stokAwal + stokMasuk - stokAkhir);
+    const terjual = Math.max(stokKeluar, terjualDariCatatan);
+    const stokAwal = Math.max(0, stokAkhir + terjual);
 
     if (terjual > 0 || stokKeluar > 0) {
       recapByProduct.set(product.id, {
