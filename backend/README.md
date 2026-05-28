@@ -1,4 +1,4 @@
-﻿# SiDoku Backend API
+# SiDoku Backend API
 
 Sistem manajemen inventori untuk toko yang menghadirkan REST API dengan dukungan autentikasi, manajemen produk, stok masuk/keluar, pengeluaran, laporan penjualan, dashboard analitik, dan integrasi AI.
 
@@ -229,18 +229,137 @@ Semua endpoint berada di bawah prefix `/v1`.
 ### AI Chatbot
 
 - `POST /v1/ai-chatbot/ask`
-  - body: `{ question }`
+  - **Description**: Mengirim pertanyaan ke AI chatbot untuk mendapatkan analisis bisnis interaktif
+  - **Authentication**: Membutuhkan header `Authorization: Bearer <accessToken>`
+  - **Request Body**: `{ question: string }`
+  - **Response**:
+    ```json
+    {
+      "status": "success",
+      "message": "AI chatbot response generated successfully",
+      "data": {
+        "question": "string",
+        "answer": "string",
+        "aiResponse": "string",
+        "action": "string",
+        "tag": "string",
+        "data": {}
+      }
+    }
+    ```
+
+  **Supported Actions** (AI akan mendeteksi action berdasarkan pertanyaan):
+  - `fetch_daily_sales`: Penjualan hari ini
+    - Jawaban: Total produk terjual + estimasi pemasukan
+  - `fetch_best_selling`: Produk paling laku (7 hari terakhir)
+    - Jawaban: Top 3 produk dengan jumlah penjualan
+  - `fetch_expenses`: Pengeluaran bulan ini
+    - Jawaban: Total pengeluaran bulanan
+  - `fetch_profit_loss`: Keuntungan/rugi bulan ini
+    - Jawaban: Estimasi profit, total pemasukan, HPP, pengeluaran
+  - `fetch_inventory`: Status inventori
+    - Jawaban: Daftar produk dengan stok rendah (di bawah minimum)
+  - `predict_inventory_depletion`: Prediksi stok yang akan habis
+    - Jawaban: Produk dengan stok kritis berdasarkan AI analysis
+  - `generate_strategy_recommendation`: Rekomendasi strategi restock
+    - Jawaban: Rekomendasi jumlah restock untuk setiap produk
+  - `predict_future_sales`: Prediksi penjualan 7 hari ke depan
+    - Jawaban: Estimasi jumlah unit yang akan terjual
+  - `exit_chat`: Keluar dari sesi chat
+    - Jawaban: Konfirmasi penutupan sesi
+
+  **Contoh Request**:
+
+  ```json
+  {
+    "question": "berapa penjualan hari ini?"
+  }
+  ```
+
+  **Error Handling**:
+  - Status `502`: AI Service tidak tersedia atau error koneksi
+  - Status `503`: AI Service overloaded
+  - Response error mencakup detail dari AI service
 
 ### AI Analytics
 
 - `GET /v1/ai/forecast/:productId`
-  - query: `daysAhead`, `historyDays`
+  - **Description**: Mendapatkan prediksi penjualan produk untuk periode waktu tertentu
+  - **Authentication**: Membutuhkan header `Authorization: Bearer <accessToken>`
+  - **Parameters**:
+    - `productId` (path): ID produk yang akan diprediksi
+    - `daysAhead` (query, optional): Jumlah hari ke depan untuk prediksi (default: 7)
+    - `historyDays` (query, optional): Jumlah hari riwayat untuk analisis (default: 60)
+  - **Response**:
+    ```json
+    {
+      "status": "success",
+      "message": "Sales forecast retrieved successfully",
+      "data": {
+        "productId": "string",
+        "product_name": "string",
+        "predictions": [
+          {
+            "date": "string",
+            "predicted_qty": number
+          }
+        ]
+      }
+    }
+    ```
+  - **Error**:
+    - `404`: Produk tidak ditemukan
+    - `400`: Data stok keluar produk belum cukup untuk prediksi
 
 - `GET /v1/ai/insights`
-  - query: `historyDays`
+  - **Description**: Mendapatkan insight analisis AI untuk semua produk aktif
+  - **Authentication**: Membutuhkan header `Authorization: Bearer <accessToken>`
+  - **Parameters**:
+    - `historyDays` (query, optional): Jumlah hari riwayat untuk analisis (default: 60)
+  - **Response**:
+    ```json
+    {
+      "status": "success",
+      "message": "AI insights retrieved successfully",
+      "data": {
+        "insights": [
+          {
+            "product_name": "string",
+            "status": "critical|warning|safe",
+            "stok": number,
+            "insight": "string"
+          }
+        ]
+      }
+    }
+    ```
+  - **Error**:
+    - `404`: Data produk tidak ditemukan
 
 - `GET /v1/ai/recommendations`
-  - query: `historyDays`
+  - **Description**: Mendapatkan rekomendasi restock dari AI untuk semua produk aktif
+  - **Authentication**: Membutuhkan header `Authorization: Bearer <accessToken>`
+  - **Parameters**:
+    - `historyDays` (query, optional): Jumlah hari riwayat untuk analisis (default: 60)
+  - **Response**:
+    ```json
+    {
+      "status": "success",
+      "message": "AI recommendations retrieved successfully",
+      "data": {
+        "recommendations": [
+          {
+            "product_name": "string",
+            "current_stock": number,
+            "reorder_qty": number,
+            "reason": "string"
+          }
+        ]
+      }
+    }
+    ```
+  - **Error**:
+    - `404`: Data produk tidak ditemukan
 
 ---
 
@@ -285,6 +404,77 @@ Contoh error:
 {
   "status": "fail",
   "message": "Email atau password salah."
+}
+```
+
+---
+
+## Integrasi AI
+
+### Deskripsi Umum
+
+Sistem ini mengintegrasikan layanan AI eksternal untuk memberikan fitur prediksi, insight, rekomendasi, dan chatbot interaktif. Semua fitur AI bergantung pada `AI_SERVICE_URL` yang dikonfigurasi di environment variables.
+
+### Layanan AI yang Didukung
+
+1. **Sales Forecasting**: Prediksi penjualan berdasarkan riwayat stok keluar
+2. **Inventory Insights**: Analisis stok produk dan identifikasi yang kritis
+3. **Restock Recommendations**: Rekomendasi jumlah restock optimal
+4. **Interactive Chatbot**: Bot conversational untuk analisis bisnis real-time
+
+### Requirements untuk AI Service
+
+AI service yang diarahkan di `AI_SERVICE_URL` harus mendukung endpoint berikut:
+
+1. **Chat Endpoint** (untuk chatbot):
+   - Method: `POST`
+   - Payload: `{ "message": string }`
+   - Response: `{ "response": string, "action": string, "tag": string }`
+
+2. **Forecast Endpoint** (untuk prediksi penjualan):
+   - Method: `POST`
+   - Payload: `{ "product_name": string, "stok_keluar": array, "stok_masuk": array, "stok": number, "harga_jual": number, "days_ahead": number }`
+   - Response: `{ "product_name": string, "predictions": array }`
+
+3. **Insights Endpoint** (untuk analisis stok):
+   - Method: `POST`
+   - Payload: `{ products: array }`
+   - Response: `{ "insights": array }`
+
+4. **Recommendations Endpoint** (untuk rekomendasi restock):
+   - Method: `POST`
+   - Payload: `{ products: array }`
+   - Response: `{ "recommendations": array }`
+
+### Error Handling
+
+Jika AI service mengalami error:
+
+- Status `502`: AI Service tidak tersedia atau error koneksi
+- Status `503`: AI Service overloaded/busy
+- Pesan error dari AI service akan ditampilkan ke frontend
+
+### Data yang Dikirim ke AI Service
+
+Untuk setiap produk, data yang dikirim ke AI service meliputi:
+
+```json
+{
+  "product_name": "string",
+  "stok": number,
+  "harga_jual": number,
+  "stok_keluar": [
+    {
+      "date": "YYYY-MM-DD",
+      "qty": number
+    }
+  ],
+  "stok_masuk": [
+    {
+      "date": "YYYY-MM-DD",
+      "qty": number
+    }
+  ]
 }
 ```
 
