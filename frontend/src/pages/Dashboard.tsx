@@ -1,553 +1,456 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
-import SalesChart from "@/components/SalesChart";
-import { useBusinessContext } from "@/context";
-import { useAuth } from "@/context/AuthContext";
-import apiClient from "@/services/api";
-import { getPreferredUserName } from "@/services/auth.service";
-import { getSalesForecast, getAiForecastErrorMessage } from "@/services";
-import { formatRupiahCompact } from "@/lib/utils";
 import {
-  ArrowUpRight,
-  ArrowDownRight,
+  ArrowLeft,
+  Bot,
+  SendHorizonal,
   Sparkles,
+  TrendingUp,
   Package,
-  CircleDollarSign,
-  Banknote,
-  Activity,
-  ShieldAlert,
-  ChevronRight,
+  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
+import { askAiChatbot, getAiChatbotErrorMessage } from "@/services";
 
-const Insights = lazy(() => import("@/components/Insights"));
-const ForecastTrendChart = lazy(() => import("@/components/ForecastTrendChart"));
-
-interface ApiResponse<T> {
-  status: string;
-  message: string;
-  data: T;
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  error?: string;
 }
 
-interface DashboardSummary {
-  income: number;
-  expense: number;
-  profit: number;
-  roi: number;
-}
+const CHAT_STORAGE_KEY = "sidoku_ai_chat_messages";
 
-interface DashboardTrendItem {
-  day: string;
-  income: number;
-  expense: number;
-}
+const DEFAULT_MESSAGES: Message[] = [
+  {
+    id: "1",
+    role: "assistant",
+    content:
+      "Halo 👋 Saya Asisten AI SiDoku. Saya bisa bantu cek penjualan, stok, keuntungan, dan insight bisnis dengan cepat.",
+    timestamp: Date.now(),
+  },
+];
 
-interface DashboardTrends {
-  period: string;
-  items: DashboardTrendItem[];
-  totalIncome: number;
-  totalExpense: number;
-}
+const loadStoredMessages = (): Message[] => {
+  if (typeof window === "undefined") return DEFAULT_MESSAGES;
 
-interface ChartPoint {
-  label: string;
-  income: number;
-  expense: number;
-  profit: number;
-}
+  try {
+    const rawMessages = window.localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!rawMessages) return DEFAULT_MESSAGES;
 
-interface ForecastTrendPoint {
-  label: string;
-  predictedRevenue: number;
-  predictedQuantity: number;
-}
+    const parsedMessages = JSON.parse(rawMessages) as Message[];
 
-interface TopForecastProduct {
-  productId: string;
-  productName: string;
-  totalRevenue: number;
-}
-
-export default function Dashboard() {
-  const { products, salesRecords } = useBusinessContext();
-  const { user } = useAuth();
-  const displayName = getPreferredUserName(user);
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
-  const [forecastData, setForecastData] = useState<ForecastTrendPoint[]>([]);
-  const [forecastError, setForecastError] = useState<string | null>(null);
-  const [isForecastLoading, setIsForecastLoading] = useState(false);
-  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
-
-  const productLookup = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
-
-  const topForecastProducts = useMemo<TopForecastProduct[]>(() => {
-    const totalsByProduct = new Map<string, TopForecastProduct>();
-
-    for (const record of salesRecords) {
-      const product = productLookup.get(record.productId);
-
-      if (!product) {
-        continue;
-      }
-
-      const existing = totalsByProduct.get(record.productId);
-
-      if (existing) {
-        existing.totalRevenue += record.totalAmount;
-      } else {
-        totalsByProduct.set(record.productId, {
-          productId: record.productId,
-          productName: record.productName || product.name,
-          totalRevenue: record.totalAmount,
-        });
-      }
+    if (!Array.isArray(parsedMessages) || parsedMessages.length === 0) {
+      return DEFAULT_MESSAGES;
     }
 
-    return Array.from(totalsByProduct.values())
-      .sort((a, b) => b.totalRevenue - a.totalRevenue)
-      .slice(0, 3);
-  }, [productLookup, salesRecords]);
+    const validMessages = parsedMessages.filter(
+      (message): message is Message =>
+        typeof message?.id === "string" &&
+        (message.role === "user" || message.role === "assistant") &&
+        typeof message.content === "string" &&
+        typeof message.timestamp === "number"
+    );
 
-  // Handle pemuatan data dasar bisnis (Ringkasan Keuangan) secara mandiri agar cepat muncul
-  useEffect(() => {
-    let isMounted = true;
+    return validMessages.length > 0 ? validMessages : DEFAULT_MESSAGES;
+  } catch {
+    return DEFAULT_MESSAGES;
+  }
+};
 
-    const loadDashboard = async () => {
-      setIsLoadingDashboard(true);
+export default function Assistant() {
+  const [messages, setMessages] = useState<Message[]>(() =>
+    loadStoredMessages()
+  );
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setError] = useState<string | null>(null);
 
-      try {
-        const [summaryResponse, trendsResponse] = await Promise.allSettled([
-          apiClient.get<ApiResponse<DashboardSummary>>("/dashboard/summary"),
-          apiClient.get<ApiResponse<DashboardTrends>>("/dashboard/trends"),
-        ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isConversationFresh = messages.length <= 1;
 
-        if (!isMounted) {
-          return;
-        }
-
-        if (summaryResponse.status === "fulfilled") {
-          setSummary(summaryResponse.value.data.data || null);
-        } else {
-          console.error("Failed to load dashboard summary:", summaryResponse.reason);
-          setSummary(null);
-        }
-
-        if (trendsResponse.status === "fulfilled") {
-          setTrends(trendsResponse.value.data.data?.items || []);
-        } else {
-          console.error("Failed to load dashboard trends:", trendsResponse.reason);
-          setTrends([]);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-
-        if (isMounted) {
-          setSummary(null);
-          setTrends([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingDashboard(false);
-        }
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Handle pemuatan data prediksi AI secara real-time dari model
-  useEffect(() => {
-    let isCancelled = false;
-
-    const loadForecast = async () => {
-      if (topForecastProducts.length === 0) {
-        setForecastData([]);
-        setForecastError(null);
-        setIsForecastLoading(false);
-        return;
-      }
-
-      setIsForecastLoading(true);
-      setForecastError(null);
-
-      try {
-        const settledForecasts = await Promise.allSettled(
-          topForecastProducts.map((product) =>
-            getSalesForecast(product.productId, {
-              daysAhead: 7,
-              historyDays: 60,
-            }),
-          ),
-        );
-
-        if (isCancelled) {
-          return;
-        }
-
-        const successfulForecasts = settledForecasts
-          .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof getSalesForecast>>> => result.status === "fulfilled")
-          .map((result) => result.value);
-
-        if (successfulForecasts.length === 0) {
-          setForecastData([]);
-          setForecastError("Belum ada data forecast AI yang dapat ditampilkan.");
-          return;
-        }
-
-        const aggregatedByDate = new Map<
-          string,
-          ForecastTrendPoint & { sortValue: number }
-        >();
-
-        successfulForecasts.forEach((forecast) => {
-          const product = productLookup.get(forecast.productId);
-          const sellPrice = product?.sellPrice || 0;
-
-          forecast.predictions.forEach((prediction) => {
-            const sortValue = new Date(`${prediction.date}T00:00:00`).getTime();
-            const label = new Date(`${prediction.date}T00:00:00`).toLocaleDateString("id-ID", {
-              weekday: "short",
-              day: "2-digit",
-              month: "short",
-            });
-
-            const current = aggregatedByDate.get(prediction.date) || {
-              label,
-              predictedRevenue: 0,
-              predictedQuantity: 0,
-              sortValue,
-            };
-
-            current.predictedRevenue += prediction.predictedQty * sellPrice;
-            current.predictedQuantity += prediction.predictedQty;
-            aggregatedByDate.set(prediction.date, current);
-          });
-        });
-
-        const chartPoints = Array.from(aggregatedByDate.values())
-          .sort((a, b) => a.sortValue - b.sortValue)
-          .map(({ sortValue, ...point }) => point);
-
-        setForecastData(chartPoints);
-      } catch (error) {
-        if (!isCancelled) {
-          setForecastData([]);
-          setForecastError(getAiForecastErrorMessage(error));
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsForecastLoading(false);
-        }
-      }
-    };
-
-    loadForecast();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [productLookup, topForecastProducts]);
-
-  const chartData = useMemo<ChartPoint[]>(() => {
-    return trends.map((item) => ({
-      label: item.day,
-      income: Number(item.income) || 0,
-      expense: Number(item.expense) || 0,
-      profit: (Number(item.income) || 0) - (Number(item.expense) || 0),
-    }));
-  }, [trends]);
-
-  const financialSummary = summary || {
-    income: 0,
-    expense: 0,
-    profit: 0,
-    roi: 0,
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  const isProfitNegative = financialSummary.profit < 0;
-  const isRoiNegative = financialSummary.roi < 0;
 
-  const lowStockProducts = products.filter(p => p.stock <= p.minimumStock).slice(0, 3);
-  const hasLowStock = lowStockProducts.length > 0;
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  const aiCardSkeleton = (
-    <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-4 w-32 rounded-full bg-slate-100 animate-pulse" />
-                <div className="h-3 w-full rounded-full bg-slate-100 animate-pulse" />
-                <div className="h-3 w-4/5 rounded-full bg-slate-100 animate-pulse" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore localStorage error
+    }
+  }, [messages]);
 
-      <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-4 shadow-sm mt-4">
-        <div className="h-5 w-40 rounded-full bg-slate-100 animate-pulse mb-3.5" />
-        <div className="flex flex-col gap-2.5">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <div key={index} className="h-12 rounded-[14px] border border-blue-50 bg-white animate-pulse" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  const generateMessageId = () =>
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const forecastSkeleton = (
-    <div className="section-shell p-4 sm:p-4.5 lg:p-5">
-      <div className="h-5 w-64 rounded-full bg-slate-100 animate-pulse" />
-      <div className="mt-3 h-4 w-96 max-w-full rounded-full bg-slate-100 animate-pulse" />
-      <div className="mt-4 h-[320px] rounded-[24px] border border-slate-200 bg-slate-50 animate-pulse" />
-    </div>
-  );
+  const resetChat = () => {
+    try {
+      window.localStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch {
+      // ignore localStorage error
+    }
+
+    setMessages(DEFAULT_MESSAGES);
+    setInput("");
+    setError(null);
+    setIsLoading(false);
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const currentInput = input.trim();
+
+    const userMessage: Message = {
+      id: generateMessageId(),
+      role: "user",
+      content: currentInput,
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      {
+        id: `loading-${Date.now()}`,
+        role: "assistant",
+        content: "Sedang memproses...",
+        timestamp: Date.now(),
+      },
+    ]);
+
+    setInput("");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await askAiChatbot(currentInput);
+
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+
+        return [
+          ...filtered,
+          {
+            id: generateMessageId(),
+            role: "assistant",
+            content: result.answer,
+            timestamp: Date.now(),
+          },
+        ];
+      });
+    } catch (error) {
+      const errorMessage = getAiChatbotErrorMessage(error);
+      setError(errorMessage);
+
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+
+        return [
+          ...filtered,
+          {
+            id: generateMessageId(),
+            role: "assistant",
+            content: errorMessage,
+            timestamp: Date.now(),
+            error: errorMessage,
+          },
+        ];
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-3 sm:space-y-3.5 w-full max-w-full overflow-x-hidden">
-        <section className="section-shell overflow-hidden">
-          <div className="bg-[linear-gradient(135deg,_rgba(29,78,216,0.06),_rgba(56,189,248,0.04))] p-4 sm:p-4.5 lg:p-5">
-            <div className="flex flex-col gap-3.5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-2 max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm">
-                  <Sparkles size={14} />
-                  SiDoku Analytics
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter text-slate-900 leading-tight">
-                    Selamat Datang Kembali, {displayName}
-                  </h1>
-                  <p className="text-sm sm:text-[15px] text-slate-600 max-w-2xl leading-relaxed">
-                    Pantau ringkasan usaha, insight penting, stok menipis, dan tren performa dalam satu tampilan.
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition"
+            >
+              <ArrowLeft size={18} />
+              Kembali
+            </Link>
+
+            <div className="hidden md:block w-px h-6 bg-slate-300" />
+
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white shadow-lg">
+                <Bot size={22} />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:justify-end">
-                <Link
-                  to="/stok-masuk"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-blue-700 shadow-sm hover:border-blue-300 hover:bg-blue-50"
-                  aria-label="Restock"
-                >
-                  <ArrowUpRight size={18} />
-                  Stok Masuk
-                </Link>
-                <Link
-                  to="/stok-keluar"
-                  className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,_#0f172a,_#1d4ed8)] px-3.5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_30px_rgba(29,78,216,0.18)] hover:brightness-105"
-                  aria-label="Stok Keluar"
-                >
-                  <ArrowDownRight size={18} />
-                  Stok Keluar
-                </Link>
+              <div>
+                <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
+                  Asisten AI SiDoku
+                </h1>
+                <p className="text-xs md:text-sm text-slate-500">
+                  Analisis bisnis otomatis & insight usaha
+                </p>
               </div>
             </div>
           </div>
-        </section>
 
-        <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
-          <div>
-            <h2 className="section-heading">Ringkasan Keuangan</h2>
-            <p className="mt-1 text-sm text-slate-500">Empat angka utama untuk membaca performa bisnis dengan cepat.</p>
+          <div className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-full text-xs font-semibold">
+            <Sparkles size={14} />
+            AI Active
           </div>
+        </div>
+      </header>
 
-          {isLoadingDashboard ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={`summary-skeleton-${index}`}
-                  className="rounded-[28px] border border-slate-200 bg-white p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col">
+        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm">
+          <p className="text-sm font-bold text-slate-900 leading-tight">
+            Halo! Saya Asisten AI SiDoku 👋
+          </p>
+          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau
+            prediksi bisnis Anda.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3">
+          <aside className="hidden lg:block space-y-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-sm font-bold text-slate-900">
+                Tentang Asisten AI
+              </p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Asisten ini membantu membaca data bisnis dengan cepat dan
+                memberi saran yang mudah dipahami.
+              </p>
+
+              <div className="mt-3 rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
+                <p className="text-xs font-semibold text-sky-700">Tips</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang
+                  diberikan.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
+              <div className="mb-3 space-y-1">
+                <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Pilih menu di bawah atau tulis pertanyaan sendiri.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => setInput("Produk apa yang paling laku?")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
-                  <div className="h-3 w-24 rounded-full bg-slate-100 animate-pulse" />
-                  <div className="mt-4 h-8 w-32 rounded-full bg-slate-100 animate-pulse" />
-                  <div className="mt-3 h-3 w-20 rounded-full bg-slate-100 animate-pulse" />
+                  <div className="flex items-center gap-2.5">
+                    <TrendingUp size={18} className="text-blue-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Produk Paling Laku
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Beri ringkasan usaha saya.")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles size={18} className="text-sky-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Ringkasan Usaha
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() =>
+                    setInput("Rekomendasi restock apa yang saya butuh?")
+                  }
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Package size={18} className="text-emerald-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Rekomendasi Restock
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() =>
+                    setInput("Bisa prediksi penjualan minggu depan?")
+                  }
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles size={18} className="text-orange-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Prediksi Penjualan
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Cek stok menipis.")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle size={18} className="text-amber-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Cek Stok Menipis
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[640px]">
+            <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
+                      <Bot size={22} />
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900">
+                      Asisten AI SiDoku
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Siap membantu • Jawaban singkat dan praktis
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={resetChat}
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-800 transition"
+                >
+                  <RotateCcw size={13} />
+                  Reset Chat
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
+              {isConversationFresh && (
+                <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
+                  Coba tanyakan: produk paling laku, restock, atau prediksi
+                  penjualan.
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  {message.role === "assistant" ? (
+                    <div className="max-w-[90%] md:max-w-[75%]">
+                      <div
+                        className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
+                          message.error
+                            ? "bg-red-50 border border-red-200"
+                            : message.content === "Sedang memproses..."
+                            ? "bg-slate-100 border border-slate-200"
+                            : "bg-white border border-slate-200"
+                        }`}
+                      >
+                        {message.content === "Sedang memproses..." ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                            <div
+                              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.2s" }}
+                            />
+                            <div
+                              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.4s" }}
+                            />
+                          </div>
+                        ) : message.error ? (
+                          <div className="flex items-start gap-2">
+                            <AlertCircle
+                              size={16}
+                              className="text-red-600 flex-shrink-0 mt-0.5"
+                            />
+                            <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">
+                              {message.content}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
+                            {message.content}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
+                      <p className="text-sm md:text-[15px] leading-relaxed">
+                        {message.content}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
+
+              <div ref={messagesEndRef} />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
-              <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
-                <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
-                    <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.income)}</p>
-                    <p className="mt-1.5 text-xs font-medium text-slate-500">dari penjualan</p>
-                  </div>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
-                    <CircleDollarSign size={22} />
-                  </div>
+
+            <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
+              <div className="flex items-stretch gap-2.5">
+                <div className="flex-1">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    disabled={isLoading}
+                    placeholder="Tulis pertanyaan Anda..."
+                    rows={2}
+                    className="w-full h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                 </div>
-                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-blue-100/80">
-                  <div className="h-full w-[78%] rounded-full bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-                </div>
+
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !input.trim()}
+                  className="h-[52px] px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  <SendHorizonal size={15} />
+                  <span className="hidden sm:inline">
+                    {isLoading ? "Mengirim..." : "Kirim"}
+                  </span>
+                </button>
               </div>
 
-              <div className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.11)]">
-                <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
-                    <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">{formatRupiahCompact(financialSummary.expense)}</p>
-                    <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
-                  </div>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-slate-200">
-                    <Banknote size={22} />
-                  </div>
-                </div>
-                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-slate-200/80">
-                  <div className="h-full w-[42%] rounded-full bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
-                </div>
-              </div>
-
-              <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"}`}>
-                <div className={`absolute inset-x-0 top-0 h-1 ${isProfitNegative ? "bg-[linear-gradient(90deg,_#f59e0b,_#ea580c)]" : "bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
-                    <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>{formatRupiahCompact(financialSummary.profit)}</p>
-                    <p className="mt-1.5 text-xs font-medium text-slate-500">uang masuk - keluar</p>
-                  </div>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
-                    <Package size={22} />
-                  </div>
-                </div>
-                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
-                  <div className={`h-full rounded-full ${isProfitNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[66%] bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
-                </div>
-              </div>
-
-              <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"}`}>
-                <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
-                    <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>{`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}</p>
-                    <p className="mt-1.5 text-xs font-medium text-slate-500">persentase laba dari modal</p>
-                  </div>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
-                    <ShieldAlert size={22} />
-                  </div>
-                </div>
-                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
-                  <div className={`h-full rounded-full ${isRoiNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[88%] bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
-                </div>
-              </div>
+              <p className="text-xs text-slate-400 mt-3 text-center">
+                AI dapat membuat kesalahan. Pastikan cek kembali data penting.
+              </p>
             </div>
-          )}
-        </section>
-
-        <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
-          <div>
-            <h2 className="section-heading">Insight Singkat</h2>
-            <p className="mt-1 text-sm text-slate-500">Saran yang lebih ringkas dan lebih cepat dipindai.</p>
-          </div>
-          <Suspense fallback={aiCardSkeleton}>
-            <Insights />
-          </Suspense>
-        </section>
-
-        <section className="space-y-2.5 sm:space-y-3 w-full">
-          <Suspense fallback={forecastSkeleton}>
-            <ForecastTrendChart
-              data={forecastData}
-              isLoading={isForecastLoading}
-              error={forecastError}
-              sourceLabel={topForecastProducts.map((product) => product.productName).join(", ")}
-            />
-          </Suspense>
-        </section>
-
-        <section className="section-shell p-4 sm:p-4.5 lg:p-5 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="section-heading">Produk Hampir Habis ({lowStockProducts.length})</h2>
-              <p className="mt-1 text-sm text-slate-500">Prioritaskan restock untuk menjaga ketersediaan barang.</p>
-            </div>
-            {hasLowStock && (
-              <Link to="/products" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
-                Lihat semua
-                <ChevronRight size={16} />
-              </Link>
-            )}
-          </div>
-
-          {hasLowStock ? (
-            <div className="overflow-x-auto rounded-[20px] border border-slate-200/60 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.02)]">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50/50 text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200/60">
-                  <tr>
-                    <th className="px-5 py-3.5 font-semibold w-[35%]">Produk</th>
-                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Satuan</th>
-                    <th className="px-4 py-3.5 font-semibold text-center w-[14%]">Sisa Stok</th>
-                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Min.</th>
-                    <th className="px-4 py-3.5 font-semibold text-center w-[12%]">Status</th>
-                    <th className="px-5 py-3.5 font-semibold text-right w-[15%]">Keterangan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {lowStockProducts.map((product) => {
-                    const isCritical = product.stock === 0;
-                    const shortage = product.minimumStock - product.stock;
-                    
-                    return (
-                      <tr key={product.id} className="hover:bg-slate-50/40 transition-colors group">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${isCritical ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'} group-hover:shadow-sm transition-all`}>
-                              <Package size={16} />
-                            </div>
-                            <span className="font-bold text-slate-800">{product.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center font-medium text-slate-500">{product.unit}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`font-extrabold ${isCritical ? 'text-red-600' : 'text-amber-600'}`}>{product.stock}</span>
-                        </td>
-                        <td className="px-4 py-3 text-center font-medium text-slate-400">{product.minimumStock}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                            isCritical 
-                              ? 'bg-red-50 text-red-700 ring-1 ring-red-200/50' 
-                              : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/50'
-                          }`}>
-                            {isCritical ? "Kritis" : "Low"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <span className="text-[12.5px] font-semibold text-slate-500">
-                            {isCritical ? "Segera restok" : `Butuh ${shortage > 0 ? shortage : 1} ${product.unit}`}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-center">
-              <p className="text-sm font-semibold text-slate-700">Tidak ada produk yang menipis.</p>
-              <p className="mt-1 text-sm text-slate-500">Semua stok masih aman untuk saat ini.</p>
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-2.5 sm:space-y-3 w-full">
-          <SalesChart data={chartData} isLoading={isLoadingDashboard} />
-        </section>
-      </div>
-    </DashboardLayout>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
