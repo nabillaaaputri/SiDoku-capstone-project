@@ -212,54 +212,11 @@ export default function Assistant() {
       </header>
 
       {/* CONTENT */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-4 md:py-5 space-y-4 md:space-y-5">
-        {/* AI INTRO CARD */}
-        <div className="rounded-[24px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.88),_rgba(255,255,255,0.96))] shadow-sm px-4 py-4 md:px-5 md:py-4.5">
-          <div className="flex items-start gap-3.5">
-            <div className="h-11 w-11 shrink-0 rounded-2xl bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Sparkles size={24} />
-            </div>
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">AI Assistant</p>
-                <h2 className="mt-1 text-base md:text-lg font-black text-slate-900">Halo! Saya Asisten AI SiDoku</h2>
-                <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-3xl">
-                  Fokus ke percakapan bisnis. Tanya apa saja soal stok, rekap penjualan, atau insight usaha Anda.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium shadow-sm">
-                  <Sparkles size={12} />
-                  Solusi cepat
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium shadow-sm">
-                  <Bot size={12} />
-                  Bahasa Indonesia
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
           {/* SIDEBAR */}
-          <aside className="lg:w-[260px] xl:w-[280px] space-y-3.5 lg:sticky lg:top-24">
-          <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-sm">
-            <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center mb-2.5">
-              <Bot className="text-blue-600" size={28} />
-            </div>
-
-            <h2 className="text-lg font-extrabold text-slate-900 leading-tight">
-              Tanya Apa Saja Tentang Bisnis Kamu
-            </h2>
-
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-              Chat singkat untuk cek stok, penjualan, dan insight bisnis tanpa banyak klik.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-sm">
+          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0">
+          <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-3">
               <p className="text-sm font-bold text-slate-900">Quick Actions</p>
               <button
@@ -278,23 +235,16 @@ export default function Assistant() {
                 onClick={() =>
                   setInput("Produk apa yang paling laku?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-2.5">
                   <TrendingUp
                     size={18}
                     className="text-blue-500 mt-0.5"
                   />
-
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Produk Paling Laku
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      Lihat produk yang paling laku sekarang
-                    </p>
-                  </div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Produk Paling Laku
+                  </p>
                 </div>
               </button>
 
@@ -302,23 +252,16 @@ export default function Assistant() {
                 onClick={() =>
                   setInput("Rekomendasi restock apa yang saya butuh?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-2.5">
                   <Package
                     size={18}
                     className="text-emerald-500 mt-0.5"
                   />
-
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Rekomendasi Restock
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      Cek barang yang perlu diisi ulang
-                    </p>
-                  </div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Rekomendasi Restock
+                  </p>
                 </div>
               </button>
 
@@ -326,23 +269,16 @@ export default function Assistant() {
                 onClick={() =>
                   setInput("Bisa prediksi penjualan minggu depan?")
                 }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
+                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-2.5">
                   <Sparkles
                     size={18}
                     className="text-orange-500 mt-0.5"
                   />
-
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Prediksi Penjualan
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      Lihat perkiraan penjualan ke depan
-                    </p>
-                  </div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Prediksi Penjualan
+                  </p>
                 </div>
               </button>
             </div>
@@ -350,9 +286,9 @@ export default function Assistant() {
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[680px] lg:min-h-[760px]">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:h-[calc(100vh-180px)]">
           {/* CHAT HEADER */}
-          <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur">
+          <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
               <div className="relative">
@@ -387,7 +323,7 @@ export default function Assistant() {
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-4 md:py-5 space-y-3.5 bg-gradient-to-b from-slate-50/70 to-white">
+          <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3.5 md:py-4 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -398,14 +334,7 @@ export default function Assistant() {
                 }`}
               >
                 {message.role === "assistant" ? (
-                  <div className="flex gap-3 max-w-[90%] md:max-w-[75%]">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Bot
-                        size={18}
-                        className="text-blue-600"
-                      />
-                    </div>
-
+                  <div className="max-w-[90%] md:max-w-[75%]">
                     <div className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
                       message.error
                         ? "bg-red-50 border border-red-200"
@@ -447,7 +376,7 @@ export default function Assistant() {
           </div>
 
           {/* INPUT */}
-          <div className="border-t border-slate-200 bg-white p-3.5 md:p-4">
+          <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
             <div className="flex items-end gap-2.5">
               <div className="flex-1">
                 <textarea
@@ -465,14 +394,14 @@ export default function Assistant() {
                   disabled={isLoading}
                   placeholder="Tulis pertanyaan Anda..."
                   rows={2}
-                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !input.trim()}
-                className="h-11 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="h-10 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <SendHorizonal size={18} />
 
