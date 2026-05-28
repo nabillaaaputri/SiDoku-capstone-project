@@ -214,16 +214,24 @@ export default function Assistant() {
 
       {/* CONTENT */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
-        <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm mb-3">
-          <p className="text-sm font-bold text-slate-900">Halo! Saya Asisten AI SiDoku 👋</p>
-          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
-            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
-          </p>
+        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-sm">
+              <Bot size={18} />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900 leading-tight">Halo! Saya Asisten AI SiDoku 👋</p>
+              <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+                Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch">
           {/* SIDEBAR */}
-          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0">
+          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0 lg:self-stretch lg:flex lg:flex-col">
           <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
             <div className="mb-3 space-y-1">
               <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
@@ -320,7 +328,7 @@ export default function Assistant() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 lg:mt-auto">
             <div>
               <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
@@ -338,28 +346,28 @@ export default function Assistant() {
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:h-[calc(100vh-170px)]">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
           {/* CHAT HEADER */}
           <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
-                  <Bot size={22} />
+                <div className="relative">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
+                    <Bot size={22} />
+                  </div>
+
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                 </div>
 
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-              </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    Asisten AI SiDoku
+                  </h3>
 
-              <div>
-                <h3 className="font-bold text-slate-900">
-                  Asisten AI SiDoku
-                </h3>
-
-                <p className="text-xs text-slate-500">
-                  Siap membantu • Jawaban singkat dan praktis
-                </p>
-              </div>
+                  <p className="text-xs text-slate-500">
+                    Siap membantu • Jawaban singkat dan praktis
+                  </p>
+                </div>
               </div>
 
               <button
@@ -375,7 +383,7 @@ export default function Assistant() {
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3.5 md:py-4 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
+          <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
             {isConversationFresh && (
               <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
                 Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
@@ -459,9 +467,9 @@ export default function Assistant() {
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !input.trim()}
-                className="min-h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
+                className="h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
               >
-                <SendHorizonal size={16} />
+                <SendHorizonal size={14} />
 
                 <span className="hidden sm:inline">
                   {isLoading ? "Mengirim..." : "Kirim"}
