@@ -35,11 +35,11 @@
   html,
   body,
   #root {
-    @apply min-h-screen;
+    @apply min-h-screen overflow-x-clip;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased overflow-x-clip;
   }
 
   input[type="password"]::-ms-reveal,

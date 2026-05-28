@@ -160,9 +160,9 @@ export default function Assistant() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,_rgba(219,234,254,0.9),_rgba(248,250,252,1)_42%,_rgba(239,246,255,1)_100%)] text-slate-900">
+    <div className="min-h-screen overflow-x-clip flex flex-col bg-[radial-gradient(circle_at_top,_rgba(219,234,254,0.9),_rgba(248,250,252,1)_42%,_rgba(239,246,255,1)_100%)] text-slate-900">
       <header className="sticky top-0 z-40 border-b border-white/70 bg-white/75 shadow-[0_8px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 md:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6 md:py-3.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               to="/dashboard"
@@ -173,14 +173,14 @@ export default function Assistant() {
             </Link>
             <div className="hidden h-6 w-px bg-slate-200 md:block" />
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-[0_12px_24px_rgba(37,99,235,0.28)]">
-                <Bot size={22} />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-[0_12px_24px_rgba(37,99,235,0.28)] md:h-11 md:w-11">
+                <Bot size={20} className="md:h-[22px] md:w-[22px]" />
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-extrabold text-slate-900 md:text-xl">
+                <h1 className="truncate text-base font-extrabold text-slate-900 md:text-xl">
                   Asisten AI SiDoku
                 </h1>
-                <p className="truncate text-xs text-slate-500 md:text-sm">
+                <p className="truncate text-[11px] text-slate-500 md:text-sm">
                   Analisis bisnis otomatis & insight usaha
                 </p>
               </div>
@@ -193,8 +193,8 @@ export default function Assistant() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 min-h-0 flex-col gap-3 px-4 py-4 md:px-6 md:py-6 lg:min-h-[calc(100dvh-92px)]">
-        <div className="px-1 pt-1">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 min-h-0 flex-col gap-3 px-3 py-3 sm:px-4 md:px-6 md:py-6">
+        <div className="hidden px-1 pt-1 md:block">
           <p className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
             Halo! Saya Asisten AI SiDoku 👋
           </p>
@@ -203,7 +203,7 @@ export default function Assistant() {
           </p>
         </div>
 
-        <div className="grid flex-1 min-h-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-stretch">
+        <div className="grid flex-1 min-h-0 gap-3 md:gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-stretch">
           <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:self-start lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-slate-200 bg-white/95 p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
               <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
@@ -274,38 +274,38 @@ export default function Assistant() {
             </div>
           </aside>
 
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-[30px] border border-white/80 bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:min-h-[calc(100dvh-220px)]">
-            <div className="shrink-0 border-b border-slate-200/80 bg-white/80 px-4 py-3.5 backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-3">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-[26px] border border-white/80 bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur min-h-[calc(100dvh-12rem)] sm:min-h-[calc(100dvh-13rem)] md:min-h-[calc(100dvh-14rem)] lg:min-h-[calc(100dvh-220px)]">
+            <div className="shrink-0 border-b border-slate-200/80 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-4 sm:py-3.5">
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="relative">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)]">
-                      <Bot size={22} />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)] sm:h-11 sm:w-11">
+                      <Bot size={20} className="sm:h-[22px] sm:w-[22px]" />
                     </div>
                     <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="truncate font-bold text-slate-900">Asisten AI SiDoku</h3>
-                    <p className="truncate text-xs text-slate-500">Online • Membantu bisnis Anda</p>
+                    <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">Asisten AI SiDoku</h3>
+                    <p className="truncate text-[11px] text-slate-500 sm:text-xs">Online • Membantu bisnis Anda</p>
                   </div>
                 </div>
 
                 <button
                   onClick={resetChat}
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:px-3 sm:text-xs"
                 >
-                  <RotateCcw size={13} />
+                  <RotateCcw size={12} />
                   Reset Chat
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.85)_0%,rgba(255,255,255,1)_56%,rgba(239,246,255,0.45)_100%)] px-4 py-4 space-y-3.5 md:px-5 md:py-5">
+            <div className="flex-1 min-h-0 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.85)_0%,rgba(255,255,255,1)_56%,rgba(239,246,255,0.45)_100%)] px-3 py-3 space-y-3.5 sm:px-4 sm:py-4 md:px-5 md:py-5">
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   {message.role === "assistant" ? (
-                    <div className="max-w-[92%] md:max-w-[78%] lg:max-w-[66%]">
+                    <div className="max-w-[92%] sm:max-w-[82%] md:max-w-[78%] lg:max-w-[66%]">
                       <div
                         className={`rounded-[22px] rounded-tl-md px-4 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                           message.error
@@ -342,8 +342,8 @@ export default function Assistant() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="shrink-0 border-t border-slate-200/80 bg-white/95 p-3.5 md:p-4">
-              <div className="flex items-end gap-2.5">
+            <div className="shrink-0 border-t border-slate-200/80 bg-white/95 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:p-4">
+              <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <textarea
                     value={input}
@@ -357,14 +357,14 @@ export default function Assistant() {
                     disabled={isLoading}
                     placeholder="Tulis pertanyaan Anda..."
                     rows={1}
-                    className="w-full min-h-[56px] resize-none rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full min-h-[52px] resize-none rounded-[18px] border border-slate-200 bg-slate-50/80 px-3.5 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[56px] sm:px-4"
                   />
                 </div>
 
                 <button
                   onClick={handleSendMessage}
                   disabled={isLoading || !input.trim()}
-                  className="inline-flex h-[56px] items-center justify-center gap-1.5 rounded-[20px] bg-gradient-to-r from-blue-600 to-sky-500 px-5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(37,99,235,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                  className="inline-flex h-[52px] items-center justify-center gap-1.5 rounded-[18px] bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(37,99,235,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 sm:h-[56px] sm:px-5"
                 >
                   <SendHorizonal size={15} />
                   <span className="hidden sm:inline">{isLoading ? "Mengirim..." : "Kirim"}</span>

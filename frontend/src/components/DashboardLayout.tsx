@@ -63,11 +63,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_transparent_26%),linear-gradient(180deg,_#f8fbff_0%,_#f5f8fc_48%,_#eef4fb_100%)] flex flex-col text-slate-900">
+    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_transparent_26%),linear-gradient(180deg,_#f8fbff_0%,_#f5f8fc_48%,_#eef4fb_100%)] flex flex-col text-slate-900">
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[0_8px_24px_rgba(15,23,42,0.035)] overflow-visible">
-        <nav className="w-full px-3 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-3 sm:gap-4">
+        <nav className="w-full px-3 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4">
 
           {/* Left */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 min-w-0">
@@ -177,7 +177,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
 
         {/* Konten utama — overflow-x-hidden hanya di sini, bukan di parent */}
-        <main className="flex-1 min-w-0 px-3 py-4 sm:p-4 md:p-6 overflow-x-hidden">
+        <main className="flex-1 min-w-0 px-3 py-4 sm:p-4 md:p-6 overflow-x-clip">
           <div className="mx-auto w-full max-w-[1220px] space-y-4 sm:space-y-5">
             {children}
           </div>
@@ -187,7 +187,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Floating AI Button */}
       <Link
         to="/ai-assistant"
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-3 sm:bottom-6 sm:right-6 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
         aria-label="Open AI Assistant"
       >
         <MessageCircle size={24} />

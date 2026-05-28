@@ -116,33 +116,28 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           Mobile Sidebar (Drawer)
           ============================================= */}
       {isOpen && (
-        <div className="md:hidden fixed left-0 top-0 h-full w-[78vw] max-w-[288px] bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 flex flex-col shadow-[16px_0_40px_rgba(15,23,42,0.18)]">
-          <div className="border-b border-slate-200/80 p-4">
-            <div className="p-4">
+        <div className="md:hidden fixed left-0 top-0 h-full w-[82vw] max-w-[300px] bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-40 flex flex-col shadow-[16px_0_40px_rgba(15,23,42,0.18)]">
+          <div className="flex items-start justify-between gap-3 border-b border-slate-200/80 px-4 py-4">
+            <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
                 SiDoku
               </p>
               <p className="mt-1 text-base font-semibold text-slate-900">
-                Business dashboard
+                Menu utama
               </p>
             </div>
 
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Navigasi
-              </span>
-              <button
-                onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700"
-                aria-label="Close sidebar"
-              >
-                <X size={18} />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:text-blue-700"
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           {/* Menu Items */}
-          <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto">
+          <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {menuItems.map((item) => renderMenuItem(item, false, onClose))}
           </nav>
         </div>

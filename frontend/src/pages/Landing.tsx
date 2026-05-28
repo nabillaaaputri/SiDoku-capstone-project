@@ -29,14 +29,14 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-clip">
       {/* 1. NAVBAR */}
       <div className="fixed top-0 inset-x-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
-        <header className={`pointer-events-auto transition-all duration-300 rounded-full border w-full max-w-4xl ${
+        <header className={`pointer-events-auto transition-all duration-300 rounded-full border w-full max-w-5xl ${
           scrolled ? 'bg-[#EAF2FB]/90 backdrop-blur-sm border-slate-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.08)]' 
           : 'bg-[#EAF2FB]/90 backdrop-blur-sm border-slate-200/70 shadow-[0_8px_20px_rgba(15,23,42,0.06)]'
         }`}>
-          <div className="flex justify-between items-center h-14 px-4 sm:px-6">
+          <div className="flex justify-between items-center h-14 px-4 sm:px-5 lg:px-6">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                 <div className="w-8 h-8 rounded-2xl bg-white text-slate-900 border border-white/80 flex items-center justify-center p-1.5 shadow-sm">
@@ -89,14 +89,14 @@ export default function Landing() {
 
       <main>
         {/* 2. HERO SECTION */}
-        <section id="beranda" className="pt-28 pb-8 md:pt-34 md:pb-10 px-4 sm:px-6 max-w-[1100px] mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 z-10 text-center md:text-left">
+        <section id="beranda" className="pt-24 pb-8 sm:pt-28 md:pt-34 md:pb-10 px-4 sm:px-5 lg:px-6 max-w-[1120px] mx-auto">
+          <div className="grid gap-8 md:grid-cols-2 md:gap-10 lg:gap-12 items-center">
+            <div className="space-y-5 sm:space-y-6 z-10 text-center md:text-left">
               <div className="space-y-4">
-                <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black text-slate-900 leading-[1.2] tracking-tight">
+                <h1 className="text-3xl sm:text-[2.35rem] md:text-4xl lg:text-[42px] font-black text-slate-900 leading-[1.15] tracking-tight">
                   Kelola Stok dan Keuangan Usaha <span className="text-blue-600">Tanpa Ribet</span>
                 </h1>
-                <p className="text-sm text-slate-600 max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
+                <p className="text-sm sm:text-[15px] text-slate-600 max-w-md mx-auto md:mx-0 leading-relaxed font-medium">
                   SiDoku membantu pemilik usaha mencatat stok, pemasukan, pengeluaran, dan memahami kondisi usaha dalam satu dashboard sederhana.
                 </p>
               </div>
@@ -122,8 +122,8 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="mt-8 md:mt-0 relative flex justify-center">
-              <div className="w-full max-w-lg rounded-3xl border border-blue-100 bg-white shadow-[0_18px_44px_rgba(2,32,71,0.14)] overflow-hidden">
+            <div className="mt-2 md:mt-0 relative flex justify-center md:justify-end">
+              <div className="w-full max-w-[540px] rounded-3xl border border-blue-100 bg-white shadow-[0_18px_44px_rgba(2,32,71,0.14)] overflow-hidden">
                  <div className="h-11 px-4 border-b border-blue-100 bg-[linear-gradient(90deg,_#0f172a,_#0c4a6e)] flex items-center gap-3">
                    <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-900 shadow-sm">
                      <img src={logoImage} alt="SiDoku" className="w-4 h-4 object-contain" />
@@ -131,29 +131,29 @@ export default function Landing() {
                    <div className="ml-1 text-[10px] font-bold text-white/90">Dashboard SiDoku</div>
                  </div>
 
-                 <div className="grid grid-cols-12 gap-2.5 p-3.5 bg-[linear-gradient(180deg,_#f8fbff,_#eef6ff)]">
-                   <div className="col-span-4 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
+                 <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-3.5 sm:p-4 bg-[linear-gradient(180deg,_#f8fbff,_#eef6ff)]">
+                   <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
                      <p className="text-[10px] font-bold text-slate-500">Uang Masuk</p>
-                     <p className="text-base sm:text-lg font-black text-slate-900 mt-1">Rp3.250.000</p>
-                     <p className="text-[10px] font-bold text-blue-600 mt-2">+14% dari minggu lalu</p>
+                     <p className="mt-1 text-[1.05rem] sm:text-lg font-black text-slate-900">Rp3.250.000</p>
+                     <p className="mt-2 text-[10px] font-bold text-blue-600">+14% dari minggu lalu</p>
                    </div>
-                   <div className="col-span-4 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
+                   <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
                      <p className="text-[10px] font-bold text-slate-500">Uang Keluar</p>
-                     <p className="text-base sm:text-lg font-black text-slate-900 mt-1">Rp1.120.000</p>
-                     <p className="text-[10px] font-bold text-cyan-600 mt-2">Bahan baku & operasional</p>
+                     <p className="mt-1 text-[1.05rem] sm:text-lg font-black text-slate-900">Rp1.120.000</p>
+                     <p className="mt-2 text-[10px] font-bold text-cyan-600">Bahan baku & operasional</p>
                    </div>
-                   <div className="col-span-4 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
+                   <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)] sm:col-span-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                      <p className="text-[10px] font-bold text-slate-500">Produk Hampir Habis</p>
-                     <p className="text-base sm:text-lg font-black text-slate-900 mt-1">6 Produk</p>
-                     <p className="text-[10px] font-bold text-orange-500 mt-2">Prioritas restock</p>
+                     <p className="mt-1 text-[1.05rem] sm:text-lg font-black text-slate-900">6 Produk</p>
+                     <p className="mt-2 text-[10px] font-bold text-orange-500">Prioritas restock</p>
                    </div>
 
-                   <div className="col-span-8 rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)]">
+                   <div className="rounded-2xl border border-blue-100 bg-white p-3 shadow-[0_8px_20px_rgba(14,116,144,0.08)] sm:col-span-2">
                      <div className="flex items-center justify-between mb-2">
                        <p className="text-[10px] font-bold text-slate-500">Tren Keuangan 7 Hari</p>
                        <span className="text-[10px] font-bold text-blue-600">Stabil naik</span>
                      </div>
-                     <svg viewBox="0 0 240 70" className="w-full h-[68px]">
+                     <svg viewBox="0 0 240 70" className="w-full h-[60px] sm:h-[68px]">
                        <path
                          fill="none"
                          stroke="#3b82f6"
@@ -177,7 +177,7 @@ export default function Landing() {
                      </div>
                    </div>
 
-                   <div className="col-span-4 rounded-2xl border border-cyan-200 bg-[linear-gradient(170deg,_#ecfeff,_#dbeafe)] p-3 shadow-[0_8px_20px_rgba(34,211,238,0.14)]">
+                   <div className="rounded-2xl border border-cyan-200 bg-[linear-gradient(170deg,_#ecfeff,_#dbeafe)] p-3 shadow-[0_8px_20px_rgba(34,211,238,0.14)] sm:col-span-2 md:col-span-1">
                      <p className="text-[10px] font-bold text-sky-800 mb-1">Insight AI</p>
                      <p className="text-[10px] text-slate-700 font-semibold leading-relaxed">
                        Prediksi akhir pekan: permintaan minyak goreng dan telur naik. Tambah stok 10-15%.
