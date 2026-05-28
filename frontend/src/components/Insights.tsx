@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { AlertCircle, Package, Star, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertCircle, BarChart3, Package, Star } from "lucide-react";
 import apiClient from "@/services/api";
 import { useBusinessContext } from "@/context";
 import { formatRupiahCompact } from "@/lib/utils";
@@ -41,14 +41,6 @@ interface ProductSalesAggregate {
   totalRevenue: number;
 }
 
-interface ForecastInsightCard {
-  id: string;
-  productName: string;
-  predictedDemand: number;
-  stock: number;
-  status: AiProductInsightItem["status"];
-}
-
 interface RestockInsightCard {
   id: string;
   productName: string;
@@ -58,71 +50,39 @@ interface RestockInsightCard {
   status: AiRecommendationItem["status"];
 }
 
-const statusMeta: Record<
-  AiProductInsightItem["status"],
-  {
-    type: InsightCard["type"];
-    title: string;
-    description: (item: AiProductInsightItem) => string;
-    metric: (item: AiProductInsightItem) => string;
-    icon: ReactNode;
-  }
-> = {
-  critical: {
-    type: "warning",
-    title: "Stok Kritis",
-    description: (item) =>
-      `${item.product_name} diprediksi butuh ${item.predicted_demand_7d.toFixed(1)} unit dalam 7 hari ke depan, sementara stok sekarang tinggal ${item.stok}.`,
-    metric: (item) => `-${Math.max(0, item.predicted_demand_7d - item.stok).toFixed(0)}`,
-    icon: <AlertCircle size={20} />,
-  },
-  normal: {
-    type: "neutral",
-    title: "Stok Aman",
-    description: (item) =>
-      `${item.product_name} masih aman untuk 7 hari ke depan dengan stok ${item.stok} dan kebutuhan prediksi ${item.predicted_demand_7d.toFixed(1)} unit.`,
-    metric: (item) => `${Math.max(0, item.stok - item.predicted_demand_7d).toFixed(0)}`,
-    icon: <Package size={20} />,
-  },
-  increasing: {
-    type: "positive",
-    title: "Permintaan Naik",
-    description: (item) =>
-      `${item.product_name} menunjukkan tren permintaan naik dengan prediksi ${item.predicted_demand_7d.toFixed(1)} unit dalam 7 hari.`,
-    metric: (item) => `+${item.predicted_demand_7d.toFixed(0)}`,
-    icon: <TrendingUp size={20} />,
-  },
-  overstock: {
-    type: "neutral",
-    title: "Stok Berlebih",
-    description: (item) =>
-      `${item.product_name} diprediksi hanya terpakai ${item.predicted_demand_7d.toFixed(1)} unit dalam 7 hari, sementara stok saat ini ${item.stok}.`,
-    metric: (item) => `+${Math.max(0, item.stok - item.predicted_demand_7d).toFixed(0)}`,
-    icon: <TrendingDown size={20} />,
-  },
-};
-
-const toRecommendationText = (item: AiRecommendationItem) => {
-  if (item.status === "critical") {
-    return `${item.product_name} perlu segera restock sekitar ${item.reorder_qty} unit agar tidak kehabisan stok.`;
-  }
-
-  if (item.status === "increasing") {
-    return `${item.product_name} sedang naik, pertimbangkan tambah stok sekitar ${item.reorder_qty || Math.max(1, Math.ceil(item.predicted_demand_7d - item.current_stock))} unit.`;
-  }
-
-  if (item.status === "overstock") {
-    return `${item.product_name} stoknya relatif aman/berlebih, fokuskan penjualan dulu sebelum restock.`;
-  }
-
-  return `${item.product_name} masih aman, pantau stok secara berkala dan pertahankan ritme penjualan.`;
-};
-
 const formatQuantity = (value: number) => `${Math.max(0, Math.round(value))} unit`;
+
+const formatPercentChange = (value: number) => {
+  const rounded = Math.abs(value).toFixed(1).replace(/\.0$/, "");
+  const prefix = value > 0 ? "+" : value < 0 ? "-" : "";
+  return `${prefix}${rounded}%`;
+};
+
+const getRangeTotals = (
+  salesRecords: { date: Date; totalAmount: number; quantity: number }[],
+  startDate: Date,
+  endDate: Date,
+) => {
+  return salesRecords.reduce(
+    (accumulator, record) => {
+      const recordDate = record.date instanceof Date ? record.date : new Date(record.date);
+
+      if (recordDate < startDate || recordDate > endDate) {
+        return accumulator;
+      }
+
+      return {
+        totalAmount: accumulator.totalAmount + (Number(record.totalAmount) || 0),
+        totalQuantity: accumulator.totalQuantity + (Number(record.quantity) || 0),
+        totalTransactions: accumulator.totalTransactions + 1,
+      };
+    },
+    { totalAmount: 0, totalQuantity: 0, totalTransactions: 0 },
+  );
+};
 
 export default function Insights() {
   const { salesRecords } = useBusinessContext();
-  const [insightItems, setInsightItems] = useState<AiProductInsightItem[]>([]);
   const [recommendationItems, setRecommendationItems] = useState<AiRecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,43 +95,20 @@ export default function Insights() {
       setError(null);
 
       try {
-        const [insightsResponse, recommendationsResponse] = await Promise.allSettled([
-          apiClient.get<AiApiResponse<{ insights: AiProductInsightItem[] }>>("/ai/insights", {
+        const recommendationsResponse = await apiClient.get<AiApiResponse<{ recommendations: AiRecommendationItem[] }>>("/ai/recommendations", {
             params: { historyDays: 60 },
-          }),
-          apiClient.get<AiApiResponse<{ recommendations: AiRecommendationItem[] }>>("/ai/recommendations", {
-            params: { historyDays: 60 },
-          }),
-        ]);
+          });
 
         if (isCancelled) {
           return;
         }
 
-        if (insightsResponse.status === "fulfilled") {
-          setInsightItems(insightsResponse.value.data.data?.insights || []);
-        } else {
-          setInsightItems([]);
-          setError(
-            insightsResponse.reason?.response?.data?.message ||
-              insightsResponse.reason?.message ||
-              "Insight AI belum tersedia saat ini.",
-          );
-        }
-
-        if (recommendationsResponse.status === "fulfilled") {
-          setRecommendationItems(recommendationsResponse.value.data.data?.recommendations || []);
-        } else {
-          setRecommendationItems([]);
-        }
+        setRecommendationItems(recommendationsResponse.data.data?.recommendations || []);
       } catch (loadError) {
         if (!isCancelled) {
-          setInsightItems([]);
           setRecommendationItems([]);
           setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Insight AI belum tersedia saat ini.",
+            loadError instanceof Error ? loadError.message : "Insight AI belum tersedia saat ini.",
           );
         }
       } finally {
@@ -234,69 +171,6 @@ export default function Insights() {
     };
   }, [salesAggregates]);
 
-  const forecastCards = useMemo<ForecastInsightCard[]>(() => {
-    return [...insightItems]
-      .sort((a, b) => {
-        const statusPriority = (status: AiProductInsightItem["status"]) => {
-          if (status === "increasing") return 0;
-          if (status === "critical") return 1;
-          if (status === "normal") return 2;
-          return 3;
-        };
-
-        const priorityDiff = statusPriority(a.status) - statusPriority(b.status);
-
-        if (priorityDiff !== 0) {
-          return priorityDiff;
-        }
-
-        return b.predicted_demand_7d - a.predicted_demand_7d;
-      })
-      .slice(0, 3)
-      .map((item, index) => ({
-        id: `forecast-${item.product_name}-${index}`,
-        productName: item.product_name,
-        predictedDemand: Number(item.predicted_demand_7d) || 0,
-        stock: Number(item.stok) || 0,
-        status: item.status,
-      }));
-  }, [insightItems]);
-
-  const primaryForecastCard = useMemo<InsightCard | null>(() => {
-    const forecast = forecastCards[0];
-
-    if (!forecast) {
-      return null;
-    }
-
-    const isIncreasing = forecast.status === "increasing";
-    const isCritical = forecast.status === "critical";
-    const isOverstock = forecast.status === "overstock";
-
-    return {
-      id: forecast.id,
-      type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
-      title: isIncreasing
-        ? "Prediksi Tren Naik"
-        : isCritical
-          ? "Prediksi Demand Kritis"
-          : isOverstock
-            ? "Prediksi Demand Rendah"
-            : "Prediksi Tren Stabil",
-      description: isIncreasing
-        ? `${forecast.productName} diprediksi tumbuh ke ${formatQuantity(forecast.predictedDemand)} dalam 7 hari, dengan stok saat ini ${formatQuantity(forecast.stock)}.`
-        : isCritical
-          ? `${forecast.productName} diprediksi butuh ${formatQuantity(forecast.predictedDemand)} dalam 7 hari sementara stok sekarang hanya ${formatQuantity(forecast.stock)}.`
-          : isOverstock
-            ? `${forecast.productName} diprediksi hanya terserap ${formatQuantity(forecast.predictedDemand)} dalam 7 hari, stok saat ini ${formatQuantity(forecast.stock)}.`
-            : `${forecast.productName} diprediksi stabil di ${formatQuantity(forecast.predictedDemand)} dalam 7 hari dengan stok ${formatQuantity(forecast.stock)}.`,
-      metric: isIncreasing
-        ? `+${Math.max(0, Math.round(forecast.predictedDemand))}`
-        : formatQuantity(forecast.predictedDemand),
-      icon: isCritical ? <AlertCircle size={20} /> : isIncreasing ? <TrendingUp size={20} /> : isOverstock ? <TrendingDown size={20} /> : <Package size={20} />,
-    };
-  }, [forecastCards]);
-
   const restockCards = useMemo<RestockInsightCard[]>(() => {
     return [...recommendationItems]
       .sort((a, b) => {
@@ -326,9 +200,6 @@ export default function Insights() {
       }));
   }, [recommendationItems]);
 
-  const primaryForecastName = forecastCards[0]?.productName;
-  const primaryRestockName = restockCards[0]?.productName;
-
   const restockCard = useMemo<InsightCard | null>(() => {
     const restock = restockCards[0];
 
@@ -342,7 +213,7 @@ export default function Insights() {
     return {
       id: restock.id,
       type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
-      title: isCritical ? "Restock Prioritas" : "Rekomendasi Restock",
+      title: "Restok Prioritas",
       description: isCritical
         ? `${restock.productName} perlu restock sekitar ${formatQuantity(restock.reorderQty)} agar tidak kehabisan stok.`
         : `${restock.productName} disarankan tambah ${formatQuantity(restock.reorderQty)} berdasarkan stok ${formatQuantity(restock.currentStock)} dan prediksi ${formatQuantity(restock.predictedDemand)}.`,
@@ -351,51 +222,57 @@ export default function Insights() {
     };
   }, [restockCards]);
 
-  const supplementalCard = useMemo<InsightCard | null>(() => {
-    const usedNames = new Set<string>();
+  const performanceCard = useMemo<InsightCard | null>(() => {
+    const now = new Date();
+    const currentWeekEnd = new Date(now);
+    currentWeekEnd.setHours(23, 59, 59, 999);
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(currentWeekStart.getDate() - 6);
+    currentWeekStart.setHours(0, 0, 0, 0);
 
-    if (primaryForecastName) {
-      usedNames.add(primaryForecastName);
-    }
+    const previousWeekEnd = new Date(currentWeekStart);
+    previousWeekEnd.setDate(previousWeekEnd.getDate() - 1);
+    previousWeekEnd.setHours(23, 59, 59, 999);
 
-    if (primaryRestockName) {
-      usedNames.add(primaryRestockName);
-    }
+    const previousWeekStart = new Date(previousWeekEnd);
+    previousWeekStart.setDate(previousWeekStart.getDate() - 6);
+    previousWeekStart.setHours(0, 0, 0, 0);
 
-    const extraForecast = forecastCards.find((item) => !usedNames.has(item.productName));
-
-    if (!extraForecast) {
-      return null;
-    }
+    const currentWeekTotals = getRangeTotals(salesRecords, currentWeekStart, currentWeekEnd);
+    const previousWeekTotals = getRangeTotals(salesRecords, previousWeekStart, previousWeekEnd);
+    const difference = currentWeekTotals.totalAmount - previousWeekTotals.totalAmount;
+    const percentChange = previousWeekTotals.totalAmount > 0
+      ? (difference / previousWeekTotals.totalAmount) * 100
+      : currentWeekTotals.totalAmount > 0
+        ? 100
+        : 0;
+    const isStable = Math.abs(percentChange) < 5;
+    const status = isStable ? "Stabil" : difference > 0 ? "Naik" : difference < 0 ? "Turun" : "Stabil";
+    const paceLabel = status === "Naik" ? "sedang laris" : status === "Turun" ? "sedang sepi" : "relatif stabil";
 
     return {
-      id: `supplemental-${extraForecast.id}`,
-      type: extraForecast.status === "critical" ? "warning" : extraForecast.status === "increasing" ? "positive" : "neutral",
-      title: "Sorotan AI Tambahan",
-      description: `${extraForecast.productName} masih relevan dipantau dengan prediksi ${formatQuantity(extraForecast.predictedDemand)} untuk 7 hari ke depan.`,
-      metric: formatQuantity(extraForecast.predictedDemand),
-      icon: extraForecast.status === "critical" ? <AlertCircle size={20} /> : extraForecast.status === "increasing" ? <TrendingUp size={20} /> : <Package size={20} />,
+      id: "sales-performance-summary",
+      type: isStable ? "neutral" : difference > 0 ? "positive" : "warning",
+      title: "Rangkuman Performa Penjualan",
+      description: `Minggu ini ${formatRupiahCompact(currentWeekTotals.totalAmount)} dari ${currentWeekTotals.totalTransactions} catatan penjualan, dibanding ${formatRupiahCompact(previousWeekTotals.totalAmount)} pada minggu sebelumnya. Performa ${status.toLowerCase()} dan penjualan ${paceLabel}.`,
+      metric: `${status} ${formatPercentChange(percentChange)}`.trim(),
+      icon: <BarChart3 size={20} />,
     };
-  }, [forecastCards, primaryForecastName, primaryRestockName]);
+  }, [salesRecords]);
 
   const insightCards = useMemo(() => {
-    return [topSellerCard, primaryForecastCard, restockCard, supplementalCard].filter(
+    return [topSellerCard, restockCard, performanceCard].filter(
       (card): card is InsightCard => Boolean(card),
     );
-  }, [primaryForecastCard, restockCard, supplementalCard, topSellerCard]);
-
-  const recommendations = useMemo(() => {
-    return recommendationItems.slice(0, 3).map(toRecommendationText);
-  }, [recommendationItems]);
+  }, [performanceCard, restockCard, topSellerCard]);
 
   const hasData = insightCards.length > 0;
-  const hasRecommendations = recommendations.length > 0;
 
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="grid gap-3 md:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, index) => (
+        <div className="grid gap-3 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
@@ -431,9 +308,9 @@ export default function Insights() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
         {hasData ? (
-          insightCards.slice(0, 4).map((insight) => (
+          insightCards.slice(0, 3).map((insight) => (
             <div
               key={insight.id}
               className={`group rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
@@ -480,7 +357,7 @@ export default function Insights() {
             </div>
           ))
         ) : (
-          <div className="md:col-span-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+          <div className="md:col-span-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
               <AlertCircle size={24} />
             </div>
@@ -488,33 +365,6 @@ export default function Insights() {
             <p className="text-sm text-slate-500 mt-1">
               {error || "Coba lagi beberapa saat setelah data sinkron dengan backend."}
             </p>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-[20px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.6),_rgba(255,255,255,0.8))] p-4 shadow-sm mt-4">
-        <div className="flex items-center gap-2.5 text-sm font-extrabold text-slate-900 mb-3.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-200">
-            <Star size={18} />
-          </span>
-          Apa yang bisa kamu lakukan?
-        </div>
-
-        {hasRecommendations ? (
-          <div className="flex flex-col gap-2.5">
-            {recommendations.map((rec, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-3 rounded-[14px] border border-blue-50 bg-white px-4 py-3 text-[13px] font-medium leading-relaxed text-slate-700 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition hover:border-blue-200"
-              >
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                <span>{rec}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-[14px] border border-blue-50 bg-white px-4 py-3 text-[13px] font-medium leading-relaxed text-slate-700 shadow-[0_2px_10px_rgba(15,23,42,0.02)]">
-            {error ? "Rekomendasi AI belum tersedia saat ini." : "Belum ada rekomendasi dari AI untuk ditampilkan."}
           </div>
         )}
       </div>

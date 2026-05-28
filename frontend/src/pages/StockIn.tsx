@@ -408,7 +408,7 @@ export default function StockIn() {
                 onClick={resetHistoryFilters}
                 className="h-11 rounded-xl w-full"
               >
-                Reset Filter
+                Bersihkan Filter Riwayat
               </Button>
             </div>
 

@@ -211,8 +211,8 @@ export default function StockOut() {
 
       if (product.stock < stockOutForm.quantity) {
         toast({
-          title: "Error",
-          description: `Stok ${product.name} tidak mencukupi. Stok tersedia: ${product.stock} unit`,
+          title: "Stok tidak mencukupi",
+          description: `Stok tidak mencukupi. Stok tersedia hanya ${product.stock} ${product.unit}.`,
           variant: "destructive",
         });
         return;
@@ -417,7 +417,7 @@ export default function StockOut() {
                 onClick={resetHistoryFilters}
                 className="h-11 rounded-xl w-full"
               >
-                Reset Filter
+                Bersihkan Filter Riwayat
               </Button>
             </div>
 

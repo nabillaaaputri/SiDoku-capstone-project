@@ -436,6 +436,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     setProducts((current) =>
       current.map((p) => (p.id === id ? mapProductResponse(response.data.data) : p)),
     );
+    await refreshData();
   };
 
   const restoreProduct = async (id: string) => {
@@ -443,6 +444,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     setProducts((current) =>
       current.map((p) => (p.id === id ? mapProductResponse(response.data.data) : p)),
     );
+    await refreshData();
   };
 
   const deleteProduct = async (id: string) => {

@@ -31,7 +31,7 @@ interface ForecastTrendChartProps {
 
 const chartConfig = {
   predictedRevenue: {
-    label: "Prediksi Penjualan",
+    label: "Penjualan",
     color: "#2563eb",
   },
 } as const;
@@ -80,9 +80,9 @@ export default function ForecastTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Prediksi Tren Penjualan 7 Hari ke Depan</h3>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Tren Penjualan Selama 7 Hari</h3>
               <p className="mt-1 text-sm text-slate-500 font-medium">
-                {sourceLabel ? `Berdasarkan ${sourceLabel}.` : "Belum ada data yang bisa diprediksi saat ini."}
+                {sourceLabel ? `Berdasarkan ${sourceLabel}.` : "Ringkasan rekap penjualan 7 hari terakhir."}
               </p>
             </div>
           </div>
@@ -91,10 +91,10 @@ export default function ForecastTrendChart({
           <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">
             <AlertCircle className="mx-auto text-slate-400" size={24} />
             <p className="mt-3 text-sm font-semibold text-slate-700">
-              {error || "Prediksi belum tersedia untuk produk terpilih."}
+              {error || "Belum ada data penjualan untuk ditampilkan."}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Grafik akan muncul setelah data histori cukup atau model AI berhasil memberi hasil.
+              Grafik akan muncul setelah data penjualan tersedia.
             </p>
           </div>
         </div>
@@ -111,9 +111,9 @@ export default function ForecastTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Prediksi Tren Penjualan 7 Hari ke Depan</h3>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Tren Penjualan Selama 7 Hari</h3>
               <p className="mt-1 text-sm text-slate-500 font-medium">
-                Prediksi gabungan dari produk terlaris berdasarkan histori stok keluar.
+                Ringkasan rekap penjualan 7 hari terakhir berdasarkan histori penjualan.
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function ForecastTrendChart({
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 min-w-0">
           <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Prediksi</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Penjualan</p>
             <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.revenue)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
@@ -135,7 +135,7 @@ export default function ForecastTrendChart({
         <div className="flex flex-wrap items-center gap-5 text-[13px] font-semibold text-slate-600 px-1">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb] shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
-            Prediksi Penjualan
+            Penjualan
           </div>
         </div>
 
@@ -171,7 +171,7 @@ export default function ForecastTrendChart({
                   )}
                   formatter={(value) => (
                     <div className="flex w-full items-center justify-between gap-4">
-                      <span className="text-slate-600">Prediksi Penjualan</span>
+                      <span className="text-slate-600">Penjualan</span>
                       <span className="font-mono font-semibold tabular-nums text-slate-900">{formatRupiahCompact(Number(value))}</span>
                     </div>
                   )}

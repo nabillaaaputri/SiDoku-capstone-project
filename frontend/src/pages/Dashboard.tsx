@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
+import ForecastTrendChart from "@/components/ForecastTrendChart";
 import SalesChart from "@/components/SalesChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
 import { getPreferredUserName } from "@/services/auth.service";
 import { formatRupiahCompact } from "@/lib/utils";
+import { getJakartaDateInputValue } from "@/lib/timezone";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -52,8 +54,14 @@ interface ChartPoint {
   profit: number;
 }
 
+interface ForecastTrendPoint {
+  label: string;
+  predictedRevenue: number;
+  predictedQuantity: number;
+}
+
 export default function Dashboard() {
-  const { products } = useBusinessContext();
+  const { products, salesRecords } = useBusinessContext();
   const { user } = useAuth();
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -117,8 +125,66 @@ export default function Dashboard() {
   const isProfitNegative = financialSummary.profit < 0;
   const isRoiNegative = financialSummary.roi < 0;
 
-  const lowStockProducts = products.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
+  const activeProducts = products.filter((product) => product.archived !== true);
+  const lowStockProducts = activeProducts.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
+
+  const restockRecommendations = useMemo(() => {
+    return [...activeProducts]
+      .filter((product) => product.stock <= product.minimumStock)
+      .sort((left, right) => {
+        const leftShortage = left.minimumStock - left.stock;
+        const rightShortage = right.minimumStock - right.stock;
+        return rightShortage - leftShortage;
+      })
+      .slice(0, 3)
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        shortage: Math.max(1, product.minimumStock - product.stock),
+        stock: product.stock,
+        unit: product.unit,
+      }));
+  }, [activeProducts]);
+
+  const salesTrendData = useMemo<ForecastTrendPoint[]>(() => {
+    const today = new Date();
+    const points = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - index));
+      date.setHours(0, 0, 0, 0);
+
+      return {
+        date,
+        key: getJakartaDateInputValue(date),
+        label: new Intl.DateTimeFormat("id-ID", {
+          timeZone: "Asia/Jakarta",
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+        }).format(date),
+        predictedRevenue: 0,
+        predictedQuantity: 0,
+      };
+    });
+
+    const pointMap = new Map(points.map((point) => [point.key, point]));
+
+    for (const record of salesRecords) {
+      const recordDate = new Date(record.date);
+      const key = getJakartaDateInputValue(recordDate);
+      const targetPoint = pointMap.get(key);
+
+      if (!targetPoint) {
+        continue;
+      }
+
+      targetPoint.predictedRevenue += Number(record.totalAmount) || 0;
+      targetPoint.predictedQuantity += Number(record.quantity) || 0;
+    }
+
+    return points.map(({ key, date: _date, ...point }) => point);
+  }, [salesRecords]);
 
   return (
     <DashboardLayout>
@@ -342,6 +408,41 @@ export default function Dashboard() {
               <p className="mt-1 text-sm text-slate-500">Semua stok masih aman untuk saat ini.</p>
             </div>
           )}
+
+          <div className="rounded-[22px] border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.8),_rgba(255,255,255,0.95))] p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Rekomendasi Restock</h3>
+                <p className="mt-1 text-xs text-slate-500">Produk prioritas yang paling perlu diisi ulang.</p>
+              </div>
+            </div>
+
+            {restockRecommendations.length > 0 ? (
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {restockRecommendations.map((item) => (
+                  <div key={item.id} className="rounded-2xl border border-blue-50 bg-white px-3 py-3 shadow-sm">
+                    <p className="text-sm font-bold text-slate-900">{item.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">Sisa stok {item.stock} {item.unit}</p>
+                    <p className="mt-2 text-sm font-semibold text-blue-700">Butuh restock {item.shortage} {item.unit}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-dashed border-blue-100 bg-white px-4 py-4 text-sm text-slate-600">
+                Belum ada rekomendasi restock tambahan.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="section-heading">Tren Penjualan Selama 7 Hari</h2>
+              <p className="mt-1 text-sm text-slate-500">Pantau arah penjualan mingguan dalam satu grafik ringkas.</p>
+            </div>
+          </div>
+          <ForecastTrendChart data={salesTrendData} isLoading={false} />
         </section>
 
         <section className="w-full space-y-2.5 sm:space-y-3">

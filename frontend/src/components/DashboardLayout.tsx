@@ -2,8 +2,9 @@ import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
-import { authService, getPreferredUserName } from "@/services/auth.service";
+import { getPreferredUserName } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -16,7 +17,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
 
   const displayName = getPreferredUserName(user);
   const avatarInitials =
@@ -31,9 +33,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
-    } finally {
-      navigate("/login");
+      await logout();
+      toast({
+        title: "Logout berhasil",
+        description: "Anda telah keluar dari akun SiDoku.",
+      });
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast({
+        title: "Logout gagal",
+        description: "Sesi tidak dapat ditutup saat ini.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -70,13 +82,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <span className="text-xs sm:text-sm font-semibold">Menu</span>
             </button>
 
-            <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-2xl bg-white border border-slate-200 text-slate-900 flex items-center justify-center shadow-sm">
-                <img src="/logo.png" alt="SiDoku" className="w-6 h-6 object-contain" />
+            <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center overflow-hidden ring-1 ring-blue-100/80">
+                <img src="/logo.png" alt="SiDoku" className="w-5 h-5 object-contain" />
               </div>
-              <div className="hidden sm:block min-w-0">
-                <p className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-none">SiDoku</p>
-                <p className="text-xs text-slate-500 mt-1">Sistem Data Operasional dan Keuangan Usaha</p>
+              <div className="hidden sm:block min-w-0 leading-tight">
+                <p className="text-sm font-bold tracking-tight text-slate-900">SiDoku</p>
+                <p className="text-[11px] text-slate-500">Identitas tim dan dashboard operasional</p>
               </div>
             </Link>
           </div>
