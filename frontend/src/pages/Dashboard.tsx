@@ -55,6 +55,7 @@ const loadStoredMessages = (): Message[] => {
 
     return validMessages.length > 0 ? validMessages : DEFAULT_MESSAGES;
   } catch {
+    window.localStorage.removeItem(CHAT_STORAGE_KEY);
     return DEFAULT_MESSAGES;
   }
 };
@@ -134,7 +135,6 @@ export default function Assistant() {
 
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
-
         return [
           ...filtered,
           {
@@ -151,7 +151,6 @@ export default function Assistant() {
 
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
-
         return [
           ...filtered,
           {
@@ -170,6 +169,7 @@ export default function Assistant() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col">
+      {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -187,7 +187,6 @@ export default function Assistant() {
               <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white shadow-lg">
                 <Bot size={22} />
               </div>
-
               <div>
                 <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
                   Asisten AI SiDoku
@@ -206,7 +205,9 @@ export default function Assistant() {
         </div>
       </header>
 
+      {/* MAIN */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col">
+        {/* GREETING BANNER */}
         <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm">
           <p className="text-sm font-bold text-slate-900 leading-tight">
             Halo! Saya Asisten AI SiDoku 👋
@@ -217,8 +218,11 @@ export default function Assistant() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3">
-          <aside className="hidden lg:block space-y-3">
+        {/* GRID LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 flex-1">
+
+          {/* SIDEBAR */}
+          <aside className="hidden lg:flex flex-col gap-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
               <p className="text-sm font-bold text-slate-900">
                 Tentang Asisten AI
@@ -227,7 +231,6 @@ export default function Assistant() {
                 Asisten ini membantu membaca data bisnis dengan cepat dan
                 memberi saran yang mudah dipahami.
               </p>
-
               <div className="mt-3 rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
                 <p className="text-xs font-semibold text-sky-700">Tips</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
@@ -313,7 +316,9 @@ export default function Assistant() {
             </div>
           </aside>
 
-          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[640px]">
+          {/* CHAT AREA */}
+          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden h-[calc(100vh-200px)] min-h-[500px]">
+            {/* CHAT HEADER */}
             <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -323,7 +328,6 @@ export default function Assistant() {
                     </div>
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                   </div>
-
                   <div>
                     <h3 className="font-bold text-slate-900">
                       Asisten AI SiDoku
@@ -345,6 +349,7 @@ export default function Assistant() {
               </div>
             </div>
 
+            {/* MESSAGES */}
             <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
               {isConversationFresh && (
                 <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
@@ -413,6 +418,7 @@ export default function Assistant() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* INPUT */}
             <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
               <div className="flex items-stretch gap-2.5">
                 <div className="flex-1">
