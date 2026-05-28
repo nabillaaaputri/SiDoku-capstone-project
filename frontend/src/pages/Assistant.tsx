@@ -216,9 +216,9 @@ export default function Assistant() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5">
+        <div className="flex flex-col lg:flex-row gap-5 lg:h-[calc(100vh-240px)]">
           {/* SIDEBAR */}
-          <aside className="lg:w-[300px] space-y-4">
+          <aside className="lg:w-[300px] space-y-4 lg:sticky lg:top-24 lg:self-start">
           {/* INTRO */}
           <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
             <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mb-3">
@@ -318,7 +318,7 @@ export default function Assistant() {
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[620px]">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[620px] lg:h-full">
           {/* CHAT HEADER */}
           <div className="border-b border-slate-200 px-4 py-3.5 bg-slate-50">
             <div className="flex items-center gap-3">
