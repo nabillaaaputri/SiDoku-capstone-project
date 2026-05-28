@@ -215,23 +215,31 @@ export default function Assistant() {
       {/* CONTENT */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
         <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-sky-400 text-white shadow-sm">
-              <Bot size={18} />
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 leading-tight">Halo! Saya Asisten AI SiDoku 👋</p>
-              <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
-                Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
-              </p>
-            </div>
-          </div>
+          <p className="text-sm font-bold text-slate-900 leading-tight">Halo! Saya Asisten AI SiDoku 👋</p>
+          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
+          </p>
         </div>
 
         <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch">
           {/* SIDEBAR */}
           <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0 lg:self-stretch lg:flex lg:flex-col">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 lg:mt-0">
+            <div>
+              <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
+              <p className="text-xs font-semibold text-sky-700">Tips</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
+              </p>
+            </div>
+          </div>
+
           <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
             <div className="mb-3 space-y-1">
               <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
@@ -328,25 +336,10 @@ export default function Assistant() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 lg:mt-auto">
-            <div>
-              <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
-              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
-              <p className="text-xs font-semibold text-sky-700">Tips</p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
-              </p>
-            </div>
-          </div>
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch lg:max-h-[calc(100vh-192px)]">
           {/* CHAT HEADER */}
           <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
             <div className="flex items-center justify-between gap-3">
