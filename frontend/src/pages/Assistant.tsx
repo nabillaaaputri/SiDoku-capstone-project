@@ -115,7 +115,6 @@ export default function Assistant() {
       timestamp: Date.now(),
     };
 
-    // Add user message dan loading placeholder
     setMessages((prev) => [
       ...prev,
       userMessage,
@@ -132,10 +131,8 @@ export default function Assistant() {
     setError(null);
 
     try {
-      // Call backend AI service
       const result = await askAiChatbot(input.trim());
       
-      // Remove loading message dan add real response
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
         return [
@@ -149,7 +146,6 @@ export default function Assistant() {
         ];
       });
     } catch (error) {
-      // Show error message
       const errorMessage = getAiChatbotErrorMessage(error);
 
       setError(errorMessage);
@@ -221,260 +217,206 @@ export default function Assistant() {
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch">
+        {/* Perubahan di wrapper utama halaman: ditambahkan h-[calc(100vh-210px)] untuk membatasi tinggi container agar scroll internal aktif */}
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch lg:h-[calc(100vh-210px)]">
+          
           {/* SIDEBAR */}
-          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0 lg:self-stretch lg:flex lg:flex-col">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 lg:mt-0">
-            <div>
-              <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
-              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
-              </p>
+          {/* PERUBAHAN: Menjadikan aside flex flex-col penuh */}
+          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 flex flex-col gap-3 min-h-0 lg:self-stretch">
+            {/* Box 1: Tentang Asisten */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+              <div>
+                <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
+                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                  Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
+                <p className="text-xs font-semibold text-sky-700">Tips</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
-              <p className="text-xs font-semibold text-sky-700">Tips</p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
-              </p>
+            {/* Box 2: Menu Pintar */}
+            {/* PERUBAHAN: Ditambahkan `lg:flex-1 lg:overflow-y-auto` agar kotak ini memanjang kebawah mengikuti tinggi Chat Area */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm lg:flex-1 lg:overflow-y-auto space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Pilih menu di bawah atau tulis pertanyaan sendiri.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => setInput("Produk apa yang paling laku?")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <TrendingUp size={18} className="text-blue-500 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-800">Produk Paling Laku</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Beri ringkasan usaha saya.")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles size={18} className="text-sky-500 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-800">Ringkasan Usaha</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Rekomendasi restock apa yang saya butuh?")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Package size={18} className="text-emerald-500 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-800">Rekomendasi Restock</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Bisa prediksi penjualan minggu depan?")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles size={18} className="text-orange-500 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-800">Prediksi Penjualan</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setInput("Cek stok menipis.")}
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle size={18} className="text-amber-500 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-800">Cek Stok Menipis</p>
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
-            <div className="mb-3 space-y-1">
-              <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Pilih menu di bawah atau tulis pertanyaan sendiri.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                onClick={() =>
-                  setInput("Produk apa yang paling laku?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <TrendingUp
-                    size={18}
-                    className="text-blue-500 mt-0.5"
-                  />
-                  <p className="text-sm font-semibold text-slate-800">
-                    Produk Paling Laku
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput("Beri ringkasan usaha saya.")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Sparkles
-                    size={18}
-                    className="text-sky-500 mt-0.5"
-                  />
-                  <p className="text-sm font-semibold text-slate-800">
-                    Ringkasan Usaha
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput("Rekomendasi restock apa yang saya butuh?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Package
-                    size={18}
-                    className="text-emerald-500 mt-0.5"
-                  />
-                  <p className="text-sm font-semibold text-slate-800">
-                    Rekomendasi Restock
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput("Bisa prediksi penjualan minggu depan?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Sparkles
-                    size={18}
-                    className="text-orange-500 mt-0.5"
-                  />
-                  <p className="text-sm font-semibold text-slate-800">
-                    Prediksi Penjualan
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput("Cek stok menipis.")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle
-                    size={18}
-                    className="text-amber-500 mt-0.5"
-                  />
-                  <p className="text-sm font-semibold text-slate-800">
-                    Cek Stok Menipis
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-
           </aside>
 
           {/* CHAT AREA */}
-          {/* PERUBAHAN: hapus lg:max-h-[calc(100vh-192px)] supaya tinggi chat mengikuti sidebar */}
           <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
-          {/* CHAT HEADER */}
-          <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
-                    <Bot size={22} />
-                  </div>
-
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-slate-900">
-                    Asisten AI SiDoku
-                  </h3>
-
-                  <p className="text-xs text-slate-500">
-                    Siap membantu • Jawaban singkat dan praktis
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={resetChat}
-                type="button"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-800 transition"
-                aria-label="Reset chat"
-              >
-                <RotateCcw size={13} />
-                Reset Chat
-              </button>
-            </div>
-          </div>
-
-          {/* MESSAGES */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
-            {isConversationFresh && (
-              <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
-                Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
-              </div>
-            )}
-
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === "user"
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                {message.role === "assistant" ? (
-                  <div className="max-w-[90%] md:max-w-[75%]">
-                    <div className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
-                      message.error
-                        ? "bg-red-50 border border-red-200"
-                        : message.content === "Sedang memproses..."
-                          ? "bg-slate-100 border border-slate-200"
-                          : "bg-white border border-slate-200"
-                    }`}>
-                      {message.content === "Sedang memproses..." ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
-                        </div>
-                      ) : message.error ? (
-                        <div className="flex items-start gap-2">
-                          <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">
-                            {message.content}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
-                          {message.content}
-                        </p>
-                      )}
+            {/* CHAT HEADER */}
+            <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
+                      <Bot size={22} />
                     </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                   </div>
-                ) : (
-                  <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
-                    <p className="text-sm md:text-[15px] leading-relaxed">
-                      {message.content}
-                    </p>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900">Asisten AI SiDoku</h3>
+                    <p className="text-xs text-slate-500">Siap membantu • Jawaban singkat dan praktis</p>
                   </div>
-                )}
+                </div>
+
+                <button
+                  onClick={resetChat}
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-800 transition"
+                  aria-label="Reset chat"
+                >
+                  <RotateCcw size={13} />
+                  Reset Chat
+                </button>
               </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* INPUT */}
-          <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
-            <div className="flex items-stretch gap-2.5">
-              <div className="flex-1">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      !e.shiftKey
-                    ) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  disabled={isLoading}
-                  placeholder="Tulis pertanyaan Anda..."
-                  rows={2}
-                  className="w-full min-h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading || !input.trim()}
-                className="h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
-              >
-                <SendHorizonal size={14} />
-
-                <span className="hidden sm:inline">
-                  {isLoading ? "Mengirim..." : "Kirim"}
-                </span>
-              </button>
             </div>
 
-            <p className="text-xs text-slate-400 mt-3 text-center">
-              AI dapat membuat kesalahan. Pastikan cek kembali data penting.
-            </p>
-          </div>
+            {/* MESSAGES */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
+              {isConversationFresh && (
+                <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
+                  Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {message.role === "assistant" ? (
+                    <div className="max-w-[90%] md:max-w-[75%]">
+                      <div className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
+                        message.error
+                          ? "bg-red-50 border border-red-200"
+                          : message.content === "Sedang memproses..."
+                            ? "bg-slate-100 border border-slate-200"
+                            : "bg-white border border-slate-200"
+                      }`}>
+                        {message.content === "Sedang memproses..." ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                          </div>
+                        ) : message.error ? (
+                          <div className="flex items-start gap-2">
+                            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">{message.content}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">{message.content}</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
+                      <p className="text-sm md:text-[15px] leading-relaxed">{message.content}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* INPUT */}
+            <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
+              <div className="flex items-stretch gap-2.5">
+                <div className="flex-1">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    disabled={isLoading}
+                    placeholder="Tulis pertanyaan Anda..."
+                    rows={2}
+                    className="w-full min-h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !input.trim()}
+                  className="h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
+                >
+                  <SendHorizonal size={14} />
+                  <span className="hidden sm:inline">{isLoading ? "Mengirim..." : "Kirim"}</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-400 mt-3 text-center">
+                AI dapat membuat kesalahan. Pastikan cek kembali data penting.
+              </p>
+            </div>
           </section>
         </div>
       </div>
