@@ -214,26 +214,23 @@ export default function Assistant() {
 
       {/* CONTENT */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
+        <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm mb-3">
+          <p className="text-sm font-bold text-slate-900">Halo! Saya Asisten AI SiDoku 👋</p>
+          <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
+            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
+          </p>
+        </div>
+
         <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
           {/* SIDEBAR */}
           <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0">
           <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <p className="text-sm font-bold text-slate-900">Quick Actions</p>
-              <button
-                onClick={resetChat}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition"
-                type="button"
-                aria-label="Bersihkan chat"
-              >
-                <RotateCcw size={12} />
-                Bersihkan
-              </button>
+            <div className="mb-3 space-y-1">
+              <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Pilih menu di bawah atau tulis pertanyaan sendiri.
+              </p>
             </div>
-
-            <p className="mb-3 text-xs text-slate-500 leading-relaxed">
-              Pilih aksi cepat atau tulis pertanyaan sendiri.
-            </p>
 
             <div className="space-y-2">
               <button
@@ -322,10 +319,26 @@ export default function Assistant() {
               </button>
             </div>
           </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
+              <p className="text-xs font-semibold text-sky-700">Tips</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
+              </p>
+            </div>
+          </div>
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:h-[calc(100vh-180px)]">
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:h-[calc(100vh-170px)]">
           {/* CHAT HEADER */}
           <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
             <div className="flex items-center justify-between gap-3">
@@ -340,11 +353,11 @@ export default function Assistant() {
 
               <div>
                 <h3 className="font-bold text-slate-900">
-                  AI Assistant
+                  Asisten AI SiDoku
                 </h3>
 
                 <p className="text-xs text-slate-500">
-                  Online • Membantu bisnis Anda
+                  Siap membantu • Jawaban singkat dan praktis
                 </p>
               </div>
               </div>
@@ -422,7 +435,7 @@ export default function Assistant() {
 
           {/* INPUT */}
           <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
-            <div className="flex items-end gap-2.5">
+            <div className="flex items-stretch gap-2.5">
               <div className="flex-1">
                 <textarea
                   value={input}
@@ -439,16 +452,16 @@ export default function Assistant() {
                   disabled={isLoading}
                   placeholder="Tulis pertanyaan Anda..."
                   rows={2}
-                  className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full min-h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !input.trim()}
-                className="h-10 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="min-h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
               >
-                <SendHorizonal size={18} />
+                <SendHorizonal size={16} />
 
                 <span className="hidden sm:inline">
                   {isLoading ? "Mengirim..." : "Kirim"}
