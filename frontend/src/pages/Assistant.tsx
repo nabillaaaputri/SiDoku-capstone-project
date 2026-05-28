@@ -21,14 +21,19 @@ interface Message {
 }
 
 export default function Assistant() {
-  const [messages, setMessages] = useState<Message[]>([
+  const STORAGE_KEY = "sidoku_ai_chat_messages";
+
+  const DEFAULT_MESSAGES: Message[] = [
     {
       id: "1",
       role: "assistant",
-      content: "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
+      content:
+        "Halo 👋 Saya Asisten AI SiDoku. Saya bisa membantu analisis stok, penjualan, keuntungan, dan memberikan insight bisnis secara cepat.",
       timestamp: Date.now(),
     },
-  ]);
+  ];
+
+  const [messages, setMessages] = useState<Message[]>(DEFAULT_MESSAGES);
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +52,32 @@ export default function Assistant() {
 
   useEffect(() => {
     if (isFirstRender.current) {
+      // load stored messages on first render
       isFirstRender.current = false;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as Message[];
+          if (Array.isArray(parsed) && parsed.length) {
+            setMessages(parsed);
+          }
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
       return;
     }
 
     scrollToBottom();
+  }, [messages]);
+
+  // persist messages
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch (e) {
+      // ignore
+    }
   }, [messages]);
 
   const generateMessageId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -120,6 +146,15 @@ export default function Assistant() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const resetChat = () => {
+    setMessages(DEFAULT_MESSAGES);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // ignore
     }
   };
 
@@ -218,103 +253,67 @@ export default function Assistant() {
 
         <div className="flex flex-col lg:flex-row gap-5 lg:h-[calc(100vh-240px)]">
           {/* SIDEBAR */}
-          <aside className="lg:w-[300px] space-y-4 lg:sticky lg:top-24 lg:self-start">
-          {/* INTRO */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mb-3">
-              <Bot className="text-blue-600" size={28} />
+          <aside className="lg:w-[320px] space-y-4 lg:sticky lg:top-24 lg:self-start">
+            {/* INTRO */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center">
+                  <Bot className="text-blue-600" size={22} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Tentang Asisten AI</p>
+                  <p className="text-xs text-slate-500 mt-1">Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.</p>
+                </div>
+              </div>
             </div>
 
-            <h2 className="text-xl font-extrabold text-slate-900 leading-tight">
-              Tanya Apa Saja Tentang Bisnis Kamu
-            </h2>
+            {/* QUICK MENU */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
+              <p className="text-sm font-bold text-slate-900 mb-3">Menu Pintar</p>
 
-            <p className="text-sm text-slate-600 mt-2.5 leading-relaxed">
-              Dapatkan insight cepat mengenai stok, penjualan,
-              keuntungan, hingga rekomendasi bisnis otomatis.
-            </p>
-          </div>
-
-          {/* QUICK QUESTIONS */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-4 shadow-sm">
-            <p className="text-sm font-bold text-slate-900 mb-4">
-              Contoh Pertanyaan
-            </p>
-
-            <div className="space-y-2.5">
-              <button
-                onClick={() =>
-                  setInput("Produk apa yang paling laku minggu ini?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-start gap-3">
-                  <TrendingUp
-                    size={18}
-                    className="text-blue-500 mt-0.5"
-                  />
-
+              <div className="grid gap-3">
+                <button onClick={() => setInput("Produk paling laris apa")} className="flex items-center gap-3 text-left rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition">
+                  <TrendingUp size={18} className="text-blue-500" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Penjualan Terbaik
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      “Produk apa yang paling laku minggu ini?”
-                    </p>
+                    <p className="text-sm font-semibold">Produk Paling Laku</p>
+                    <p className="text-xs text-slate-500">Cek produk paling laku</p>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              <button
-                onClick={() =>
-                  setInput("Stok mana yang harus segera restock?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-start gap-3">
-                  <Package
-                    size={18}
-                    className="text-emerald-500 mt-0.5"
-                  />
-
+                <button onClick={() => setInput("Ringkasan usaha saya") } className="flex items-center gap-3 text-left rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition">
+                  <Sparkles size={18} className="text-emerald-500" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Kelola Stok
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      “Stok mana yang harus segera restock?”
-                    </p>
+                    <p className="text-sm font-semibold">Ringkasan Usaha</p>
+                    <p className="text-xs text-slate-500">Ringkasan transaksi dan kinerja</p>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              <button
-                onClick={() =>
-                  setInput("Berapa estimasi keuntungan bulan ini?")
-                }
-                className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex items-start gap-3">
-                  <Wallet
-                    size={18}
-                    className="text-orange-500 mt-0.5"
-                  />
-
+                <button onClick={() => setInput("Rekomendasi restock apa yang saya butuhkan?") } className="flex items-center gap-3 text-left rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition">
+                  <Package size={18} className="text-amber-500" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      Analisis Keuntungan
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-                      “Berapa estimasi keuntungan bulan ini?”
-                    </p>
+                    <p className="text-sm font-semibold">Rekomendasi Restock</p>
+                    <p className="text-xs text-slate-500">Saran restock otomatis</p>
                   </div>
-                </div>
-              </button>
+                </button>
+
+                <button onClick={() => setInput("Bisa prediksi penjualan minggu depan?") } className="flex items-center gap-3 text-left rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition">
+                  <TrendingUp size={18} className="text-blue-500" />
+                  <div>
+                    <p className="text-sm font-semibold">Prediksi Penjualan</p>
+                    <p className="text-xs text-slate-500">Perkiraan penjualan mendatang</p>
+                  </div>
+                </button>
+
+                <button onClick={() => setInput("Produk apa yang stoknya menipis?") } className="flex items-center gap-3 text-left rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition">
+                  <Package size={18} className="text-red-500" />
+                  <div>
+                    <p className="text-sm font-semibold">Cek Stok Menipis</p>
+                    <p className="text-xs text-slate-500">Lihat produk mendekati habis</p>
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
           </aside>
 
           {/* CHAT AREA */}
