@@ -37,7 +37,6 @@ const loadStoredMessages = (): Message[] => {
 
   try {
     const rawMessages = window.localStorage.getItem(CHAT_STORAGE_KEY);
-
     if (!rawMessages) return DEFAULT_MESSAGES;
 
     const parsedMessages = JSON.parse(rawMessages) as Message[];
@@ -61,20 +60,16 @@ const loadStoredMessages = (): Message[] => {
 };
 
 export default function Assistant() {
-  const [messages, setMessages] = useState<Message[]>(() =>
-    loadStoredMessages()
-  );
+  const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isConversationFresh = messages.length <= 1;
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -85,7 +80,7 @@ export default function Assistant() {
     try {
       window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch {
-      // Ignore storage write failures.
+      // ignore
     }
   }, [messages]);
 
@@ -96,7 +91,7 @@ export default function Assistant() {
     try {
       window.localStorage.removeItem(CHAT_STORAGE_KEY);
     } catch {
-      // Ignore storage removal errors.
+      // ignore
     }
 
     setMessages(DEFAULT_MESSAGES);
@@ -150,7 +145,6 @@ export default function Assistant() {
       });
     } catch (error) {
       const errorMessage = getAiChatbotErrorMessage(error);
-
       setError(errorMessage);
 
       setMessages((prev) => {
@@ -173,9 +167,8 @@ export default function Assistant() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col overflow-hidden">
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur shrink-0">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -197,7 +190,6 @@ export default function Assistant() {
                 <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
                   Asisten AI SiDoku
                 </h1>
-
                 <p className="text-xs md:text-sm text-slate-500">
                   Analisis bisnis otomatis & insight usaha
                 </p>
@@ -212,36 +204,28 @@ export default function Assistant() {
         </div>
       </header>
 
-      {/* CONTENT */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col min-h-0 overflow-hidden">
-        {/* INTRO */}
-        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm shrink-0">
+      <main className="flex-1 min-h-0 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col overflow-hidden">
+        <div className="mb-3 shrink-0 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm">
           <p className="text-sm font-bold text-slate-900 leading-tight">
             Halo! Saya Asisten AI SiDoku 👋
           </p>
           <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
-            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau
-            prediksi bisnis Anda.
+            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
           </p>
         </div>
 
-        <div className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 overflow-hidden">
-          {/* SIDEBAR */}
-          <aside className="space-y-3 min-h-0 overflow-y-auto pr-0 lg:pr-1">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 overflow-hidden">
+          <aside className="hidden lg:flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <p className="text-sm font-bold text-slate-900">
-                Tentang Asisten AI
-              </p>
+              <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Membantu membaca data stok, penjualan, dan memberi saran bisnis
-                sederhana.
+                Membantu membaca data stok, penjualan, dan memberi saran bisnis sederhana.
               </p>
 
               <div className="mt-3 rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
                 <p className="text-xs font-semibold text-sky-700">Tips</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang
-                  diberikan.
+                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
                 </p>
               </div>
             </div>
@@ -280,9 +264,7 @@ export default function Assistant() {
                 </button>
 
                 <button
-                  onClick={() =>
-                    setInput("Rekomendasi restock apa yang saya butuh?")
-                  }
+                  onClick={() => setInput("Rekomendasi restock apa yang saya butuh?")}
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
@@ -294,9 +276,7 @@ export default function Assistant() {
                 </button>
 
                 <button
-                  onClick={() =>
-                    setInput("Bisa prediksi penjualan minggu depan?")
-                  }
+                  onClick={() => setInput("Bisa prediksi penjualan minggu depan?")}
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
@@ -322,17 +302,14 @@ export default function Assistant() {
             </div>
           </aside>
 
-          {/* CHAT AREA */}
-          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 h-[calc(100vh-245px)]">
-            {/* CHAT HEADER */}
-            <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
+          <section className="h-full min-h-0 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="shrink-0 border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
                       <Bot size={22} />
                     </div>
-
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                   </div>
 
@@ -340,7 +317,6 @@ export default function Assistant() {
                     <h3 className="font-bold text-slate-900">
                       Asisten AI SiDoku
                     </h3>
-
                     <p className="text-xs text-slate-500">
                       Siap membantu • Jawaban singkat dan praktis
                     </p>
@@ -351,7 +327,6 @@ export default function Assistant() {
                   onClick={resetChat}
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-800 transition"
-                  aria-label="Reset chat"
                 >
                   <RotateCcw size={13} />
                   Reset Chat
@@ -359,12 +334,10 @@ export default function Assistant() {
               </div>
             </div>
 
-            {/* MESSAGES */}
             <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
               {isConversationFresh && (
                 <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
-                  Coba tanyakan: produk paling laku, restock, atau prediksi
-                  penjualan.
+                  Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
                 </div>
               )}
 
@@ -428,8 +401,7 @@ export default function Assistant() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT */}
-            <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
+            <div className="shrink-0 border-t border-slate-200 bg-white p-3 md:p-3.5">
               <div className="flex items-stretch gap-2.5">
                 <div className="flex-1">
                   <textarea
@@ -444,7 +416,7 @@ export default function Assistant() {
                     disabled={isLoading}
                     placeholder="Tulis pertanyaan Anda..."
                     rows={2}
-                    className="w-full min-h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-[52px] resize-none rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -454,7 +426,6 @@ export default function Assistant() {
                   className="h-[52px] px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   <SendHorizonal size={15} />
-
                   <span className="hidden sm:inline">
                     {isLoading ? "Mengirim..." : "Kirim"}
                   </span>
