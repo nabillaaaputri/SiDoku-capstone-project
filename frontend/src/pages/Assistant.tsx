@@ -339,7 +339,8 @@ export default function Assistant() {
           </aside>
 
           {/* CHAT AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch lg:max-h-[calc(100vh-192px)]">
+          {/* PERUBAHAN: hapus lg:max-h-[calc(100vh-192px)] supaya tinggi chat mengikuti sidebar */}
+          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
           {/* CHAT HEADER */}
           <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
             <div className="flex items-center justify-between gap-3">
