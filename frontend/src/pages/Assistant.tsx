@@ -7,7 +7,6 @@ import {
   Sparkles,
   TrendingUp,
   Package,
-  Wallet,
   AlertCircle,
 } from "lucide-react";
 import { askAiChatbot, getAiChatbotErrorMessage } from "@/services";
@@ -187,6 +186,7 @@ export default function Assistant() {
                     <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
                       <li>• Menjelaskan ringkasan usaha</li>
                       <li>• Memberikan insight pengeluaran</li>
+                      <li>• Mengecek produk paling laku</li>
                       <li>• Mengecek stok yang hampir habis</li>
                       <li>• Memberikan saran pencatatan usaha sederhana</li>
                     </ul>
@@ -195,10 +195,10 @@ export default function Assistant() {
                   <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm">
                     Contoh pertanyaan:
                     <ul className="mt-1.5 space-y-1 text-sm text-slate-600">
-                      <li>• Pengeluaran saya paling besar di mana?</li>
-                      <li>• Produk apa yang stoknya hampir habis?</li>
+                      <li>• Produk apa yang paling laku?</li>
+                      <li>• Rekomendasi restock apa yang saya butuh?</li>
+                      <li>• Bisa prediksi penjualan minggu depan?</li>
                       <li>• Bagaimana kondisi usaha saya minggu ini?</li>
-                      <li>• Apa yang perlu saya perhatikan hari ini?</li>
                     </ul>
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function Assistant() {
             <div className="space-y-2.5">
               <button
                 onClick={() =>
-                  setInput("Produk apa yang paling laku minggu ini?")
+                  setInput("Produk apa yang paling laku?")
                 }
                 className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
@@ -256,11 +256,11 @@ export default function Assistant() {
 
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      Penjualan Terbaik
+                      Produk Paling Laku
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Produk apa yang paling laku minggu ini?”
+                      “Produk apa yang paling laku?”
                     </p>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export default function Assistant() {
 
               <button
                 onClick={() =>
-                  setInput("Stok mana yang harus segera restock?")
+                  setInput("Rekomendasi restock apa yang saya butuh?")
                 }
                 className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
@@ -280,11 +280,11 @@ export default function Assistant() {
 
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      Kelola Stok
+                      Rekomendasi Restock
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Stok mana yang harus segera restock?”
+                      “Rekomendasi restock apa yang saya butuh?”
                     </p>
                   </div>
                 </div>
@@ -292,23 +292,23 @@ export default function Assistant() {
 
               <button
                 onClick={() =>
-                  setInput("Berapa estimasi keuntungan bulan ini?")
+                  setInput("Bisa prediksi penjualan minggu depan?")
                 }
                 className="w-full text-left rounded-2xl border border-slate-200 p-2.5 hover:bg-slate-50 transition"
               >
                 <div className="flex items-start gap-3">
-                  <Wallet
+                  <Sparkles
                     size={18}
                     className="text-orange-500 mt-0.5"
                   />
 
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      Analisis Keuntungan
+                      Prediksi Penjualan
                     </p>
 
                     <p className="text-xs text-slate-500 mt-1">
-                      “Berapa estimasi keuntungan bulan ini?”
+                      “Bisa prediksi penjualan minggu depan?”
                     </p>
                   </div>
                 </div>
