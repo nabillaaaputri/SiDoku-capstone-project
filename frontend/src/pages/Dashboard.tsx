@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
 import ForecastTrendChart from "@/components/ForecastTrendChart";
@@ -63,6 +63,7 @@ interface ForecastTrendPoint {
 export default function Dashboard() {
   const { products, salesRecords } = useBusinessContext();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
@@ -141,6 +142,7 @@ export default function Dashboard() {
       .slice(0, 3)
       .map((product) => ({
         id: product.id,
+        productId: product.id,
         name: product.name,
         minimumStock: product.minimumStock,
         shortage: Math.max(1, product.minimumStock - product.stock),
@@ -148,6 +150,12 @@ export default function Dashboard() {
         unit: product.unit,
       }));
   }, [activeProducts]);
+
+  const handleQuickRestock = (productId: string) => {
+    navigate("/stok-masuk", {
+      state: { quickActionProductId: productId },
+    });
+  };
 
   const salesTrendData = useMemo<ForecastTrendPoint[]>(() => {
     const today = new Date();
@@ -422,35 +430,29 @@ export default function Dashboard() {
             {restockRecommendations.length > 0 ? (
               <div className="mt-3 space-y-2">
                 {restockRecommendations.map((item) => {
-                  const priorityLabel = item.shortage >= 5 ? "Prioritas tinggi" : "Perlu restock";
-                  const isHighPriority = item.shortage >= 5;
-
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-blue-50 bg-white px-4 py-3 shadow-sm">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                    <div key={item.id} className="flex flex-col gap-3 rounded-2xl border border-blue-50 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
                         <Package size={18} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-slate-900">{item.name}</p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Sisa stok {item.stock} {item.unit} • Minimum {item.minimumStock} {item.unit}
-                            </p>
-                          </div>
-                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isHighPriority ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
-                            {priorityLabel}
-                          </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-900">{item.name}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Sisa stok {item.stock} {item.unit} • Minimum {item.minimumStock} {item.unit}
+                          </p>
+                          <span className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100">
                             Butuh restock {item.shortage} {item.unit}
                           </span>
-                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                            {item.stock === 0 ? "Stok habis" : "Masih tersedia"}
-                          </span>
-                        </div>
                       </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickRestock(item.productId)}
+                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-3.5 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 sm:self-center"
+                      >
+                        + Tambah Stok
+                      </button>
                     </div>
                   );
                 })}

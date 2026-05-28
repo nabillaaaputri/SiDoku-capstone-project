@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Clock3, MoreVertical, Package, Plus, Trash2, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useBusinessContext } from "@/context";
@@ -31,6 +31,7 @@ export default function StockIn() {
   const { products, stockIns, addStockIn, deleteStockIn } = useBusinessContext();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isStockInModalOpen, setIsStockInModalOpen] = useState(false);
   const [isNoProductDialogOpen, setIsNoProductDialogOpen] = useState(false);
@@ -43,6 +44,7 @@ export default function StockIn() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalProductComboboxRef = useRef<HTMLDivElement | null>(null);
   const historyProductComboboxRef = useRef<HTMLDivElement | null>(null);
+  const quickActionHandledRef = useRef(false);
   const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
   const [stockInForm, setStockInForm] = useState({
     productId: "",
@@ -187,6 +189,33 @@ export default function StockIn() {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [showHistoryProductDropdown, showProductDropdown]);
+
+  useEffect(() => {
+    if (quickActionHandledRef.current) {
+      return;
+    }
+
+    const quickActionProductId = (location.state as { quickActionProductId?: string } | null)?.quickActionProductId;
+
+    if (!quickActionProductId || activeProducts.length === 0) {
+      return;
+    }
+
+    const product = activeProducts.find((item) => item.id === quickActionProductId);
+
+    if (!product) {
+      return;
+    }
+
+    quickActionHandledRef.current = true;
+    setStockInForm((current) => ({
+      ...current,
+      productId: product.id,
+    }));
+    setProductSearchQuery(product.name);
+    setIsStockInModalOpen(true);
+    navigate("/stok-masuk", { replace: true, state: null });
+  }, [activeProducts, location.state, navigate]);
 
   const handleStockInSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
