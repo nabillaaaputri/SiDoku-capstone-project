@@ -358,7 +358,7 @@ export default function StockIn() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_160px_160px] lg:grid-cols-[minmax(0,1fr)_180px_180px] gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,1fr)] md:items-start">
               <div ref={historyProductComboboxRef} className="relative">
                 <Input
                   value={selectedHistoryProduct ? selectedHistoryProduct.name : historyProductQuery}

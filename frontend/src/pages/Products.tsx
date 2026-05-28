@@ -118,7 +118,7 @@ export default function Products() {
     costPrice: 0,
     sellPrice: 0,
     stock: 0,
-    minimumStock: 10,
+    minimumStock: "10",
     category: "",
     unit: "pcs",
   });
@@ -206,13 +206,24 @@ export default function Products() {
         return;
       }
 
+      const minimumStock = Number(addProductForm.minimumStock);
+      if (!addProductForm.minimumStock.trim() || Number.isNaN(minimumStock) || minimumStock < 1) {
+        toast({
+          title: "Error",
+          description: "Stok minimum harus diisi dengan angka minimal 1",
+          variant: "destructive",
+        });
+        setIsSubmittingForm(false);
+        return;
+      }
+
       const productName = addProductForm.name;
       await addProduct({
         name: addProductForm.name,
         costPrice: addProductForm.costPrice,
         sellPrice: addProductForm.sellPrice,
         stock: addProductForm.stock,
-        minimumStock: addProductForm.minimumStock,
+        minimumStock,
         category: addProductForm.category,
         unit: addProductForm.unit,
         archived: false,
@@ -229,7 +240,7 @@ export default function Products() {
         costPrice: 0,
         sellPrice: 0,
         stock: 0,
-        minimumStock: 10,
+        minimumStock: "10",
         category: "",
         unit: "pcs",
       });
@@ -718,12 +729,11 @@ export default function Products() {
                 <Input
                   type="number"
                   min="1"
-                  value={addProductForm.minimumStock || ""}
+                  value={addProductForm.minimumStock}
                   onChange={(e) => {
-                    const val = e.target.value ? parseInt(e.target.value, 10) : 10;
                     setAddProductForm({
                       ...addProductForm,
-                      minimumStock: val,
+                      minimumStock: e.target.value,
                     });
                   }}
                   placeholder="Contoh: 10"

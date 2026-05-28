@@ -23,7 +23,9 @@ export default function EditProductModal({
     unit: product.unit,
     costPrice: product.costPrice,
     sellPrice: product.sellPrice,
+    minimumStock: String(product.minimumStock),
   });
+  const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
     setFormData({
@@ -32,12 +34,29 @@ export default function EditProductModal({
       unit: product.unit,
       costPrice: product.costPrice,
       sellPrice: product.sellPrice,
+      minimumStock: String(product.minimumStock),
     });
+    setValidationError("");
   }, [product, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+
+    const minimumStock = Number(formData.minimumStock);
+    if (!formData.minimumStock.trim() || Number.isNaN(minimumStock) || minimumStock < 1) {
+      setValidationError("Stok minimum harus diisi dengan angka minimal 1.");
+      return;
+    }
+
+    setValidationError("");
+    onSave({
+      name: formData.name,
+      category: formData.category,
+      unit: formData.unit,
+      costPrice: formData.costPrice,
+      sellPrice: formData.sellPrice,
+      minimumStock,
+    });
     onClose();
   };
 
@@ -156,6 +175,32 @@ export default function EditProductModal({
               required
             />
           </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Stok Minimum <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="number"
+              value={formData.minimumStock}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  minimumStock: e.target.value,
+                })
+              }
+              className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500"
+              placeholder="0"
+              min="1"
+              required
+            />
+          </div>
+
+          {validationError && (
+            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {validationError}
+            </div>
+          )}
 
           <div className="flex gap-3 border-t border-slate-200 pt-4">
             <button

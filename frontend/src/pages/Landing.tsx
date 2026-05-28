@@ -340,20 +340,20 @@ export default function Landing() {
         </section>
 
         {/* 7. OUR TEAM */}
-        <section className="py-10 bg-white border-t border-slate-100">
+        <section className="py-6 bg-white border-t border-slate-100">
           <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
-            <div className="mb-5">
-              <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Dibangun oleh Tim SiDoku</h3>
-              <p className="mt-2 text-[13px] font-medium text-slate-500">Enam orang yang mengerjakan produk ini bersama.</p>
+            <div className="mb-3">
+              <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight">Dibangun oleh Tim SiDoku</h3>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Enam orang yang mengerjakan produk ini bersama.</p>
             </div>
-            <div className="flex flex-wrap justify-center gap-2.5">
+            <div className="flex flex-wrap justify-center gap-2">
               {TEAM.map((member, i) => (
-                <div key={i} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white">
+                <div key={i} className="inline-flex max-w-[190px] items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white">
                     {member.initials}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 leading-tight">{member.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold text-slate-900 leading-tight">{member.name}</p>
                   </div>
                 </div>
               ))}

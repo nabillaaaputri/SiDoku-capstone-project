@@ -142,6 +142,7 @@ export default function Dashboard() {
       .map((product) => ({
         id: product.id,
         name: product.name,
+        minimumStock: product.minimumStock,
         shortage: Math.max(1, product.minimumStock - product.stock),
         stock: product.stock,
         unit: product.unit,
@@ -419,14 +420,40 @@ export default function Dashboard() {
             </div>
 
             {restockRecommendations.length > 0 ? (
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {restockRecommendations.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-blue-50 bg-white px-3 py-3 shadow-sm">
-                    <p className="text-sm font-bold text-slate-900">{item.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">Sisa stok {item.stock} {item.unit}</p>
-                    <p className="mt-2 text-sm font-semibold text-blue-700">Butuh restock {item.shortage} {item.unit}</p>
-                  </div>
-                ))}
+              <div className="mt-3 space-y-2">
+                {restockRecommendations.map((item) => {
+                  const priorityLabel = item.shortage >= 5 ? "Prioritas tinggi" : "Perlu restock";
+                  const isHighPriority = item.shortage >= 5;
+
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-blue-50 bg-white px-4 py-3 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                        <Package size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-900">{item.name}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Sisa stok {item.stock} {item.unit} • Minimum {item.minimumStock} {item.unit}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isHighPriority ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`}>
+                            {priorityLabel}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                            Butuh restock {item.shortage} {item.unit}
+                          </span>
+                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                            {item.stock === 0 ? "Stok habis" : "Masih tersedia"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="mt-3 rounded-2xl border border-dashed border-blue-100 bg-white px-4 py-4 text-sm text-slate-600">

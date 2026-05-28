@@ -10,13 +10,6 @@ interface AiApiResponse<T> {
   data: T;
 }
 
-interface AiProductInsightItem {
-  product_name: string;
-  stok: number;
-  predicted_demand_7d: number;
-  status: "critical" | "normal" | "increasing" | "overstock";
-}
-
 interface AiRecommendationItem {
   product_name: string;
   current_stock: number;
@@ -86,9 +79,19 @@ export default function Insights() {
   const [recommendationItems, setRecommendationItems] = useState<AiRecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
-  const activeProductIdSet = useMemo(() => new Set(activeProducts.map((product) => product.id)), [activeProducts]);
-  const activeProductNameSet = useMemo(() => new Set(activeProducts.map((product) => product.name.toLowerCase())), [activeProducts]);
+
+  const activeProducts = useMemo(
+    () => products.filter((product) => product.archived !== true),
+    [products],
+  );
+  const activeProductIdSet = useMemo(
+    () => new Set(activeProducts.map((product) => product.id)),
+    [activeProducts],
+  );
+  const activeProductNameSet = useMemo(
+    () => new Set(activeProducts.map((product) => product.name.toLowerCase())),
+    [activeProducts],
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -98,9 +101,12 @@ export default function Insights() {
       setError(null);
 
       try {
-        const recommendationsResponse = await apiClient.get<AiApiResponse<{ recommendations: AiRecommendationItem[] }>>("/ai/recommendations", {
+        const recommendationsResponse = await apiClient.get<AiApiResponse<{ recommendations: AiRecommendationItem[] }>>(
+          "/ai/recommendations",
+          {
             params: { historyDays: 60 },
-          });
+          },
+        );
 
         if (isCancelled) {
           return;
@@ -110,9 +116,7 @@ export default function Insights() {
       } catch (loadError) {
         if (!isCancelled) {
           setRecommendationItems([]);
-          setError(
-            loadError instanceof Error ? loadError.message : "Insight AI belum tersedia saat ini.",
-          );
+          setError(loadError instanceof Error ? loadError.message : "Insight AI belum tersedia saat ini.");
         }
       } finally {
         if (!isCancelled) {
@@ -276,17 +280,16 @@ export default function Insights() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="h-4 w-32 rounded-full bg-slate-100 animate-pulse" />
-                  <div className="h-3 w-full rounded-full bg-slate-100 animate-pulse" />
-                  <div className="h-3 w-4/5 rounded-full bg-slate-100 animate-pulse" />
-                </div>
+            <div key={index} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="h-11 w-11 shrink-0 rounded-2xl bg-slate-100 animate-pulse" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="h-4 w-32 rounded-full bg-slate-100 animate-pulse" />
+                <div className="h-3 w-full rounded-full bg-slate-100 animate-pulse" />
+                <div className="h-3 w-4/5 rounded-full bg-slate-100 animate-pulse" />
               </div>
+              <div className="h-6 w-14 shrink-0 rounded-full bg-slate-100 animate-pulse" />
             </div>
           ))}
         </div>
@@ -313,12 +316,12 @@ export default function Insights() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="space-y-3">
         {hasData ? (
           insightCards.slice(0, 3).map((insight) => (
             <div
               key={insight.id}
-              className={`group rounded-2xl border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+              className={`group flex w-full items-start gap-3 rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                 insight.type === "positive"
                   ? "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)]"
                   : insight.type === "warning"
@@ -326,48 +329,48 @@ export default function Insights() {
                     : "border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)]"
               }`}
             >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
-                    insight.type === "positive"
-                      ? "border-emerald-100 bg-emerald-50 text-emerald-600"
-                      : insight.type === "warning"
-                        ? "border-amber-100 bg-amber-50 text-amber-600"
-                        : "border-blue-100 bg-blue-50 text-blue-600"
-                  }`}
-                >
-                  {insight.icon}
-                </div>
+              <div
+                className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
+                  insight.type === "positive"
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-600"
+                    : insight.type === "warning"
+                      ? "border-amber-100 bg-amber-50 text-amber-600"
+                      : "border-blue-100 bg-blue-50 text-blue-600"
+                }`}
+              >
+                {insight.icon}
+              </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 leading-tight">{insight.title}</h3>
-                    {insight.metric && (
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                          insight.type === "positive"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : insight.type === "warning"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {insight.metric}
-                      </span>
-                    )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold leading-tight text-slate-900">{insight.title}</h3>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{insight.description}</p>
                   </div>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600">{insight.description}</p>
+                  {insight.metric && (
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        insight.type === "positive"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : insight.type === "warning"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {insight.metric}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="md:col-span-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
               <AlertCircle size={24} />
             </div>
             <p className="text-sm font-semibold text-slate-900">Belum ada insight AI</p>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="mt-1 text-sm text-slate-500">
               {error || "Coba lagi beberapa saat setelah data sinkron dengan backend."}
             </p>
           </div>
