@@ -215,8 +215,8 @@ export default function Assistant() {
         </div>
 
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 overflow-hidden">
-          <aside className="hidden lg:flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <aside className="hidden lg:flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+            <div className="rounded-2xl bg-white border border-slate-200 p-2.5 shadow-sm">
               <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                 Membantu membaca data stok, penjualan, dan memberi saran bisnis sederhana.
@@ -241,7 +241,7 @@ export default function Assistant() {
               <div className="space-y-2">
                 <button
                   onClick={() => setInput("Produk apa yang paling laku?")}
-                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+                  className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
                     <TrendingUp size={18} className="text-blue-500" />
