@@ -181,3 +181,39 @@ export const getInventorySummary = async (userId) => {
 
   return result.rows;
 };
+
+export const getBestSellingProducts = async ({
+  userId,
+  days = 7,
+  limit = 5,
+}) => {
+  const result = await query(
+    `SELECT
+      so.product_id AS "productId",
+      so.product_name AS "productName",
+      p.category,
+      p.unit,
+      SUM(so.quantity) AS "totalSold"
+    FROM stock_outs so
+    JOIN products p ON so.product_id = p.id
+    WHERE so.user_id = $1
+      AND so.date >= CURRENT_DATE - ($2::int * INTERVAL '1 day')
+      AND p.is_archived = false
+    GROUP BY
+      so.product_id,
+      so.product_name,
+      p.category,
+      p.unit
+    ORDER BY SUM(so.quantity) DESC
+    LIMIT $3`,
+    [userId, days, limit],
+  );
+
+  return result.rows.map((row) => ({
+    productId: row.productId,
+    productName: row.productName,
+    category: row.category,
+    unit: row.unit,
+    totalSold: Number(row.totalSold),
+  }));
+};
