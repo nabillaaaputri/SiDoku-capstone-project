@@ -204,7 +204,7 @@ export default function Assistant() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col min-h-0 lg:overflow-hidden">
         <div className="mb-3 shrink-0 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm">
           <p className="text-sm font-bold text-slate-900 leading-tight">
             Halo! Saya Asisten AI SiDoku 👋
@@ -214,8 +214,8 @@ export default function Assistant() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3">
-          <aside className="flex flex-col gap-3 lg:sticky lg:top-[92px] lg:self-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-3 min-h-0 flex-1 lg:overflow-hidden">
+          <aside className="flex flex-col gap-3 lg:sticky lg:top-[92px] lg:self-start lg:h-fit">
             <div className="rounded-2xl bg-white border border-slate-200 p-2.5 shadow-sm">
               <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
@@ -302,7 +302,7 @@ export default function Assistant() {
             </div>
           </aside>
 
-          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:h-full">
             <div className="shrink-0 border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -334,7 +334,7 @@ export default function Assistant() {
               </div>
             </div>
 
-            <div className="px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
+            <div className="px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
               {isConversationFresh && (
                 <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
                   Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
