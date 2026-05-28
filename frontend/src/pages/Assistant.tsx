@@ -221,7 +221,7 @@ export default function Assistant() {
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch lg:max-h-[calc(100vh-180px)]">
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 overflow-hidden lg:items-stretch">
           {/* SIDEBAR */}
           <aside className="lg:w-[240px] xl:w-[260px] shrink-0 space-y-3 min-h-0 lg:self-stretch lg:flex lg:flex-col">
           <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 lg:mt-0">
