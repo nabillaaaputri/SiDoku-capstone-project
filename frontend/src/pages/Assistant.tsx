@@ -33,16 +33,12 @@ const DEFAULT_MESSAGES: Message[] = [
 ];
 
 const loadStoredMessages = (): Message[] => {
-  if (typeof window === "undefined") {
-    return DEFAULT_MESSAGES;
-  }
+  if (typeof window === "undefined") return DEFAULT_MESSAGES;
 
   try {
     const rawMessages = window.localStorage.getItem(CHAT_STORAGE_KEY);
 
-    if (!rawMessages) {
-      return DEFAULT_MESSAGES;
-    }
+    if (!rawMessages) return DEFAULT_MESSAGES;
 
     const parsedMessages = JSON.parse(rawMessages) as Message[];
 
@@ -50,20 +46,24 @@ const loadStoredMessages = (): Message[] => {
       return DEFAULT_MESSAGES;
     }
 
-    return parsedMessages.filter(
+    const validMessages = parsedMessages.filter(
       (message): message is Message =>
         typeof message?.id === "string" &&
         (message.role === "user" || message.role === "assistant") &&
         typeof message.content === "string" &&
-        typeof message.timestamp === "number",
+        typeof message.timestamp === "number"
     );
+
+    return validMessages.length > 0 ? validMessages : DEFAULT_MESSAGES;
   } catch {
     return DEFAULT_MESSAGES;
   }
 };
 
 export default function Assistant() {
-  const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
+  const [messages, setMessages] = useState<Message[]>(() =>
+    loadStoredMessages()
+  );
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
@@ -85,11 +85,12 @@ export default function Assistant() {
     try {
       window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch {
-      // Ignore storage write failures so chat still works normally.
+      // Ignore storage write failures.
     }
   }, [messages]);
 
-  const generateMessageId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const generateMessageId = () =>
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const resetChat = () => {
     try {
@@ -107,10 +108,12 @@ export default function Assistant() {
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
+    const currentInput = input.trim();
+
     const userMessage: Message = {
       id: generateMessageId(),
       role: "user",
-      content: input.trim(),
+      content: currentInput,
       timestamp: Date.now(),
     };
 
@@ -130,10 +133,11 @@ export default function Assistant() {
     setError(null);
 
     try {
-      const result = await askAiChatbot(input.trim());
-      
+      const result = await askAiChatbot(currentInput);
+
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+
         return [
           ...filtered,
           {
@@ -146,10 +150,12 @@ export default function Assistant() {
       });
     } catch (error) {
       const errorMessage = getAiChatbotErrorMessage(error);
+
       setError(errorMessage);
 
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.id.startsWith("loading-"));
+
         return [
           ...filtered,
           {
@@ -167,7 +173,7 @@ export default function Assistant() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-sky-100 flex flex-col overflow-hidden">
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur shrink-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
@@ -191,6 +197,7 @@ export default function Assistant() {
                 <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
                   Asisten AI SiDoku
                 </h1>
+
                 <p className="text-xs md:text-sm text-slate-500">
                   Analisis bisnis otomatis & insight usaha
                 </p>
@@ -205,41 +212,42 @@ export default function Assistant() {
         </div>
       </header>
 
-      {/* CONTENT CONTAINER */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col min-h-0">
-        {/* Banner Sapaan Atas */}
-        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 shadow-sm shrink-0">
-          <p className="text-sm font-bold text-slate-900 leading-tight">Halo! Saya Asisten AI SiDoku 👋</p>
+      {/* CONTENT */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-5 py-3 md:py-4 flex flex-col min-h-0 overflow-hidden">
+        {/* INTRO */}
+        <div className="mb-3 rounded-2xl border border-blue-100 bg-white/90 px-4 py-3 shadow-sm shrink-0">
+          <p className="text-sm font-bold text-slate-900 leading-tight">
+            Halo! Saya Asisten AI SiDoku 👋
+          </p>
           <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
-            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau prediksi bisnis Anda.
+            Tanya apa saja tentang stok, penjualan, restock, keuntungan, atau
+            prediksi bisnis Anda.
           </p>
         </div>
 
-        {/* Flex Wrapper Utama Antara Sidebar & Chat Area */}
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 min-h-0 lg:items-stretch lg:max-h-[calc(100vh-190px)]">
-          
-          {/* SIDEBAR AREA */}
-          <aside className="lg:w-[240px] xl:w-[260px] shrink-0 flex flex-col gap-3 min-h-0 lg:self-stretch">
-            {/* Box 1: Tentang Asisten AI */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm space-y-3 shrink-0">
-              <div>
-                <p className="text-sm font-bold text-slate-900">Tentang Asisten AI</p>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                  Asisten ini membantu membaca data bisnis dengan cepat dan memberi saran yang mudah dipahami.
-                </p>
-              </div>
+        <div className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[260px_1fr] gap-3 overflow-hidden">
+          {/* SIDEBAR */}
+          <aside className="space-y-3 min-h-0 overflow-y-auto pr-0 lg:pr-1">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-sm font-bold text-slate-900">
+                Tentang Asisten AI
+              </p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Membantu membaca data stok, penjualan, dan memberi saran bisnis
+                sederhana.
+              </p>
 
-              <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
+              <div className="mt-3 rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2">
                 <p className="text-xs font-semibold text-sky-700">Tips</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang diberikan.
+                  Semakin spesifik pertanyaan Anda, semakin tepat jawaban yang
+                  diberikan.
                 </p>
               </div>
             </div>
 
-            {/* Box 2: Menu Pintar */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm flex-1 lg:overflow-y-auto space-y-3">
-              <div className="space-y-1">
+            <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
+              <div className="mb-3 space-y-1">
                 <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Pilih menu di bawah atau tulis pertanyaan sendiri.
@@ -252,8 +260,10 @@ export default function Assistant() {
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <TrendingUp size={18} className="text-blue-500 mt-0.5" />
-                    <p className="text-sm font-semibold text-slate-800">Produk Paling Laku</p>
+                    <TrendingUp size={18} className="text-blue-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Produk Paling Laku
+                    </p>
                   </div>
                 </button>
 
@@ -262,28 +272,38 @@ export default function Assistant() {
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Sparkles size={18} className="text-sky-500 mt-0.5" />
-                    <p className="text-sm font-semibold text-slate-800">Ringkasan Usaha</p>
+                    <Sparkles size={18} className="text-sky-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Ringkasan Usaha
+                    </p>
                   </div>
                 </button>
 
                 <button
-                  onClick={() => setInput("Rekomendasi restock apa yang saya butuh?")}
+                  onClick={() =>
+                    setInput("Rekomendasi restock apa yang saya butuh?")
+                  }
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Package size={18} className="text-emerald-500 mt-0.5" />
-                    <p className="text-sm font-semibold text-slate-800">Rekomendasi Restock</p>
+                    <Package size={18} className="text-emerald-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Rekomendasi Restock
+                    </p>
                   </div>
                 </button>
 
                 <button
-                  onClick={() => setInput("Bisa prediksi penjualan minggu depan?")}
+                  onClick={() =>
+                    setInput("Bisa prediksi penjualan minggu depan?")
+                  }
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Sparkles size={18} className="text-orange-500 mt-0.5" />
-                    <p className="text-sm font-semibold text-slate-800">Prediksi Penjualan</p>
+                    <Sparkles size={18} className="text-orange-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Prediksi Penjualan
+                    </p>
                   </div>
                 </button>
 
@@ -292,17 +312,19 @@ export default function Assistant() {
                   className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
                 >
                   <div className="flex items-center gap-2.5">
-                    <AlertCircle size={18} className="text-amber-500 mt-0.5" />
-                    <p className="text-sm font-semibold text-slate-800">Cek Stok Menipis</p>
+                    <AlertCircle size={18} className="text-amber-500" />
+                    <p className="text-sm font-semibold text-slate-800">
+                      Cek Stok Menipis
+                    </p>
                   </div>
                 </button>
               </div>
             </div>
           </aside>
 
-          {/* CHAT CONTAINER AREA */}
-          <section className="flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 lg:self-stretch">
-            {/* Chat Box Header */}
+          {/* CHAT AREA */}
+          <section className="flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-0 h-[calc(100vh-245px)]">
+            {/* CHAT HEADER */}
             <div className="border-b border-slate-200 px-4 py-3 bg-slate-50/80 backdrop-blur shrink-0">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -310,12 +332,18 @@ export default function Assistant() {
                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 flex items-center justify-center text-white">
                       <Bot size={22} />
                     </div>
+
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-slate-900">Asisten AI SiDoku</h3>
-                    <p className="text-xs text-slate-500">Siap membantu • Jawaban singkat dan praktis</p>
+                    <h3 className="font-bold text-slate-900">
+                      Asisten AI SiDoku
+                    </h3>
+
+                    <p className="text-xs text-slate-500">
+                      Siap membantu • Jawaban singkat dan praktis
+                    </p>
                   </div>
                 </div>
 
@@ -331,55 +359,76 @@ export default function Assistant() {
               </div>
             </div>
 
-            {/* Bubble Chat Messages list */}
+            {/* MESSAGES */}
             <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
               {isConversationFresh && (
                 <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
-                  Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
+                  Coba tanyakan: produk paling laku, restock, atau prediksi
+                  penjualan.
                 </div>
               )}
 
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   {message.role === "assistant" ? (
                     <div className="max-w-[90%] md:max-w-[75%]">
-                      <div className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
-                        message.error
-                          ? "bg-red-50 border border-red-200"
-                          : message.content === "Sedang memproses..."
+                      <div
+                        className={`rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm ${
+                          message.error
+                            ? "bg-red-50 border border-red-200"
+                            : message.content === "Sedang memproses..."
                             ? "bg-slate-100 border border-slate-200"
                             : "bg-white border border-slate-200"
-                      }`}>
+                        }`}
+                      >
                         {message.content === "Sedang memproses..." ? (
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                            <div
+                              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.2s" }}
+                            />
+                            <div
+                              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.4s" }}
+                            />
                           </div>
                         ) : message.error ? (
                           <div className="flex items-start gap-2">
-                            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">{message.content}</p>
+                            <AlertCircle
+                              size={16}
+                              className="text-red-600 flex-shrink-0 mt-0.5"
+                            />
+                            <p className="text-sm md:text-[15px] text-red-700 leading-relaxed">
+                              {message.content}
+                            </p>
                           </div>
                         ) : (
-                          <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">{message.content}</p>
+                          <p className="text-sm md:text-[15px] text-slate-700 leading-relaxed">
+                            {message.content}
+                          </p>
                         )}
                       </div>
                     </div>
                   ) : (
                     <div className="max-w-[85%] md:max-w-[70%] bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 shadow-lg">
-                      <p className="text-sm md:text-[15px] leading-relaxed">{message.content}</p>
+                      <p className="text-sm md:text-[15px] leading-relaxed">
+                        {message.content}
+                      </p>
                     </div>
                   )}
                 </div>
               ))}
+
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Form Input Message */}
+            {/* INPUT */}
             <div className="border-t border-slate-200 bg-white p-3 md:p-3.5 shrink-0">
               <div className="flex items-stretch gap-2.5">
                 <div className="flex-1">
@@ -402,10 +451,13 @@ export default function Assistant() {
                 <button
                   onClick={handleSendMessage}
                   disabled={isLoading || !input.trim()}
-                  className="h-[52px] px-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 self-stretch"
+                  className="h-[52px] px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold shadow-lg hover:scale-[1.02] hover:shadow-xl transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  <SendHorizonal size={14} />
-                  <span className="hidden sm:inline">{isLoading ? "Mengirim..." : "Kirim"}</span>
+                  <SendHorizonal size={15} />
+
+                  <span className="hidden sm:inline">
+                    {isLoading ? "Mengirim..." : "Kirim"}
+                  </span>
                 </button>
               </div>
 
@@ -415,7 +467,7 @@ export default function Assistant() {
             </div>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
