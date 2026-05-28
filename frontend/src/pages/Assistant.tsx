@@ -70,6 +70,7 @@ export default function Assistant() {
   const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isConversationFresh = messages.length <= 1;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -230,6 +231,10 @@ export default function Assistant() {
               </button>
             </div>
 
+            <p className="mb-3 text-xs text-slate-500 leading-relaxed">
+              Pilih aksi cepat atau tulis pertanyaan sendiri.
+            </p>
+
             <div className="space-y-2">
               <button
                 onClick={() =>
@@ -244,6 +249,23 @@ export default function Assistant() {
                   />
                   <p className="text-sm font-semibold text-slate-800">
                     Produk Paling Laku
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() =>
+                  setInput("Beri ringkasan usaha saya.")
+                }
+                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles
+                    size={18}
+                    className="text-sky-500 mt-0.5"
+                  />
+                  <p className="text-sm font-semibold text-slate-800">
+                    Ringkasan Usaha
                   </p>
                 </div>
               </button>
@@ -278,6 +300,23 @@ export default function Assistant() {
                   />
                   <p className="text-sm font-semibold text-slate-800">
                     Prediksi Penjualan
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() =>
+                  setInput("Cek stok menipis.")
+                }
+                className="w-full text-left rounded-2xl border border-slate-200 px-3 py-2.5 hover:bg-slate-50 transition"
+              >
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle
+                    size={18}
+                    className="text-amber-500 mt-0.5"
+                  />
+                  <p className="text-sm font-semibold text-slate-800">
+                    Cek Stok Menipis
                   </p>
                 </div>
               </button>
@@ -324,6 +363,12 @@ export default function Assistant() {
 
           {/* MESSAGES */}
           <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-4 md:px-5 py-3.5 md:py-4 space-y-3 bg-gradient-to-b from-slate-50/70 to-white">
+            {isConversationFresh && (
+              <div className="rounded-2xl border border-blue-100 bg-white/90 px-3 py-2 text-xs text-slate-600 shadow-sm w-fit max-w-full">
+                Coba tanyakan: produk paling laku, restock, atau prediksi penjualan.
+              </div>
+            )}
+
             {messages.map((message) => (
               <div
                 key={message.id}
