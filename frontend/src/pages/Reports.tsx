@@ -296,8 +296,8 @@ export default function Reports() {
 
             {dailyRecaps.filter(r => r.isComplete).length === 0 ? (
               <div className="text-gray-600 text-center py-12">
-                <p className="font-semibold mb-2">Belum ada data rekap penjualan hari ini.</p>
-                <p className="text-sm">Lengkapi stok awal, stok masuk, stok akhir, dan catat penjualan untuk melihat rekap.</p>
+                <p className="font-semibold mb-2">Belum ada transaksi penjualan pada periode ini.</p>
+                <p className="text-sm">Stok masuk tetap tercatat di riwayat stok masuk dan tidak dihitung sebagai rekap penjualan.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -344,7 +344,6 @@ export default function Reports() {
                                       <tr className="border-b border-gray-300">
                                         <th className="text-left py-2 px-2 font-bold">Produk</th>
                                         <th className="text-right py-2 px-2 font-bold hidden sm:table-cell">Stok Awal</th>
-                                        <th className="text-right py-2 px-2 font-bold hidden sm:table-cell">Masuk</th>
                                         <th className="text-right py-2 px-2 font-bold">Keluar</th>
                                         <th className="text-right py-2 px-2 font-bold hidden sm:table-cell">Akhir</th>
                                         <th className="text-right py-2 px-2 font-bold">Terjual</th>
@@ -357,7 +356,6 @@ export default function Reports() {
                                         <tr key={detail.productId} className="border-b border-gray-200 hover:bg-gray-50">
                                           <td className="py-2 px-2 font-medium">{detail.productName}</td>
                                           <td className="text-right py-2 px-2 hidden sm:table-cell text-xs">{detail.stokAwal}</td>
-                                          <td className="text-right py-2 px-2 hidden sm:table-cell text-xs text-green-600">+{detail.stokMasuk}</td>
                                           <td className="text-right py-2 px-2 text-xs text-red-600">−{detail.stokKeluar + detail.terjual}</td>
                                           <td className="text-right py-2 px-2 hidden sm:table-cell text-xs">{detail.stokAkhir}</td>
                                           <td className="text-right py-2 px-2 font-bold">{detail.terjual}</td>

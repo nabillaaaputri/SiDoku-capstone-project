@@ -68,6 +68,7 @@ export default function SalesRecap() {
 
   const hasSearchQuery = productSearch.trim().length > 0;
   const hasFilteredResults = filteredDetails.length > 0;
+  const isEmptyRecap = recap.details.length === 0;
   const isNoResultFromSearch = recap.details.length > 0 && !hasFilteredResults;
 
   const formatProfitValue = (value: number) => {
@@ -89,7 +90,7 @@ export default function SalesRecap() {
 
   // Export to Excel function
   const handleExportExcel = () => {
-    if (!recap.isComplete || recap.details.length === 0) return;
+    if (recap.details.length === 0) return;
 
     const safeRecapDate = toSafeDate(recap.date) || new Date();
     const dateStr = safeRecapDate.toLocaleDateString("id-ID", {
@@ -114,7 +115,6 @@ export default function SalesRecap() {
       [
         "Produk",
         "Stok Awal",
-        "Stok Masuk",
         "Stok Akhir",
         "Terjual",
         "HPP",
@@ -124,7 +124,6 @@ export default function SalesRecap() {
       ...recap.details.map((detail) => [
         detail.productName,
         detail.stokAwal,
-        detail.stokMasuk,
         detail.stokAkhir,
         detail.terjual,
         detail.hppTerpakai,
@@ -140,7 +139,6 @@ export default function SalesRecap() {
     worksheet["!cols"] = [
       { wch: 20 }, // Produk
       { wch: 12 }, // Stok Awal
-      { wch: 12 }, // Stok Masuk
       { wch: 12 }, // Stok Akhir
       { wch: 10 }, // Terjual
       { wch: 15 }, // HPP
@@ -182,7 +180,7 @@ export default function SalesRecap() {
               />
               <Button
                 onClick={handleExportExcel}
-                disabled={!recap.isComplete || recap.details.length === 0}
+                disabled={recap.details.length === 0}
                 className="h-11 w-full rounded-xl bg-emerald-600 px-4 text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
               >
                 <Download size={18} />
@@ -203,17 +201,8 @@ export default function SalesRecap() {
           </div>
         )}
 
-        {/* Data Not Complete Warning */}
-        {!recap.isComplete && products.length > 0 && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
-            <p className="text-sm font-medium text-amber-800">
-              ⚠️ Lengkapi stok awal, stok masuk, dan stok akhir untuk melihat rekap penjualan pada tanggal ini.
-            </p>
-          </div>
-        )}
-
         {/* Summary Cards */}
-        {recap.isComplete && (
+        {recap.details.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
@@ -298,7 +287,17 @@ export default function SalesRecap() {
         )}
 
         {/* Detail Table */}
-        {recap.isComplete && (
+        {isEmptyRecap ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-12 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <ShoppingCart size={24} />
+            </div>
+            <p className="text-sm font-semibold text-slate-900">Belum ada transaksi penjualan pada tanggal ini.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Stok masuk tetap tercatat di riwayat stok masuk dan tidak masuk ke rekap penjualan.
+            </p>
+          </div>
+        ) : (
           <section className="section-shell p-4 sm:p-5 space-y-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl space-y-1">
@@ -335,7 +334,7 @@ export default function SalesRecap() {
               <p className="text-xs font-medium text-slate-500">
                 {hasSearchQuery
                   ? `Menampilkan ${filteredDetails.length} hasil untuk pencarian "${productSearch}".`
-                  : `Menampilkan ${filteredDetails.length} produk untuk tanggal ini.`}
+                    : `Menampilkan ${filteredDetails.length} produk untuk tanggal ini.`}
               </p>
               {hasSearchQuery && (
                 <Button
@@ -370,7 +369,6 @@ export default function SalesRecap() {
                         <tr className="border-b border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                           <th className="px-5 py-4">Produk</th>
                           <th className="px-5 py-4 text-center">Stok Awal</th>
-                          <th className="px-5 py-4 text-center">Stok Masuk</th>
                           <th className="px-5 py-4 text-center">Stok Akhir</th>
                           <th className="px-5 py-4 text-center">Terjual</th>
                           <th className="px-5 py-4 text-right">HPP</th>
@@ -388,9 +386,6 @@ export default function SalesRecap() {
                               </td>
                               <td className="px-5 py-4 text-center text-sm text-slate-700">
                                 {detail.stokAwal}
-                              </td>
-                              <td className="px-5 py-4 text-center text-sm font-semibold text-emerald-600">
-                                +{detail.stokMasuk}
                               </td>
                               <td className="px-5 py-4 text-center text-sm text-slate-700">
                                 {detail.stokAkhir}
@@ -430,7 +425,6 @@ export default function SalesRecap() {
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Stok</p>
                             <div className="space-y-0.5 text-slate-700">
                               <p>Awal: <span className="font-medium">{detail.stokAwal}</span></p>
-                              <p>Masuk: <span className="font-medium text-emerald-600">+{detail.stokMasuk}</span></p>
                               <p>Akhir: <span className="font-medium">{detail.stokAkhir}</span></p>
                             </div>
                           </div>
