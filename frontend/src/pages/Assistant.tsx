@@ -20,6 +20,14 @@ interface Message {
   error?: string;
 }
 
+const QUICK_QUESTIONS = [
+  "Produk paling laris",
+  "Stok hampir habis",
+  "Rekomendasi restock",
+  "Ringkasan penjualan",
+  "Cek keuntungan",
+];
+
 const STORAGE_KEY = "sidoku_ai_chat_messages";
 
 const DEFAULT_MESSAGES: Message[] = [
@@ -84,10 +92,10 @@ export default function Assistant() {
   const generateMessageId = () =>
     `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendMessage = async (rawInput: string) => {
+    const currentInput = rawInput.trim();
 
-    const currentInput = input.trim();
+    if (!currentInput || isLoading) return;
 
     const userMessage: Message = {
       id: generateMessageId(),
@@ -147,6 +155,15 @@ export default function Assistant() {
     }
   };
 
+  const handleSendMessage = async () => {
+    await sendMessage(input);
+  };
+
+  const handleQuickQuestion = async (question: string) => {
+    setInput(question);
+    await sendMessage(question);
+  };
+
   const resetChat = () => {
     setMessages(DEFAULT_MESSAGES);
     try {
@@ -194,6 +211,37 @@ export default function Assistant() {
       </header>
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 min-h-0 flex-col gap-3 px-3 py-3 sm:px-4 md:px-6 md:py-6">
+        <div className="grid gap-2 md:hidden">
+          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+            <p className="text-sm font-bold text-slate-900">Tentang Asisten SiDoku</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
+              Asisten AI SiDoku membantu membaca data usaha seperti produk paling laris, stok menipis, rekomendasi restock, dan ringkasan penjualan.
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-slate-900">Menu Pintar</p>
+                <p className="text-[11px] text-slate-500">Pilih pertanyaan cepat untuk mulai.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {QUICK_QUESTIONS.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  onClick={() => void handleQuickQuestion(question)}
+                  className="inline-flex h-9 items-center rounded-full border border-blue-100 bg-blue-50 px-3 text-[11px] font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="hidden px-1 pt-1 md:block">
           <p className="text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
             Halo! Saya Asisten AI SiDoku 👋
@@ -305,9 +353,9 @@ export default function Assistant() {
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   {message.role === "assistant" ? (
-                    <div className="max-w-[92%] sm:max-w-[82%] md:max-w-[78%] lg:max-w-[66%]">
+                    <div className="max-w-[84%] sm:max-w-[82%] md:max-w-[78%] lg:max-w-[66%]">
                       <div
-                        className={`rounded-[22px] rounded-tl-md px-4 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                        className={`rounded-[20px] rounded-tl-md px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-3 ${
                           message.error
                             ? "border border-red-200 bg-red-50"
                             : message.content === "Sedang memproses..."
@@ -324,16 +372,16 @@ export default function Assistant() {
                         ) : message.error ? (
                           <div className="flex items-start gap-2">
                             <AlertCircle size={16} className="mt-0.5 flex-shrink-0 text-red-600" />
-                            <p className="text-sm leading-relaxed text-red-700 md:text-[15px]">{message.content}</p>
+                            <p className="text-[13px] leading-relaxed text-red-700 sm:text-sm md:text-[15px]">{message.content}</p>
                           </div>
                         ) : (
-                          <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">{message.content}</p>
+                          <p className="text-[13px] leading-relaxed text-slate-700 sm:text-sm md:text-[15px]">{message.content}</p>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div className="max-w-[88%] rounded-[22px] rounded-br-md bg-gradient-to-r from-blue-600 to-sky-500 px-4 py-3 text-white shadow-[0_16px_32px_rgba(37,99,235,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,99,235,0.28)] md:max-w-[72%] lg:max-w-[60%]">
-                      <p className="text-sm leading-relaxed md:text-[15px]">{message.content}</p>
+                    <div className="max-w-[84%] rounded-[20px] rounded-br-md bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 py-2.5 text-white shadow-[0_16px_32px_rgba(37,99,235,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,99,235,0.28)] sm:max-w-[72%] lg:max-w-[60%] sm:px-4 sm:py-3">
+                      <p className="text-[13px] leading-relaxed sm:text-sm md:text-[15px]">{message.content}</p>
                     </div>
                   )}
                 </div>
@@ -357,14 +405,14 @@ export default function Assistant() {
                     disabled={isLoading}
                     placeholder="Tulis pertanyaan Anda..."
                     rows={1}
-                    className="w-full min-h-[52px] resize-none rounded-[18px] border border-slate-200 bg-slate-50/80 px-3.5 py-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[56px] sm:px-4"
+                    className="w-full min-h-[48px] resize-none rounded-[18px] border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[52px] sm:px-4 sm:py-3"
                   />
                 </div>
 
                 <button
                   onClick={handleSendMessage}
                   disabled={isLoading || !input.trim()}
-                  className="inline-flex h-[52px] items-center justify-center gap-1.5 rounded-[18px] bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(37,99,235,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 sm:h-[56px] sm:px-5"
+                  className="inline-flex h-[48px] items-center justify-center gap-1.5 rounded-[18px] bg-gradient-to-r from-blue-600 to-sky-500 px-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(37,99,235,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(37,99,235,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 sm:h-[52px] sm:px-5"
                 >
                   <SendHorizonal size={15} />
                   <span className="hidden sm:inline">{isLoading ? "Mengirim..." : "Kirim"}</span>
