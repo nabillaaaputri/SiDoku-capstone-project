@@ -29,6 +29,7 @@ interface ApiResponse<T> {
 
 interface DashboardSummary {
   income: number;
+  hpp?: number;
   expense: number;
   profit: number;
   roi: number;
@@ -38,7 +39,8 @@ interface DashboardTrendItem {
   day: string;
   income: number;
   expense: number;
-  hpp?: number;
+  hpp: number;
+  profit: number;
 }
 
 interface DashboardTrends {
@@ -47,12 +49,14 @@ interface DashboardTrends {
   totalIncome: number;
   totalHpp: number;
   totalExpense: number;
+  totalProfit: number;
 }
 
 interface ChartPoint {
   label: string;
   income: number;
   expense: number;
+  hpp: number;
   profit: number;
 }
 
@@ -124,6 +128,7 @@ export default function Dashboard() {
     totalIncome: 0,
     totalHpp: 0,
     totalExpense: 0,
+    totalProfit: 0,
   });
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
@@ -137,6 +142,7 @@ export default function Dashboard() {
         totalIncome: 0,
         totalHpp: 0,
         totalExpense: 0,
+        totalProfit: 0,
       });
       setIsLoadingDashboard(false);
 
@@ -167,6 +173,7 @@ export default function Dashboard() {
           totalIncome: Number(trendsData?.totalIncome) || 0,
           totalHpp: Number(trendsData?.totalHpp) || 0,
           totalExpense: Number(trendsData?.totalExpense) || 0,
+          totalProfit: Number(trendsData?.totalProfit) || 0,
         });
 
         console.log("dashboard profit debug", {
@@ -174,7 +181,7 @@ export default function Dashboard() {
           trendsTotalIncome: Number(trendsData?.totalIncome) || 0,
           trendsTotalExpense: Number(trendsData?.totalExpense) || 0,
           trendsTotalHpp: Number(trendsData?.totalHpp) || 0,
-          calculatedNetProfit: (Number(trendsData?.totalIncome) || 0) - (Number(trendsData?.totalHpp) || 0) - (Number(trendsData?.totalExpense) || 0),
+          trendsTotalProfit: Number(trendsData?.totalProfit) || 0,
         });
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
@@ -186,6 +193,7 @@ export default function Dashboard() {
             totalIncome: 0,
             totalHpp: 0,
             totalExpense: 0,
+            totalProfit: 0,
           });
         }
       } finally {
@@ -207,7 +215,8 @@ export default function Dashboard() {
       label: item.day,
       income: Number(item.income) || 0,
       expense: Number(item.expense) || 0,
-      profit: (Number(item.income) || 0) - (Number(item.hpp) || 0) - (Number(item.expense) || 0),
+      hpp: Number(item.hpp) || 0,
+      profit: Number(item.profit) || 0,
     }));
   }, [trends]);
 
@@ -216,11 +225,12 @@ export default function Dashboard() {
       return Number(summary.profit) || 0;
     }
 
-    return trendTotals.totalIncome - trendTotals.totalHpp - trendTotals.totalExpense;
+    return trendTotals.totalProfit;
   }, [summary, trendTotals]);
 
   const financialSummary = summary || {
     income: 0,
+    hpp: 0,
     expense: 0,
     profit: 0,
     roi: 0,
