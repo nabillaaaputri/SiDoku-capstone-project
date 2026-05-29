@@ -10,6 +10,7 @@ import apiClient from "@/services/api";
 import { getPreferredUserName } from "@/services/auth.service";
 import { formatRupiahCompact } from "@/lib/utils";
 import { getJakartaDateInputValue } from "@/lib/timezone";
+import axios from "axios";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -124,6 +125,7 @@ export default function Dashboard() {
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [trendTotals, setTrendTotals] = useState({
     totalIncome: 0,
     totalHpp: 0,
@@ -138,6 +140,7 @@ export default function Dashboard() {
     if (isAuthLoading || !user?.id) {
       setSummary(null);
       setTrends([]);
+      setDashboardError(null);
       setTrendTotals({
         totalIncome: 0,
         totalHpp: 0,
@@ -153,6 +156,19 @@ export default function Dashboard() {
 
     const loadDashboard = async () => {
       setIsLoadingDashboard(true);
+      setDashboardError(null);
+
+      let didTimeout = false;
+      const timeoutId = window.setTimeout(() => {
+        didTimeout = true;
+
+        if (!isMounted) {
+          return;
+        }
+
+        setDashboardError("Data keuangan masih dimuat, silakan tunggu sebentar.");
+        setIsLoadingDashboard(false);
+      }, 9000);
 
       try {
         const [summaryResponse, trendsResponse] = await Promise.all([
@@ -160,7 +176,7 @@ export default function Dashboard() {
           apiClient.get<ApiResponse<DashboardTrends>>("/dashboard/trends"),
         ]);
 
-        if (!isMounted) {
+        if (!isMounted || didTimeout) {
           return;
         }
 
@@ -175,29 +191,30 @@ export default function Dashboard() {
           totalExpense: Number(trendsData?.totalExpense) || 0,
           totalProfit: Number(trendsData?.totalProfit) || 0,
         });
-
-        console.log("dashboard profit debug", {
-          summaryProfit: summaryData?.profit ?? null,
-          trendsTotalIncome: Number(trendsData?.totalIncome) || 0,
-          trendsTotalExpense: Number(trendsData?.totalExpense) || 0,
-          trendsTotalHpp: Number(trendsData?.totalHpp) || 0,
-          trendsTotalProfit: Number(trendsData?.totalProfit) || 0,
-        });
       } catch (error) {
+        if (!isMounted || didTimeout) {
+          return;
+        }
+
         console.error("Failed to load dashboard data:", error);
 
-        if (isMounted) {
-          setSummary(null);
-          setTrends([]);
-          setTrendTotals({
-            totalIncome: 0,
-            totalHpp: 0,
-            totalExpense: 0,
-            totalProfit: 0,
-          });
-        }
+        setDashboardError(
+          axios.isAxiosError(error) && error.response?.status === 404
+            ? "Ringkasan keuangan belum tersedia saat ini."
+            : "Gagal memuat data keuangan.",
+        );
+        setSummary(null);
+        setTrends([]);
+        setTrendTotals({
+          totalIncome: 0,
+          totalHpp: 0,
+          totalExpense: 0,
+          totalProfit: 0,
+        });
       } finally {
-        if (isMounted) {
+        window.clearTimeout(timeoutId);
+
+        if (isMounted && !didTimeout) {
           setIsLoadingDashboard(false);
         }
       }
@@ -242,7 +259,9 @@ export default function Dashboard() {
   const activeProductIds = new Set(activeProducts.map((product) => product.id));
   const lowStockProducts = activeProducts.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
-  const isPageLoading = isAuthLoading || isBusinessLoading || isLoadingDashboard;
+  const isPageLoading = isAuthLoading;
+  const isFinancialSectionLoading = isLoadingDashboard;
+  const isBusinessSectionLoading = isBusinessLoading;
 
   const restockRecommendations = useMemo(() => {
     return [...activeProducts]
@@ -362,7 +381,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {isLoadingDashboard ? (
+          {dashboardError && !summary ? (
+            <div className="rounded-[22px] border border-amber-100 bg-amber-50/70 px-4 py-3 text-sm text-amber-800">
+              {dashboardError}
+            </div>
+          ) : isFinancialSectionLoading ? (
             <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 sm:gap-3.5 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
@@ -589,14 +612,14 @@ export default function Dashboard() {
               <p className="mt-1 text-sm text-slate-500">Pantau arah penjualan mingguan dalam satu grafik ringkas.</p>
             </div>
           </div>
-          <ForecastTrendChart data={salesTrendData} isLoading={false} />
+          <ForecastTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
         </section>
 
         <section className="w-full space-y-2.5 sm:space-y-3">
           <div className="hidden">
             {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
           </div>
-          <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isLoadingDashboard} />
+          <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isFinancialSectionLoading} />
         </section>
       </div>
     </DashboardLayout>

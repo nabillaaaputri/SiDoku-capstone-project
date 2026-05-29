@@ -75,10 +75,11 @@ const getRangeTotals = (
 };
 
 export default function Insights() {
-  const { products, salesRecords } = useBusinessContext();
+  const { products, salesRecords, isLoading: isBusinessLoading } = useBusinessContext();
   const [recommendationItems, setRecommendationItems] = useState<AiRecommendationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isSectionLoading = isLoading || isBusinessLoading;
 
   const activeProducts = useMemo(
     () => products.filter((product) => product.archived !== true),
@@ -277,7 +278,7 @@ export default function Insights() {
 
   const hasData = insightCards.length > 0;
 
-  if (isLoading) {
+  if (isSectionLoading) {
     return (
       <div className="space-y-2.5 sm:space-y-3">
         <div className="space-y-2.5 sm:space-y-3">

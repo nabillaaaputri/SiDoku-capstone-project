@@ -21,6 +21,7 @@ interface SalesChartProps {
     label: string;
     income: number;
     expense: number;
+    hpp: number;
     profit: number;
   }>;
   netProfit?: number;
@@ -36,6 +37,10 @@ const chartConfig = {
     label: "Uang Keluar",
     color: "#64748b",
   },
+  hpp: {
+    label: "HPP",
+    color: "#059669",
+  },
   profit: {
     label: "Keuntungan",
     color: "#0f766e",
@@ -48,9 +53,10 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
       (accumulator, item) => ({
         income: accumulator.income + item.income,
         expense: accumulator.expense + item.expense,
+        hpp: accumulator.hpp + item.hpp,
         profit: accumulator.profit + item.profit,
       }),
-      { income: 0, expense: 0, profit: 0 },
+      { income: 0, expense: 0, hpp: 0, profit: 0 },
     );
   }, [data]);
   const totalProfit = typeof netProfit === "number" ? netProfit : totals.profit;
@@ -99,7 +105,7 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
           <p className="text-sm text-slate-500 font-medium">Ringkasan performa uang masuk, uang keluar, dan keuntungan dalam satu tampilan.</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-2.5 min-w-0">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-4 min-w-0">
           <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Masuk</p>
             <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.income)}</p>
@@ -107,6 +113,10 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Total Keluar</p>
             <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.expense)}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-100 bg-white px-3 py-2 shadow-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Total HPP</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.hpp)}</p>
           </div>
           <div className="rounded-2xl border border-teal-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">Total Keuntungan</p>
@@ -173,6 +183,7 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
             <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="income" fill="var(--color-income)" radius={[10, 10, 0, 0]} maxBarSize={36} />
             <Bar dataKey="expense" fill="var(--color-expense)" radius={[10, 10, 0, 0]} maxBarSize={36} />
+            <Bar dataKey="hpp" fill="var(--color-hpp)" radius={[10, 10, 0, 0]} maxBarSize={36} />
             <Line
               type="monotone"
               dataKey="profit"
