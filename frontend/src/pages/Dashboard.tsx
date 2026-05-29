@@ -38,6 +38,7 @@ interface DashboardTrendItem {
   day: string;
   income: number;
   expense: number;
+  hpp?: number;
 }
 
 interface DashboardTrends {
@@ -113,7 +114,7 @@ export default function Dashboard() {
       label: item.day,
       income: Number(item.income) || 0,
       expense: Number(item.expense) || 0,
-      profit: (Number(item.income) || 0) - (Number(item.expense) || 0),
+      profit: (Number(item.income) || 0) - (Number(item.hpp) || 0) - (Number(item.expense) || 0),
     }));
   }, [trends]);
 
