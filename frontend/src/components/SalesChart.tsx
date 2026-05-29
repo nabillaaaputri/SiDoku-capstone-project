@@ -23,6 +23,7 @@ interface SalesChartProps {
     expense: number;
     profit: number;
   }>;
+  netProfit?: number;
   isLoading?: boolean;
 }
 
@@ -41,7 +42,7 @@ const chartConfig = {
   },
 } as const;
 
-export default function SalesChart({ data, isLoading = false }: SalesChartProps) {
+export default function SalesChart({ data, netProfit, isLoading = false }: SalesChartProps) {
   const totals = useMemo(() => {
     return data.reduce(
       (accumulator, item) => ({
@@ -52,6 +53,7 @@ export default function SalesChart({ data, isLoading = false }: SalesChartProps)
       { income: 0, expense: 0, profit: 0 },
     );
   }, [data]);
+  const totalProfit = typeof netProfit === "number" ? netProfit : totals.profit;
 
   if (isLoading) {
     return (
@@ -108,7 +110,7 @@ export default function SalesChart({ data, isLoading = false }: SalesChartProps)
           </div>
           <div className="rounded-2xl border border-teal-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">Total Keuntungan</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.profit)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totalProfit)}</p>
           </div>
         </div>
       </div>

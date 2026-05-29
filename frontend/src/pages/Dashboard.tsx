@@ -45,6 +45,7 @@ interface DashboardTrends {
   period: string;
   items: DashboardTrendItem[];
   totalIncome: number;
+  totalHpp: number;
   totalExpense: number;
 }
 
@@ -68,6 +69,11 @@ export default function Dashboard() {
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
+  const [trendTotals, setTrendTotals] = useState({
+    totalIncome: 0,
+    totalHpp: 0,
+    totalExpense: 0,
+  });
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
   useEffect(() => {
@@ -86,14 +92,35 @@ export default function Dashboard() {
           return;
         }
 
-        setSummary(summaryResponse.data.data || null);
-        setTrends(trendsResponse.data.data?.items || []);
+        const summaryData = summaryResponse.data.data || null;
+        const trendsData = trendsResponse.data.data || null;
+
+        setSummary(summaryData);
+        setTrends(trendsData?.items || []);
+        setTrendTotals({
+          totalIncome: Number(trendsData?.totalIncome) || 0,
+          totalHpp: Number(trendsData?.totalHpp) || 0,
+          totalExpense: Number(trendsData?.totalExpense) || 0,
+        });
+
+        console.log("dashboard profit debug", {
+          summaryProfit: summaryData?.profit ?? null,
+          trendsTotalIncome: Number(trendsData?.totalIncome) || 0,
+          trendsTotalExpense: Number(trendsData?.totalExpense) || 0,
+          trendsTotalHpp: Number(trendsData?.totalHpp) || 0,
+          calculatedNetProfit: (Number(trendsData?.totalIncome) || 0) - (Number(trendsData?.totalHpp) || 0) - (Number(trendsData?.totalExpense) || 0),
+        });
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
 
         if (isMounted) {
           setSummary(null);
           setTrends([]);
+          setTrendTotals({
+            totalIncome: 0,
+            totalHpp: 0,
+            totalExpense: 0,
+          });
         }
       } finally {
         if (isMounted) {
@@ -118,13 +145,21 @@ export default function Dashboard() {
     }));
   }, [trends]);
 
+  const calculatedNetProfit = useMemo(() => {
+    if (summary) {
+      return Number(summary.profit) || 0;
+    }
+
+    return trendTotals.totalIncome - trendTotals.totalHpp - trendTotals.totalExpense;
+  }, [summary, trendTotals]);
+
   const financialSummary = summary || {
     income: 0,
     expense: 0,
     profit: 0,
     roi: 0,
   };
-  const isProfitNegative = financialSummary.profit < 0;
+  const isProfitNegative = calculatedNetProfit < 0;
   const isRoiNegative = financialSummary.roi < 0;
 
   const activeProducts = products.filter((product) => product.archived !== true);
@@ -480,7 +515,7 @@ export default function Dashboard() {
           <div className="hidden">
             {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
           </div>
-          <SalesChart data={chartData} isLoading={isLoadingDashboard} />
+          <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isLoadingDashboard} />
         </section>
       </div>
     </DashboardLayout>
