@@ -177,7 +177,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
 
         {/* Konten utama — overflow-x-hidden hanya di sini, bukan di parent */}
-        <main className="flex-1 min-w-0 px-3 py-4 pb-24 sm:p-4 sm:pb-24 md:p-6 md:pb-28 overflow-x-clip">
+        <main className="flex-1 min-w-0 px-3 py-4 pb-24 sm:p-4 sm:pb-24 md:pl-6 md:pr-24 md:pt-6 md:pb-28 lg:pr-28 overflow-x-clip">
           <div className="mx-auto w-full max-w-[1220px] space-y-4 sm:space-y-5">
             {children}
           </div>
@@ -187,7 +187,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Floating AI Button */}
       <Link
         to="/ai-assistant"
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-3 sm:bottom-6 sm:right-6 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-3 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 xl:bottom-10 xl:right-10 w-12 sm:w-14 h-12 sm:h-14 bg-[linear-gradient(135deg,_#1d4ed8,_#38bdf8)] text-white rounded-full flex items-center justify-center hover:brightness-105 transition shadow-[0_18px_36px_rgba(37,99,235,0.28)] z-30"
         aria-label="Open AI Assistant"
       >
         <MessageCircle size={24} />
