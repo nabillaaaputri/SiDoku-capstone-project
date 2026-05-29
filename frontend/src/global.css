@@ -35,10 +35,12 @@
   html,
   body,
   #root {
+    width: 100%;
     @apply min-h-screen overflow-x-clip;
   }
 
   body {
+    min-height: 100%;
     @apply bg-background text-foreground font-sans antialiased overflow-x-clip;
   }
 

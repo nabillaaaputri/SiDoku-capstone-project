@@ -177,8 +177,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
 
         {/* Konten utama — overflow-x-hidden hanya di sini, bukan di parent */}
-        <main className="flex-1 min-w-0 px-3 py-4 pb-24 sm:p-4 sm:pb-24 md:pl-6 md:pr-24 md:pt-6 md:pb-28 lg:pr-28 overflow-x-clip">
-          <div className="mx-auto w-full max-w-[1220px] space-y-4 sm:space-y-5">
+        <main className="flex-1 min-w-0 w-full px-3 py-4 pb-24 sm:p-4 sm:pb-24 md:p-6 md:pb-28 overflow-x-clip">
+          <div className="w-full space-y-4 sm:space-y-5">
             {children}
           </div>
         </main>
