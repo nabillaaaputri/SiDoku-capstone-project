@@ -260,78 +260,78 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 sm:gap-3.5 lg:grid-cols-4">
-              <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)] min-[390px]:min-h-[160px]">
+              <div className="group relative overflow-hidden rounded-[20px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)] min-[390px]:min-h-[120px]">
                 <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
                 <div className="absolute right-4 top-4 sm:right-4 sm:top-4 md:right-5 md:top-5 lg:right-6 lg:top-6 flex h-8 w-8 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 ring-1 ring-blue-100 shadow-inner sm:h-9 sm:w-9 md:h-11 md:w-11">
                   <CircleDollarSign size={16} className="sm:h-[18px] sm:w-[18px] md:h-[22px] md:w-[22px]" />
                 </div>
-                <div className="flex min-h-full flex-col gap-3 min-w-0 pr-8 sm:pr-10 lg:pr-12">
+                <div className="flex min-h-full flex-col gap-2.5 min-w-0 pr-6 sm:pr-8 lg:pr-10">
                   <div className="min-w-0 space-y-1.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
-                    <p className="mt-2.5 text-[clamp(1.05rem,4.5vw,1.6rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
+                    <p className="mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
                       {formatRupiahCompact(financialSummary.income)}
                     </p>
-                    <p className="mt-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">dari penjualan</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">dari penjualan</p>
                   </div>
                 </div>
-                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-blue-100/80">
+                <div className="mt-3 h-1 overflow-hidden rounded-full bg-blue-100/80">
                   <div className="h-full w-[78%] rounded-full bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
                 </div>
               </div>
 
-              <div className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.11)] min-[390px]:min-h-[160px]">
+              <div className="group relative overflow-hidden rounded-[20px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.11)] min-[390px]:min-h-[120px]">
                 <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
-                <div className="flex min-h-full flex-col gap-3 min-w-0 pr-8 sm:pr-10 lg:pr-12">
+                <div className="flex min-h-full flex-col gap-2.5 min-w-0 pr-6 sm:pr-8 lg:pr-10">
                   <div className="min-w-0 space-y-1.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
-                    <p className="mt-2.5 text-[clamp(1.05rem,4.5vw,1.6rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
+                    <p className="mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
                       {formatRupiahCompact(financialSummary.expense)}
                     </p>
-                    <p className="mt-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">biaya operasional</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">biaya operasional</p>
                   </div>
                 </div>
-                <div className="absolute right-4 top-4 sm:right-4 sm:top-4 md:right-5 md:top-5 lg:right-6 lg:top-6 flex h-8 w-8 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 ring-1 ring-slate-200 shadow-inner sm:h-9 sm:w-9 md:h-11 md:w-11">
+                <div className="absolute right-3 top-3 sm:right-3 sm:top-3 md:right-4 md:top-4 lg:right-5 lg:top-5 flex h-8 w-8 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(100,116,139,0.16),_rgba(148,163,184,0.1))] text-slate-600 ring-1 ring-slate-200 shadow-inner sm:h-9 sm:w-9 md:h-11 md:w-11">
                   <Banknote size={16} className="sm:h-[18px] sm:w-[18px] md:h-[22px] md:w-[22px]" />
                 </div>
-                <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-slate-200/80">
+                <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-200/80">
                   <div className="h-full w-[42%] rounded-full bg-[linear-gradient(90deg,_#94a3b8,_#475569)]" />
                 </div>
               </div>
 
-              <div className={`group relative overflow-hidden rounded-[28px] border p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"} min-[390px]:min-h-[160px]`}>
+              <div className={`group relative overflow-hidden rounded-[20px] border p-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isProfitNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-sky-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] hover:shadow-[0_18px_40px_rgba(14,165,233,0.14)]"} min-[390px]:min-h-[120px]`}>
                 <div className={`absolute inset-x-0 top-0 h-1 ${isProfitNegative ? "bg-[linear-gradient(90deg,_#f59e0b,_#ea580c)]" : "bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
-                <div className="flex min-h-full flex-col gap-3 min-w-0 pr-8 sm:pr-10 lg:pr-12">
+                <div className="flex min-h-full flex-col gap-2.5 min-w-0 pr-6 sm:pr-8 lg:pr-10">
                   <div className="min-w-0 space-y-1.5">
                     <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
-                    <p className={`mt-2.5 text-[clamp(1.05rem,4.5vw,1.6rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>
+                    <p className={`mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>
                       {formatRupiahCompact(financialSummary.profit)}
                     </p>
-                    <p className="mt-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">uang masuk - keluar</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">uang masuk - keluar</p>
                   </div>
                 </div>
-                <div className={`absolute right-4 top-4 sm:right-4 sm:top-4 md:right-5 md:top-5 lg:right-6 lg:top-6 flex h-8 w-8 items-center justify-center rounded-2xl shadow-inner ring-1 sm:h-9 sm:w-9 md:h-11 md:w-11 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
+                <div className={`absolute right-3 top-3 sm:right-3 sm:top-3 md:right-4 md:top-4 lg:right-5 lg:top-5 flex h-8 w-8 items-center justify-center rounded-2xl shadow-inner ring-1 sm:h-9 sm:w-9 md:h-11 md:w-11 ${isProfitNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(14,165,233,0.16),_rgba(125,211,252,0.1))] text-sky-600 ring-sky-100"}`}>
                   <Package size={16} className="sm:h-[18px] sm:w-[18px] md:h-[22px] md:w-[22px]" />
                 </div>
-                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
+                <div className={`mt-3 h-1 overflow-hidden rounded-full ${isProfitNegative ? "bg-amber-100/80" : "bg-sky-100/80"}`}>
                   <div className={`h-full rounded-full ${isProfitNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[66%] bg-[linear-gradient(90deg,_#7dd3fc,_#0284c7)]"}`} />
                 </div>
               </div>
 
-              <div className={`group relative overflow-hidden rounded-[28px] border p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"} min-[390px]:min-h-[160px]`}>
+              <div className={`group relative overflow-hidden rounded-[20px] border p-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${isRoiNegative ? "border-amber-200 bg-[linear-gradient(180deg,_#fffaf0,_#fff7ed)] hover:shadow-[0_18px_40px_rgba(217,119,6,0.12)]" : "border-cyan-100 bg-[linear-gradient(180deg,_#ffffff,_#ecfeff)] hover:shadow-[0_18px_40px_rgba(6,182,212,0.14)]"} min-[390px]:min-h-[120px]`}>
                 <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
-                <div className="flex min-h-full flex-col gap-3 min-w-0 pr-8 sm:pr-10 lg:pr-12">
+                <div className="flex min-h-full flex-col gap-2.5 min-w-0 pr-6 sm:pr-8 lg:pr-10">
                   <div className="min-w-0 space-y-1.5">
                     <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
-                    <p className={`mt-2.5 text-[clamp(1.05rem,4.5vw,1.6rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>
+                    <p className={`mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>
                       {`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}
                     </p>
-                    <p className="mt-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">persentase laba dari modal</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">persentase laba dari modal</p>
                   </div>
                 </div>
-                <div className={`absolute right-4 top-4 sm:right-4 sm:top-4 md:right-5 md:top-5 lg:right-6 lg:top-6 flex h-8 w-8 items-center justify-center rounded-2xl shadow-inner ring-1 sm:h-9 sm:w-9 md:h-11 md:w-11 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
+                <div className={`absolute right-3 top-3 sm:right-3 sm:top-3 md:right-4 md:top-4 lg:right-5 lg:top-5 flex h-8 w-8 items-center justify-center rounded-2xl shadow-inner ring-1 sm:h-9 sm:w-9 md:h-11 md:w-11 ${isRoiNegative ? "bg-[linear-gradient(135deg,_rgba(245,158,11,0.16),_rgba(251,191,36,0.1))] text-amber-600 ring-amber-100" : "bg-[linear-gradient(135deg,_rgba(6,182,212,0.16),_rgba(103,232,249,0.1))] text-cyan-600 ring-cyan-100"}`}>
                   <ShieldAlert size={16} className="sm:h-[18px] sm:w-[18px] md:h-[22px] md:w-[22px]" />
                 </div>
-                <div className={`mt-3.5 h-1.5 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
+                <div className={`mt-3 h-1 overflow-hidden rounded-full ${isRoiNegative ? "bg-amber-100/80" : "bg-cyan-100/80"}`}>
                   <div className={`h-full rounded-full ${isRoiNegative ? "w-[52%] bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "w-[88%] bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
                 </div>
               </div>
