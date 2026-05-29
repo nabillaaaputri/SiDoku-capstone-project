@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [hasSession, setHasSession] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is already logged in on mount
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkAuth = async () => {
       const hasStoredSession = authService.isAuthenticated();
+      setHasSession(hasStoredSession);
 
       if (hasStoredSession) {
         try {
@@ -40,17 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
 
+          setHasSession(authService.isAuthenticated());
           setUser(currentUser);
         } catch (error) {
           console.error('Failed to fetch user:', error);
           clearStoredAuthTokens();
           if (isMounted) {
             setUser(null);
+            setHasSession(false);
           }
         }
       } else {
         if (isMounted) {
           setUser(null);
+          setHasSession(false);
         }
       }
 
@@ -65,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(null);
+      setHasSession(false);
       setIsLoading(false);
     };
 
@@ -81,15 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authService.login({ email, password });
 
     const currentUser = await authService.getCurrentUser();
+    const sessionIdentity = getStoredSessionIdentity();
+
+    setHasSession(authService.isAuthenticated());
 
     if (currentUser) {
       setUser(currentUser);
       return;
     }
 
-    const sessionIdentity = getStoredSessionIdentity();
-
     if (sessionIdentity) {
+      setHasSession(true);
       setUser({
         id: sessionIdentity.id,
         email: sessionIdentity.email,
@@ -118,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await authService.logout();
     setUser(null);
+    setHasSession(false);
   };
 
   const refreshUser = async () => {
@@ -125,16 +134,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!hasStoredSession) {
       setUser(null);
+      setHasSession(false);
       return;
     }
 
     const currentUser = await authService.getCurrentUser();
+    setHasSession(authService.isAuthenticated());
     setUser(currentUser);
   };
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated: hasSession,
     isLoading,
     login,
     register,

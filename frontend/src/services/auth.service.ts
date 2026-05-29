@@ -94,11 +94,6 @@ const isAuthHttpError = (error: unknown) => {
   return [401, 403].includes(error.response?.status ?? 0);
 };
 
-const fetchAuthMe = async () => {
-  const response = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
-  return response.data.data;
-};
-
 const refreshStoredAccessToken = async (): Promise<string | null> => {
   const refreshToken = getStoredRefreshToken();
 
@@ -121,54 +116,50 @@ const refreshStoredAccessToken = async (): Promise<string | null> => {
 };
 
 const resolveSessionIdentity = async (): Promise<AuthMeResponseData | null> => {
-  const hasAccessToken = !!getStoredAccessToken();
+  let accessToken = getStoredAccessToken();
   const hasRefreshToken = !!getStoredRefreshToken();
 
-  if (!hasAccessToken && !hasRefreshToken) {
+  if (!accessToken && !hasRefreshToken) {
     return null;
   }
 
   try {
-    return await fetchAuthMe();
-  } catch (error) {
-    if (isAuthHttpError(error)) {
-      if (hasRefreshToken) {
-        const refreshedToken = await refreshStoredAccessToken();
+    if (!accessToken && hasRefreshToken) {
+      accessToken = await refreshStoredAccessToken() || undefined;
+    }
 
-        if (!refreshedToken) {
-          clearStoredAuthTokens();
-          return null;
-        }
+    if (!accessToken) {
+      return null;
+    }
 
-        try {
-          return await fetchAuthMe();
-        } catch {
-          clearStoredAuthTokens();
-          return null;
-        }
-      }
+    const sessionIdentity = getStoredSessionIdentity();
 
+    if (!sessionIdentity) {
       clearStoredAuthTokens();
       return null;
     }
 
-    if (hasRefreshToken) {
-      try {
-        const refreshedToken = await refreshStoredAccessToken();
-
-        if (!refreshedToken) {
-          clearStoredAuthTokens();
-          return null;
-        }
-
-        return await fetchAuthMe();
-      } catch {
-        clearStoredAuthTokens();
-        return null;
-      }
+    return {
+      id: sessionIdentity.id,
+      email: sessionIdentity.email,
+    };
+  } catch (error) {
+    if (isAuthHttpError(error)) {
+      clearStoredAuthTokens();
+      return null;
     }
 
-    return null;
+    const sessionIdentity = getStoredSessionIdentity();
+
+    if (!sessionIdentity) {
+      clearStoredAuthTokens();
+      return null;
+    }
+
+    return {
+      id: sessionIdentity.id,
+      email: sessionIdentity.email,
+    };
   }
 };
 
@@ -440,6 +431,13 @@ export const authService = {
         }
 
         console.error('Profile/store account fetch failed:', settingsError);
+
+        return {
+          id: authMe.id,
+          email: authMe.email,
+          name: authMe.storeName || authMe.email || 'User',
+          storeName: authMe.storeName,
+        };
       }
 
       return {
