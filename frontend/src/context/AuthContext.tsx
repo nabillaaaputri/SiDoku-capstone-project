@@ -29,16 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if user is already logged in on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
+      const hasStoredSession = Boolean(localStorage.getItem('authToken') || localStorage.getItem('refreshToken'));
+
+      if (hasStoredSession) {
         try {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
         } catch (error) {
           console.error('Failed to fetch user:', error);
           clearStoredAuthTokens();
+          setUser(null);
         }
+      } else {
+        setUser(null);
       }
+
       setIsLoading(false);
     };
 
@@ -77,9 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshUser = async () => {
-    const token = localStorage.getItem('authToken');
+    const hasStoredSession = Boolean(localStorage.getItem('authToken') || localStorage.getItem('refreshToken'));
 
-    if (!token) {
+    if (!hasStoredSession) {
       setUser(null);
       return;
     }

@@ -22,12 +22,16 @@ export const clearStoredAuthTokens = () => {
   localStorage.removeItem("refreshToken");
 };
 
+const clearStoredAccessToken = () => {
+  localStorage.removeItem("authToken");
+};
+
 const handleUnauthorizedError = (error: unknown) => {
   if (axios.isAxiosError(error) && error.response?.status === 401) {
     const requestUrl = error.config?.url || "";
 
     if (!requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/register")) {
-      clearStoredAuthTokens();
+      clearStoredAccessToken();
     }
   }
 

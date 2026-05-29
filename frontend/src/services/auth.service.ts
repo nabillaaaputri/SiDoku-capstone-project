@@ -44,6 +44,12 @@ interface StoreAccountResponseData {
   storeDescription?: string;
 }
 
+interface AuthMeResponseData {
+  id: string;
+  email: string;
+  storeName?: string;
+}
+
 const getSafeProfileImagePayload = (profileImage?: string | null) => {
   const normalized = profileImage?.trim();
 
@@ -261,6 +267,49 @@ export const authService = {
     return accessToken || null;
   },
 
+  validateStoredSession: async (): Promise<boolean> => {
+    try {
+      const hasAccessToken = !!localStorage.getItem(ACCESS_TOKEN_KEY);
+      const hasRefreshToken = !!localStorage.getItem(REFRESH_TOKEN_KEY);
+
+      if (!hasAccessToken && !hasRefreshToken) {
+        return false;
+      }
+
+      if (!hasAccessToken && hasRefreshToken) {
+        const refreshedToken = await authService.refreshAccessToken();
+
+        if (!refreshedToken) {
+          clearStoredAuthTokens();
+          return false;
+        }
+      }
+
+      try {
+        await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        return true;
+      } catch (error) {
+        if (!hasRefreshToken) {
+          clearStoredAuthTokens();
+          return false;
+        }
+
+        const refreshedToken = await authService.refreshAccessToken();
+
+        if (!refreshedToken) {
+          clearStoredAuthTokens();
+          return false;
+        }
+
+        await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        return true;
+      }
+    } catch {
+      clearStoredAuthTokens();
+      return false;
+    }
+  },
+
   // LOGOUT
   logout: async (): Promise<void> => {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -281,6 +330,15 @@ export const authService = {
   // GET CURRENT USER
   getCurrentUser: async (): Promise<CurrentUser | null> => {
     try {
+      const sessionIsValid = await authService.validateStoredSession();
+
+      if (!sessionIsValid) {
+        return null;
+      }
+
+      const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+      const authMe = authMeResponse.data.data;
+
       const [profileResponse, storeAccountResponse] = await Promise.all([
         apiClient.get<ApiResponse<ProfileResponseData>>('/settings/profile'),
         apiClient.get<ApiResponse<StoreAccountResponseData>>('/settings/store-account'),
@@ -291,8 +349,8 @@ export const authService = {
       const normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
 
       return {
-        id: profile.id,
-        email: profile.email,
+        id: authMe.id || profile.id,
+        email: authMe.email || profile.email,
         name: normalizedStoreName || profile.ownerName || storeAccount.storeName || 'User',
         storeName: normalizedStoreName || storeAccount.storeName,
         profileImage: profile.profileImage,
@@ -310,6 +368,6 @@ export const authService = {
 
   // CHECK AUTH
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem(ACCESS_TOKEN_KEY);
+    return !!(localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY));
   },
 };
