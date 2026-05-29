@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import Sidebar from "./Sidebar";
+import Sidebar from "../Sidebar";
 import { Menu } from "lucide-react";
 
 interface DashboardLayoutProps {
