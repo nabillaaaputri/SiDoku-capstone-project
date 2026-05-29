@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
 import ForecastTrendChart from "@/components/ForecastTrendChart";
+import SalesChart from "@/components/SalesChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
@@ -631,9 +632,10 @@ export default function Dashboard() {
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2 className="section-heading">Performa Keuangan</h2>
-              <p className="mt-1 text-sm text-slate-500">Ringkasan performa keuangan untuk presentasi singkat tanpa detail grafik.</p>
+              <p className="mt-1 text-sm text-slate-500">Ringkasan performa keuangan dalam grafik dan legenda.</p>
             </div>
           </div>
+          <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isFinancialSectionLoading} />
         </section>
       </div>
     </DashboardLayout>

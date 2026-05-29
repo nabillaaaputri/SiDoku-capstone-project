@@ -78,7 +78,6 @@ export default function ForecastTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Tren Penjualan Selama 7 Hari</h3>
               <p className="mt-1 text-sm text-slate-500 font-medium">
                 {sourceLabel ? `Berdasarkan ${sourceLabel}.` : "Ringkasan rekap penjualan 7 hari terakhir."}
               </p>
@@ -109,7 +108,6 @@ export default function ForecastTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Tren Penjualan Selama 7 Hari</h3>
               <p className="mt-1 text-sm text-slate-500 font-medium">
                 Ringkasan rekap penjualan 7 hari terakhir berdasarkan histori penjualan.
               </p>
