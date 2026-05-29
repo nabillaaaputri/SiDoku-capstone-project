@@ -350,21 +350,34 @@ export const authService = {
         username: authMe.storeName,
       });
 
-      const [profileResponse, storeAccountResponse] = await Promise.all([
-        apiClient.get<ApiResponse<ProfileResponseData>>('/settings/profile'),
-        apiClient.get<ApiResponse<StoreAccountResponseData>>('/settings/store-account'),
-      ]);
+      let profile: ProfileResponseData | null = null;
+      let storeAccount: StoreAccountResponseData | null = null;
+      let normalizedStoreName = authMe.storeName || '';
 
-      const profile = profileResponse.data.data;
-      const storeAccount = storeAccountResponse.data.data;
-      const normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
+      try {
+        const [profileResponse, storeAccountResponse] = await Promise.all([
+          apiClient.get<ApiResponse<ProfileResponseData>>('/settings/profile'),
+          apiClient.get<ApiResponse<StoreAccountResponseData>>('/settings/store-account'),
+        ]);
+
+        profile = profileResponse.data.data;
+        storeAccount = storeAccountResponse.data.data;
+
+        try {
+          normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
+        } catch (syncError) {
+          console.error('Legacy settings sync failed:', syncError);
+        }
+      } catch (settingsError) {
+        console.error('Profile/store account fetch failed:', settingsError);
+      }
 
       return {
-        id: authMe.id || profile.id,
-        email: authMe.email || profile.email,
-        name: normalizedStoreName || profile.ownerName || storeAccount.storeName || authMe.storeName || 'User',
-        storeName: normalizedStoreName || storeAccount.storeName || authMe.storeName,
-        profileImage: profile.profileImage,
+        id: authMe.id || profile?.id || '',
+        email: authMe.email || profile?.email || '',
+        name: normalizedStoreName || profile?.ownerName || storeAccount?.storeName || authMe.storeName || 'User',
+        storeName: normalizedStoreName || storeAccount?.storeName || authMe.storeName,
+        profileImage: profile?.profileImage,
       };
     } catch (error) {
       console.error('Get current user error:', error);
