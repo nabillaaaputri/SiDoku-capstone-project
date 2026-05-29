@@ -8,7 +8,7 @@ import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
 import { getPreferredUserName } from "@/services/auth.service";
-import { formatRupiahCompact } from "@/lib/utils";
+import { formatRupiah } from "@/lib/utils";
 import { getJakartaDateInputValue } from "@/lib/timezone";
 import axios from "axios";
 import {
@@ -409,7 +409,7 @@ export default function Dashboard() {
                   <div className="min-w-0 space-y-1.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Uang Masuk</p>
                     <p className="mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
-                      {formatRupiahCompact(financialSummary.income)}
+                      {formatRupiah(financialSummary.income)}
                     </p>
                     <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">dari penjualan</p>
                   </div>
@@ -425,7 +425,7 @@ export default function Dashboard() {
                   <div className="min-w-0 space-y-1.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Uang Keluar</p>
                     <p className="mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight text-slate-900 tabular-nums">
-                      {formatRupiahCompact(financialSummary.expense)}
+                      {formatRupiah(financialSummary.expense)}
                     </p>
                     <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">biaya operasional</p>
                   </div>
@@ -444,7 +444,7 @@ export default function Dashboard() {
                   <div className="min-w-0 space-y-1.5">
                     <p className={`text-[11px] font-semibold uppercase tracking-wider ${isProfitNegative ? "text-amber-700/80" : "text-sky-600/80"}`}>Keuntungan</p>
                     <p className={`mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isProfitNegative ? "text-amber-700" : "text-slate-900"}`}>
-                      {formatRupiahCompact(financialSummary.profit)}
+                      {formatRupiah(financialSummary.profit)}
                     </p>
                     <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">uang masuk - keluar</p>
                   </div>

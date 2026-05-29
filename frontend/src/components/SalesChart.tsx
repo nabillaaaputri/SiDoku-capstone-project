@@ -9,12 +9,10 @@ import {
 } from "recharts";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/ui/chart";
-import { formatRupiahCompact } from "@/lib/utils";
+import { formatRupiah } from "@/lib/utils";
 
 interface SalesChartProps {
   data: Array<{
@@ -35,15 +33,15 @@ const chartConfig = {
   },
   expense: {
     label: "Uang Keluar",
-    color: "#64748b",
+    color: "#6b7280",
   },
   hpp: {
     label: "HPP",
-    color: "#059669",
+    color: "#f97316",
   },
   profit: {
     label: "Keuntungan",
-    color: "#0f766e",
+    color: "#16a34a",
   },
 } as const;
 
@@ -74,7 +72,7 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
               <div key={`chart-skeleton-${index}`} className="h-16 rounded-2xl bg-slate-100 animate-pulse" />
             ))}
           </div>
-          <div className="h-[360px] rounded-[24px] bg-slate-100 animate-pulse" />
+          <div className="h-[320px] sm:h-[360px] rounded-[24px] bg-slate-100 animate-pulse" />
         </div>
       </div>
     );
@@ -108,41 +106,45 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-4 min-w-0">
           <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Masuk</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.income)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.income)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Total Keluar</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.expense)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.expense)}</p>
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Total HPP</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.hpp)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.hpp)}</p>
           </div>
           <div className="rounded-2xl border border-teal-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">Total Keuntungan</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totalProfit)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totalProfit)}</p>
           </div>
         </div>
       </div>
 
       <div className="space-y-4 p-4 sm:p-4.5 lg:p-5">
-        <div className="flex flex-wrap items-center gap-5 text-[13px] font-semibold text-slate-600 px-1">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-[12px] sm:text-[13px] font-semibold text-slate-600 px-1">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb] shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
             Uang Masuk
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#64748b] shadow-[0_0_8px_rgba(100,116,139,0.6)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#6b7280] shadow-[0_0_8px_rgba(107,114,128,0.6)]" />
             Uang Keluar
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#0f766e] shadow-[0_0_8px_rgba(15,118,110,0.6)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f97316] shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+            HPP
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#16a34a] shadow-[0_0_8px_rgba(22,163,74,0.6)]" />
             Keuntungan
           </div>
         </div>
 
-        <ChartContainer config={chartConfig} className="aspect-auto h-[360px] w-full rounded-[24px] border border-slate-200/60 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_4px_24px_rgba(15,23,42,0.04)]">
-          <ComposedChart data={data} margin={{ top: 16, right: 16, bottom: 0, left: 0 }}>
+        <ChartContainer config={chartConfig} className="aspect-auto h-[320px] sm:h-[360px] w-full rounded-[24px] border border-slate-200/60 bg-[linear-gradient(180deg,_#ffffff,_#f8fafc)] p-2.5 sm:p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_4px_24px_rgba(15,23,42,0.04)]">
+          <ComposedChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="4 8" stroke="#e2e8f0" />
             <XAxis
               dataKey="label"
@@ -150,7 +152,7 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
               axisLine={false}
               tickMargin={12}
               stroke="#64748b"
-              fontSize={12}
+              fontSize={11}
               fontWeight={600}
             />
             <YAxis
@@ -159,8 +161,8 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
               tickMargin={10}
               width={76}
               stroke="#64748b"
-              tickFormatter={(value) => formatRupiahCompact(Number(value))}
-              fontSize={12}
+              tickFormatter={(value) => formatRupiah(Number(value))}
+              fontSize={11}
               fontWeight={600}
             />
             <ChartTooltip
@@ -174,13 +176,12 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
                   formatter={(value, name) => (
                     <div className="flex w-full items-center justify-between gap-4">
                       <span className="text-slate-600">{chartConfig[name as keyof typeof chartConfig]?.label || name}</span>
-                      <span className="font-mono font-semibold tabular-nums text-slate-900">{formatRupiahCompact(Number(value))}</span>
+                      <span className="font-mono font-semibold tabular-nums text-slate-900">{formatRupiah(Number(value))}</span>
                     </div>
                   )}
                 />
               }
             />
-            <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="income" fill="var(--color-income)" radius={[10, 10, 0, 0]} maxBarSize={36} />
             <Bar dataKey="expense" fill="var(--color-expense)" radius={[10, 10, 0, 0]} maxBarSize={36} />
             <Bar dataKey="hpp" fill="var(--color-hpp)" radius={[10, 10, 0, 0]} maxBarSize={36} />

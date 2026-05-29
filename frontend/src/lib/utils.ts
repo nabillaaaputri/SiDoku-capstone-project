@@ -6,11 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatIDR(value: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
+  return formatRupiah(value);
+}
+
+export function formatRupiah(value: number): string {
+  return `Rp ${new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: 0,
+  }).format(value)}`;
 }
 
 export function formatRupiahCompact(value: number): string {
