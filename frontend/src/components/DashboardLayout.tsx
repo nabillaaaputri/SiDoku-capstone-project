@@ -1,6 +1,6 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
+import Sidebar from "./layout/Sidebar";
 import { CheckCircle2, LogOut, Settings, Menu, MessageCircle, ChevronDown, Store } from "lucide-react";
 import { getPreferredUserName } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
