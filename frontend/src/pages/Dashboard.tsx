@@ -618,13 +618,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h2 className="section-heading">Tren Penjualan Selama 7 Hari</h2>
-              <p className="mt-1 text-sm text-slate-500">Pantau arah penjualan mingguan dalam satu grafik ringkas.</p>
-            </div>
-          </div>
+        <section className="section-shell p-0 sm:p-0 lg:p-0">
           <ForecastTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
         </section>
 
