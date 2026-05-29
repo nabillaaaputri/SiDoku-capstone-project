@@ -3,6 +3,7 @@ import axios, { AxiosHeaders } from "axios";
 const DEFAULT_API_BASE_URL = "https://sidoku.up.railway.app";
 const ACCESS_TOKEN_KEY = "authToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 const normalizeBaseUrl = (value?: string) => {
   const trimmedValue = value?.trim().replace(/\/$/, "");
@@ -62,6 +63,14 @@ export const getStoredAuthToken = (key: typeof ACCESS_TOKEN_KEY | typeof REFRESH
 export const getStoredAccessToken = () => getStoredAuthToken(ACCESS_TOKEN_KEY);
 
 export const getStoredRefreshToken = () => getStoredAuthToken(REFRESH_TOKEN_KEY);
+
+export const persistAuthToken = (key: typeof ACCESS_TOKEN_KEY | typeof REFRESH_TOKEN_KEY, value: string) => {
+  localStorage.setItem(key, value);
+
+  if (typeof document !== "undefined") {
+    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; samesite=lax`;
+  }
+};
 
 const handleUnauthorizedError = (error: unknown) => {
   const status = axios.isAxiosError(error) ? error.response?.status : undefined;

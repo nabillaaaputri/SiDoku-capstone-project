@@ -4,6 +4,7 @@ import apiClient, {
   clearStoredAuthTokens,
   getStoredAccessToken,
   getStoredRefreshToken,
+  persistAuthToken,
 } from './api';
 
 interface LoginCredentials {
@@ -113,7 +114,7 @@ const refreshStoredAccessToken = async (): Promise<string | null> => {
   const accessToken = response.data.data.accessToken;
 
   if (accessToken) {
-    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    persistAuthToken(ACCESS_TOKEN_KEY, accessToken);
   }
 
   return accessToken || null;
@@ -322,11 +323,11 @@ export const authService = {
     const { accessToken, refreshToken } = response.data.data;
 
     if (accessToken) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      persistAuthToken(ACCESS_TOKEN_KEY, accessToken);
     }
 
     if (refreshToken) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      persistAuthToken(REFRESH_TOKEN_KEY, refreshToken);
     }
 
     return response.data;
@@ -390,7 +391,7 @@ export const authService = {
 
   // LOGOUT
   logout: async (): Promise<void> => {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const refreshToken = getStoredRefreshToken();
 
     try {
       if (refreshToken) {
