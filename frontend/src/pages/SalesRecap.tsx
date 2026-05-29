@@ -206,7 +206,7 @@ export default function SalesRecap() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div className="group relative overflow-hidden rounded-[24px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)] min-h-[144px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-              <div className="flex items-start gap-3 pr-14">
+              <div className="flex items-start gap-3 pr-16">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Total Penjualan</p>
                   <p className="mt-2.5 max-w-[calc(100%-72px)] whitespace-nowrap text-[1.35rem] sm:text-xl lg:text-[1.35rem] font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
@@ -230,15 +230,15 @@ export default function SalesRecap() {
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">harga pokok penjualan</p>
                 </div>
-                <div className="absolute right-3 top-3 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 shadow-inner ring-1 ring-rose-100">
-                  <TrendingDown size={22} />
+                <div className="absolute right-2.5 top-2.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 shadow-inner ring-1 ring-rose-100">
+                  <TrendingDown size={20} />
                 </div>
               </div>
             </div>
 
             <div className="group relative overflow-hidden rounded-[24px] border border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)] min-h-[144px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#86efac,_#16a34a)]" />
-              <div className="flex items-start gap-3 pr-14">
+              <div className="flex items-start gap-3 pr-16">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600/80">Laba Kotor</p>
                   <p className={`mt-2.5 max-w-[calc(100%-72px)] whitespace-nowrap text-[1.35rem] sm:text-xl lg:text-[1.35rem] font-extrabold leading-none tabular-nums tracking-tight ${labaKotor >= 0 ? "text-slate-900" : "text-rose-700"}`}>
@@ -278,8 +278,8 @@ export default function SalesRecap() {
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">setelah pengeluaran</p>
                 </div>
-                <div className={`absolute right-3 top-3 flex h-[52px] w-[52px] items-center justify-center rounded-2xl shadow-inner ring-1 ${labaBersihIsNegative ? "bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 ring-rose-100" : "bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 ring-emerald-100"}`}>
-                  <BarChart3 size={22} />
+                <div className={`absolute right-2.5 top-2.5 flex h-12 w-12 items-center justify-center rounded-2xl shadow-inner ring-1 ${labaBersihIsNegative ? "bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 ring-rose-100" : "bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 ring-emerald-100"}`}>
+                  <BarChart3 size={20} />
                 </div>
               </div>
             </div>
