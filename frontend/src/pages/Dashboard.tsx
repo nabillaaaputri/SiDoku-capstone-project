@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
 import ForecastTrendChart from "@/components/ForecastTrendChart";
-import SalesChart from "@/components/SalesChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
@@ -254,6 +253,10 @@ export default function Dashboard() {
   };
   const isProfitNegative = calculatedNetProfit < 0;
   const isRoiNegative = financialSummary.roi < 0;
+  const formattedRoi = new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(financialSummary.roi);
 
   const activeProducts = products.filter((product) => product.archived !== true);
   const activeProductIds = new Set(activeProducts.map((product) => product.id));
@@ -461,9 +464,18 @@ export default function Dashboard() {
                 <div className={`absolute inset-x-0 top-0 h-1 ${isRoiNegative ? "bg-[linear-gradient(90deg,_#fbbf24,_#ea580c)]" : "bg-[linear-gradient(90deg,_#67e8f9,_#06b6d4)]"}`} />
                 <div className="flex min-h-full flex-col gap-2.5 min-w-0 pr-6 sm:pr-8 lg:pr-10">
                   <div className="min-w-0 space-y-1.5">
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className={`text-[11px] font-semibold uppercase tracking-wider ${isRoiNegative ? "text-amber-700/80" : "text-cyan-600/80"}`}>Tingkat Keuntungan</p>
+                      <span
+                        className={`inline-flex h-4.5 w-4.5 items-center justify-center rounded-full border text-[10px] font-bold leading-none ${isRoiNegative ? "border-amber-200 bg-amber-50 text-amber-700" : "border-cyan-200 bg-cyan-50 text-cyan-700"}`}
+                        title="Tingkat Keuntungan = (Keuntungan ÷ (HPP + Biaya Operasional)) × 100%. Ini mengikuti perhitungan backend."
+                        aria-label="Penjelasan tingkat keuntungan"
+                      >
+                        i
+                      </span>
+                    </div>
                     <p className={`mt-2 text-[clamp(1rem,3.6vw,1.4rem)] font-extrabold leading-[1.05] tracking-tight tabular-nums ${isRoiNegative ? "text-amber-700" : "text-slate-900"}`}>
-                      {`${financialSummary.roi.toFixed(2).replace(/\.00$/, "")}%`}
+                      {`${formattedRoi}%`}
                     </p>
                     <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">persentase laba dari modal</p>
                   </div>
@@ -615,11 +627,13 @@ export default function Dashboard() {
           <ForecastTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
         </section>
 
-        <section className="w-full space-y-2.5 sm:space-y-3">
-          <div className="hidden">
-            {/* Kept wrapper but hidden header to avoid duplication since SalesChart has its own header */}
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="section-heading">Performa Keuangan</h2>
+              <p className="mt-1 text-sm text-slate-500">Ringkasan performa keuangan untuk presentasi singkat tanpa detail grafik.</p>
+            </div>
           </div>
-          <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isFinancialSectionLoading} />
         </section>
       </div>
     </DashboardLayout>

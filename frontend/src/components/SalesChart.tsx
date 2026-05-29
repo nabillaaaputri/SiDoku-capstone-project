@@ -97,29 +97,10 @@ export default function SalesChart({ data, netProfit, isLoading = false }: Sales
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-3 border-b border-slate-100 bg-[linear-gradient(135deg,_rgba(29,78,216,0.05),_rgba(56,189,248,0.025))] p-4 sm:p-4.5 lg:p-5 xl:flex-row xl:items-end xl:justify-between">
+      <div className="border-b border-slate-100 bg-[linear-gradient(135deg,_rgba(29,78,216,0.05),_rgba(56,189,248,0.025))] p-4 sm:p-4.5 lg:p-5">
         <div className="space-y-1">
           <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Performa Keuangan</h3>
-          <p className="text-sm text-slate-500 font-medium">Ringkasan performa uang masuk, uang keluar, dan keuntungan dalam satu tampilan.</p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-4 min-w-0">
-          <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Masuk</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.income)}</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Total Keluar</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.expense)}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Total HPP</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.hpp)}</p>
-          </div>
-          <div className="rounded-2xl border border-teal-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">Total Keuntungan</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totalProfit)}</p>
-          </div>
+          <p className="text-sm text-slate-500 font-medium">Ringkasan performa uang masuk, uang keluar, dan keuntungan dalam grafik.</p>
         </div>
       </div>
 
