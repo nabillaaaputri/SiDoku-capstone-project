@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '@/services/auth.service';
+import { authService, getStoredSessionIdentity } from '@/services/auth.service';
 import { clearStoredAuthTokens } from '@/services/api';
 
 interface User {
@@ -63,6 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (currentUser) {
       setUser(currentUser);
+      return;
+    }
+
+    const sessionIdentity = getStoredSessionIdentity();
+
+    if (sessionIdentity) {
+      setUser({
+        id: sessionIdentity.id,
+        email: sessionIdentity.email,
+        name: email,
+      });
+
       return;
     }
 

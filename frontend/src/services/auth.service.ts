@@ -180,6 +180,42 @@ const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
   return fallbackMessage;
 };
 
+const decodeJwtPayload = (token: string) => {
+  try {
+    const payload = token.split('.')[1];
+
+    if (!payload) {
+      return null;
+    }
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const decoded = atob(paddedBase64);
+
+    return JSON.parse(decoded) as { id?: string; email?: string };
+  } catch {
+    return null;
+  }
+};
+
+export const getStoredSessionIdentity = () => {
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  const token = accessToken || refreshToken;
+
+  if (!token) {
+    return null;
+  }
+
+  const decoded = decodeJwtPayload(token);
+
+  if (!decoded?.id || !decoded.email) {
+    return null;
+  }
+
+  return decoded;
+};
+
 export const authService = {
   // LOGIN
   login: async (
@@ -294,6 +330,12 @@ export const authService = {
         console.log('auth/me response', authMeResponse.data);
         return true;
       } catch (error) {
+        const sessionIdentity = getStoredSessionIdentity();
+
+        if (sessionIdentity) {
+          return true;
+        }
+
         if (!hasRefreshToken) {
           clearStoredAuthTokens();
           return false;
@@ -311,6 +353,12 @@ export const authService = {
         return true;
       }
     } catch {
+      const sessionIdentity = getStoredSessionIdentity();
+
+      if (sessionIdentity) {
+        return true;
+      }
+
       clearStoredAuthTokens();
       return false;
     }
@@ -342,8 +390,28 @@ export const authService = {
         return null;
       }
 
-      const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
-      const authMe = authMeResponse.data.data;
+      let authMe: AuthMeResponseData | null = null;
+
+      try {
+        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        authMe = authMeResponse.data.data;
+      } catch (error) {
+        const sessionIdentity = getStoredSessionIdentity();
+
+        if (!sessionIdentity) {
+          throw error;
+        }
+
+        authMe = {
+          id: sessionIdentity.id,
+          email: sessionIdentity.email,
+        };
+      }
+
+      if (!authMe) {
+        return null;
+      }
+
       console.log('current user id/email', {
         userId: authMe.id,
         email: authMe.email,
