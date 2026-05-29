@@ -24,7 +24,7 @@ const generateAccessToken = (user) => {
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: '6h',
+      expiresIn: '1d',
     },
   );
 };
