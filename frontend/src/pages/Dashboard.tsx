@@ -382,6 +382,7 @@ export default function Dashboard() {
             <div>
               <h2 className="section-heading">Ringkasan Keuangan</h2>
               <p className="mt-1 text-sm text-slate-500">Empat angka utama untuk membaca performa bisnis dengan cepat.</p>
+              <p className="mt-1 text-xs text-slate-400">Berdasarkan seluruh data transaksi</p>
             </div>
           </div>
 
@@ -632,7 +633,7 @@ export default function Dashboard() {
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2 className="section-heading">Performa Keuangan</h2>
-              <p className="mt-1 text-sm text-slate-500">Ringkasan performa keuangan dalam grafik dan legenda.</p>
+              <p className="mt-1 text-sm text-slate-500">Visualisasi uang masuk, uang keluar, HPP, dan keuntungan selama 7 hari terakhir.</p>
             </div>
           </div>
           <SalesChart data={chartData} netProfit={calculatedNetProfit} isLoading={isFinancialSectionLoading} />

@@ -108,9 +108,7 @@ export default function ForecastTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <p className="mt-1 text-sm text-slate-500 font-medium">
-                Ringkasan rekap penjualan 7 hari terakhir berdasarkan histori penjualan.
-              </p>
+              <p className="mt-1 text-sm text-slate-500 font-medium">Data penjualan 7 hari terakhir</p>
             </div>
           </div>
         </div>
