@@ -34,6 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (hasStoredSession) {
         try {
           const currentUser = await authService.getCurrentUser();
+          console.log('auth context current user', {
+            userId: currentUser?.id,
+            email: currentUser?.email,
+            name: currentUser?.name,
+            storeName: currentUser?.storeName,
+          });
           setUser(currentUser);
         } catch (error) {
           console.error('Failed to fetch user:', error);
@@ -90,6 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const currentUser = await authService.getCurrentUser();
+    console.log('auth context refresh user', {
+      userId: currentUser?.id,
+      email: currentUser?.email,
+      name: currentUser?.name,
+      storeName: currentUser?.storeName,
+    });
     setUser(currentUser);
   };
 

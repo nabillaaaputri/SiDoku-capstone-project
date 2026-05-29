@@ -190,6 +190,8 @@ export const authService = {
       credentials,
     );
 
+    console.log('login response', response.data);
+
     const { accessToken, refreshToken } = response.data.data;
 
     if (accessToken) {
@@ -272,6 +274,8 @@ export const authService = {
       const hasAccessToken = !!localStorage.getItem(ACCESS_TOKEN_KEY);
       const hasRefreshToken = !!localStorage.getItem(REFRESH_TOKEN_KEY);
 
+      console.log('stored session check', { hasAccessToken, hasRefreshToken });
+
       if (!hasAccessToken && !hasRefreshToken) {
         return false;
       }
@@ -286,7 +290,8 @@ export const authService = {
       }
 
       try {
-        await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        console.log('auth/me response', authMeResponse.data);
         return true;
       } catch (error) {
         if (!hasRefreshToken) {
@@ -301,7 +306,8 @@ export const authService = {
           return false;
         }
 
-        await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+        console.log('auth/me response', authMeResponse.data);
         return true;
       }
     } catch {
@@ -338,6 +344,11 @@ export const authService = {
 
       const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
       const authMe = authMeResponse.data.data;
+      console.log('current user id/email', {
+        userId: authMe.id,
+        email: authMe.email,
+        username: authMe.storeName,
+      });
 
       const [profileResponse, storeAccountResponse] = await Promise.all([
         apiClient.get<ApiResponse<ProfileResponseData>>('/settings/profile'),
@@ -351,8 +362,8 @@ export const authService = {
       return {
         id: authMe.id || profile.id,
         email: authMe.email || profile.email,
-        name: normalizedStoreName || profile.ownerName || storeAccount.storeName || 'User',
-        storeName: normalizedStoreName || storeAccount.storeName,
+        name: normalizedStoreName || profile.ownerName || storeAccount.storeName || authMe.storeName || 'User',
+        storeName: normalizedStoreName || storeAccount.storeName || authMe.storeName,
         profileImage: profile.profileImage,
       };
     } catch (error) {

@@ -392,6 +392,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       resetBusinessState();
       return;
     }
+
+    console.log('business context load', {
+      userId: user.id,
+      email: user.email,
+    });
+
     resetBusinessState();
     refreshData();
   }, [isAuthenticated, user?.id]);
