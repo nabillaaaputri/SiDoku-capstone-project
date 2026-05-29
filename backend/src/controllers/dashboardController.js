@@ -62,6 +62,7 @@ export const getSummary = async (req, res, next) => {
 
     return response(res, 200, 'Dashboard summary retrieved successfully', {
       income: totalIncome,
+      hpp: totalHpp,
       expense: totalExpense,
       profit,
       roi,
@@ -177,15 +178,30 @@ export const getTrends = async (req, res, next) => {
           return total + (Number(stockOut.quantity) * Number(product.selling_price));
         }, 0);
 
+        const hpp = stockOuts.reduce((total, stockOut) => {
+          const product = products.find((item) => item.id === stockOut.product_id);
+
+          if (!product) {
+            return total;
+          }
+
+          return total + (Number(stockOut.quantity) * Number(product.purchase_price));
+        }, 0);
+
         const expense = expenses.reduce(
           (total, item) => total + Number(item.amount),
           0,
         );
 
+        const profit = income - hpp - expense;
+
         return {
+          date,
           day: getDayName(date),
           income,
+          hpp,
           expense,
+          profit,
         };
       }),
     );
@@ -195,8 +211,18 @@ export const getTrends = async (req, res, next) => {
       0,
     );
 
+    const totalHpp = items.reduce(
+      (total, item) => total + Number(item.hpp),
+      0,
+    );
+
     const totalExpense = items.reduce(
       (total, item) => total + Number(item.expense),
+      0,
+    );
+
+    const totalProfit = items.reduce(
+      (total, item) => total + Number(item.profit),
       0,
     );
 
@@ -204,7 +230,9 @@ export const getTrends = async (req, res, next) => {
       period: '7 days',
       items,
       totalIncome,
+      totalHpp,
       totalExpense,
+      totalProfit,
     });
   } catch (error) {
     return next(error);
