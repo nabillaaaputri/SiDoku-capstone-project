@@ -161,8 +161,8 @@ export default function SalesRecap() {
       <div className="space-y-4 sm:space-y-5">
         {/* Header */}
         <section className="section-shell overflow-hidden">
-          <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-1">
+          <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl space-y-1">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-[2rem]">
                 Rekap Penjualan
               </h1>
@@ -171,7 +171,7 @@ export default function SalesRecap() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
               <Input
                 type="date"
                 value={selectedDate}
@@ -203,82 +203,82 @@ export default function SalesRecap() {
 
         {/* Summary Cards */}
         {recap.details.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)]">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+            <div className="group relative overflow-hidden rounded-[28px] border border-blue-100 bg-[linear-gradient(180deg,_#ffffff,_#eff6ff)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.14)] min-h-[150px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#60a5fa,_#2563eb)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 pr-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600/80">Total Penjualan</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
+                  <p className="mt-2.5 text-[1.45rem] sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalPenjualan)}
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">nilai penjualan harian</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-blue-100">
+                <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(37,99,235,0.16),_rgba(96,165,250,0.1))] text-blue-600 shadow-inner ring-1 ring-blue-100">
                   <CircleDollarSign size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)]">
+            <div className="group relative overflow-hidden rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)] min-h-[150px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#fda4af,_#e11d48)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 pr-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-600/80">Total HPP</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
+                  <p className="mt-2.5 text-[1.45rem] sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalHPP)}
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">harga pokok penjualan</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-rose-100">
+                <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 shadow-inner ring-1 ring-rose-100">
                   <TrendingDown size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)]">
+            <div className="group relative overflow-hidden rounded-[28px] border border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)] min-h-[150px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#86efac,_#16a34a)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 pr-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600/80">Laba Kotor</p>
-                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaKotor >= 0 ? "text-slate-900" : "text-rose-700"}`}>
+                  <p className={`mt-2.5 text-[1.45rem] sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaKotor >= 0 ? "text-slate-900" : "text-rose-700"}`}>
                     {formatIDR(labaKotor)}
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">sebelum pengeluaran</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-emerald-100">
+                <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 shadow-inner ring-1 ring-emerald-100">
                   <TrendingUp size={22} />
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-orange-100 bg-[linear-gradient(180deg,_#ffffff,_#fff7ed)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(249,115,22,0.14)]">
+            <div className="group relative overflow-hidden rounded-[28px] border border-orange-100 bg-[linear-gradient(180deg,_#ffffff,_#fff7ed)] p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(249,115,22,0.14)] min-h-[150px]">
               <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,_#fdba74,_#f97316)]" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 pr-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-600/80">Pengeluaran</p>
-                  <p className="mt-2.5 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
+                  <p className="mt-2.5 text-[1.45rem] sm:text-2xl font-extrabold text-slate-900 leading-none tabular-nums tracking-tight">
                     {formatIDR(totalPengeluaran)}
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">biaya operasional</p>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(249,115,22,0.16),_rgba(251,146,60,0.1))] text-orange-600 shadow-inner shrink-0 mt-0.5 ring-1 ring-orange-100">
+                <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,_rgba(249,115,22,0.16),_rgba(251,146,60,0.1))] text-orange-600 shadow-inner ring-1 ring-orange-100">
                   <ShoppingCart size={22} />
                 </div>
               </div>
             </div>
 
-            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${labaBersihIsNegative ? "border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)]" : "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)]"}`}>
+            <div className={`group relative overflow-hidden rounded-[28px] border p-3.5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 ${labaBersihIsNegative ? "border-rose-100 bg-[linear-gradient(180deg,_#ffffff,_#fff1f2)] hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)]" : "border-emerald-100 bg-[linear-gradient(180deg,_#ffffff,_#f0fdf4)] hover:shadow-[0_18px_40px_rgba(34,197,94,0.14)]"} min-h-[150px]`}>
               <div className={`absolute inset-x-0 top-0 h-1 ${labaBersihIsNegative ? "bg-[linear-gradient(90deg,_#fda4af,_#e11d48)]" : "bg-[linear-gradient(90deg,_#86efac,_#16a34a)]"}`} />
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 pr-1">
                   <p className={`text-[11px] font-semibold uppercase tracking-wider ${labaBersihIsNegative ? "text-rose-600/80" : "text-emerald-600/80"}`}>Laba Bersih</p>
-                  <p className={`mt-2.5 text-xl sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaBersihIsNegative ? "text-rose-700" : "text-slate-900"}`}>
+                  <p className={`mt-2.5 text-[1.45rem] sm:text-2xl font-extrabold leading-none tabular-nums tracking-tight ${labaBersihIsNegative ? "text-rose-700" : "text-slate-900"}`}>
                     {labaBersihDisplay}
                   </p>
                   <p className="mt-1.5 text-xs font-medium text-slate-500">setelah pengeluaran</p>
                 </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-inner shrink-0 mt-0.5 ring-1 ${labaBersihIsNegative ? "bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 ring-rose-100" : "bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 ring-emerald-100"}`}>
+                <div className={`flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl shadow-inner ring-1 ${labaBersihIsNegative ? "bg-[linear-gradient(135deg,_rgba(244,63,94,0.16),_rgba(251,113,133,0.1))] text-rose-600 ring-rose-100" : "bg-[linear-gradient(135deg,_rgba(34,197,94,0.16),_rgba(134,239,172,0.1))] text-emerald-600 ring-emerald-100"}`}>
                   <BarChart3 size={22} />
                 </div>
               </div>
