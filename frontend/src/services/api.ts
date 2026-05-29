@@ -1,6 +1,8 @@
 import axios, { AxiosHeaders } from "axios";
 
 const DEFAULT_API_BASE_URL = "https://sidoku.up.railway.app";
+const ACCESS_TOKEN_KEY = "authToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
 
 const normalizeBaseUrl = (value?: string) => {
   const trimmedValue = value?.trim().replace(/\/$/, "");
@@ -20,18 +22,55 @@ const AUTH_API_URL = normalizeBaseUrl(
 export const clearStoredAuthTokens = () => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("refreshToken");
+
+  if (typeof document !== "undefined") {
+    document.cookie = `${ACCESS_TOKEN_KEY}=; path=/; max-age=0`;
+    document.cookie = `${REFRESH_TOKEN_KEY}=; path=/; max-age=0`;
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("sidoku-auth-invalidated"));
+  }
 };
 
-const clearStoredAccessToken = () => {
-  localStorage.removeItem("authToken");
+const getCookieValue = (name: string) => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const cookieEntry = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(`${name}=`));
+
+  if (!cookieEntry) {
+    return null;
+  }
+
+  return decodeURIComponent(cookieEntry.slice(name.length + 1));
 };
+
+export const getStoredAuthToken = (key: typeof ACCESS_TOKEN_KEY | typeof REFRESH_TOKEN_KEY) => {
+  const storedValue = localStorage.getItem(key);
+
+  if (storedValue) {
+    return storedValue;
+  }
+
+  return getCookieValue(key);
+};
+
+export const getStoredAccessToken = () => getStoredAuthToken(ACCESS_TOKEN_KEY);
+
+export const getStoredRefreshToken = () => getStoredAuthToken(REFRESH_TOKEN_KEY);
 
 const handleUnauthorizedError = (error: unknown) => {
-  if (axios.isAxiosError(error) && error.response?.status === 401) {
-    const requestUrl = error.config?.url || "";
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+  if (status === 401 || status === 403) {
+    const requestUrl = axios.isAxiosError(error) ? error.config?.url || "" : "";
 
     if (!requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/register")) {
-      clearStoredAccessToken();
+      clearStoredAuthTokens();
     }
   }
 
@@ -55,7 +94,7 @@ const authApiClient = axios.create({
 });
 
 const attachAuthHeader = (config: any) => {
-  const token = localStorage.getItem("authToken");
+  const token = getStoredAccessToken();
 
   if (!token) {
     return config;
@@ -68,7 +107,7 @@ const attachAuthHeader = (config: any) => {
 };
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
+  const token = getStoredAccessToken();
 
   if (!token) {
     return config;

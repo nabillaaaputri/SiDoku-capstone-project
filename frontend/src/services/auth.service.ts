@@ -1,5 +1,10 @@
 import axios from 'axios';
-import apiClient, { authApiClient, clearStoredAuthTokens } from './api';
+import apiClient, {
+  authApiClient,
+  clearStoredAuthTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+} from './api';
 
 interface LoginCredentials {
   email: string;
@@ -79,6 +84,92 @@ const ACCESS_TOKEN_KEY = 'authToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const LAST_REGISTERED_STORE_KEY = 'sidokuLastRegisteredStore';
 const LEGACY_SETTINGS_VALUES = new Set(['Pirak', 'Peara Store', 'pearastore@gmail.com']);
+
+const isAuthHttpError = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  return [401, 403].includes(error.response?.status ?? 0);
+};
+
+const fetchAuthMe = async () => {
+  const response = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
+  return response.data.data;
+};
+
+const refreshStoredAccessToken = async (): Promise<string | null> => {
+  const refreshToken = getStoredRefreshToken();
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const response = await authApiClient.put<ApiResponse<{ accessToken: string }>>(
+    '/auth/refresh',
+    { refreshToken },
+  );
+
+  const accessToken = response.data.data.accessToken;
+
+  if (accessToken) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  }
+
+  return accessToken || null;
+};
+
+const resolveSessionIdentity = async (): Promise<AuthMeResponseData | null> => {
+  const hasAccessToken = !!getStoredAccessToken();
+  const hasRefreshToken = !!getStoredRefreshToken();
+
+  if (!hasAccessToken && !hasRefreshToken) {
+    return null;
+  }
+
+  try {
+    return await fetchAuthMe();
+  } catch (error) {
+    if (isAuthHttpError(error)) {
+      if (hasRefreshToken) {
+        const refreshedToken = await refreshStoredAccessToken();
+
+        if (!refreshedToken) {
+          clearStoredAuthTokens();
+          return null;
+        }
+
+        try {
+          return await fetchAuthMe();
+        } catch {
+          clearStoredAuthTokens();
+          return null;
+        }
+      }
+
+      clearStoredAuthTokens();
+      return null;
+    }
+
+    if (hasRefreshToken) {
+      try {
+        const refreshedToken = await refreshStoredAccessToken();
+
+        if (!refreshedToken) {
+          clearStoredAuthTokens();
+          return null;
+        }
+
+        return await fetchAuthMe();
+      } catch {
+        clearStoredAuthTokens();
+        return null;
+      }
+    }
+
+    return null;
+  }
+};
 
 interface StoredRegisteredStore {
   email: string;
@@ -199,8 +290,8 @@ const decodeJwtPayload = (token: string) => {
 };
 
 export const getStoredSessionIdentity = () => {
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  const accessToken = getStoredAccessToken();
+  const refreshToken = getStoredRefreshToken();
   const token = accessToken || refreshToken;
 
   if (!token) {
@@ -285,80 +376,13 @@ export const authService = {
   },
 
   refreshAccessToken: async (): Promise<string | null> => {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-
-    if (!refreshToken) {
-      return null;
-    }
-
-    const response = await authApiClient.put<ApiResponse<{ accessToken: string }>>(
-      '/auth/refresh',
-      { refreshToken },
-    );
-
-    const accessToken = response.data.data.accessToken;
-
-    if (accessToken) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    }
-
-    return accessToken || null;
+    return refreshStoredAccessToken();
   },
 
   validateStoredSession: async (): Promise<boolean> => {
     try {
-      const hasAccessToken = !!localStorage.getItem(ACCESS_TOKEN_KEY);
-      const hasRefreshToken = !!localStorage.getItem(REFRESH_TOKEN_KEY);
-
-      console.log('stored session check', { hasAccessToken, hasRefreshToken });
-
-      if (!hasAccessToken && !hasRefreshToken) {
-        return false;
-      }
-
-      if (!hasAccessToken && hasRefreshToken) {
-        const refreshedToken = await authService.refreshAccessToken();
-
-        if (!refreshedToken) {
-          clearStoredAuthTokens();
-          return false;
-        }
-      }
-
-      try {
-        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
-        console.log('auth/me response', authMeResponse.data);
-        return true;
-      } catch (error) {
-        const sessionIdentity = getStoredSessionIdentity();
-
-        if (sessionIdentity) {
-          return true;
-        }
-
-        if (!hasRefreshToken) {
-          clearStoredAuthTokens();
-          return false;
-        }
-
-        const refreshedToken = await authService.refreshAccessToken();
-
-        if (!refreshedToken) {
-          clearStoredAuthTokens();
-          return false;
-        }
-
-        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
-        console.log('auth/me response', authMeResponse.data);
-        return true;
-      }
+      return !!(await resolveSessionIdentity());
     } catch {
-      const sessionIdentity = getStoredSessionIdentity();
-
-      if (sessionIdentity) {
-        return true;
-      }
-
       clearStoredAuthTokens();
       return false;
     }
@@ -384,39 +408,11 @@ export const authService = {
   // GET CURRENT USER
   getCurrentUser: async (): Promise<CurrentUser | null> => {
     try {
-      const sessionIsValid = await authService.validateStoredSession();
-
-      if (!sessionIsValid) {
-        return null;
-      }
-
-      let authMe: AuthMeResponseData | null = null;
-
-      try {
-        const authMeResponse = await authApiClient.get<ApiResponse<AuthMeResponseData>>('/auth/me');
-        authMe = authMeResponse.data.data;
-      } catch (error) {
-        const sessionIdentity = getStoredSessionIdentity();
-
-        if (!sessionIdentity) {
-          throw error;
-        }
-
-        authMe = {
-          id: sessionIdentity.id,
-          email: sessionIdentity.email,
-        };
-      }
+      const authMe = await resolveSessionIdentity();
 
       if (!authMe) {
         return null;
       }
-
-      console.log('current user id/email', {
-        userId: authMe.id,
-        email: authMe.email,
-        username: authMe.storeName,
-      });
 
       let profile: ProfileResponseData | null = null;
       let storeAccount: StoreAccountResponseData | null = null;
@@ -437,6 +433,11 @@ export const authService = {
           console.error('Legacy settings sync failed:', syncError);
         }
       } catch (settingsError) {
+        if (isAuthHttpError(settingsError)) {
+          clearStoredAuthTokens();
+          return null;
+        }
+
         console.error('Profile/store account fetch failed:', settingsError);
       }
 
@@ -460,6 +461,6 @@ export const authService = {
 
   // CHECK AUTH
   isAuthenticated: (): boolean => {
-    return !!(localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY));
+    return !!(getStoredAccessToken() || getStoredRefreshToken());
   },
 };

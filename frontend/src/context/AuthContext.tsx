@@ -28,32 +28,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is already logged in on mount
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = async () => {
-      const hasStoredSession = Boolean(localStorage.getItem('authToken') || localStorage.getItem('refreshToken'));
+      const hasStoredSession = authService.isAuthenticated();
 
       if (hasStoredSession) {
         try {
           const currentUser = await authService.getCurrentUser();
-          console.log('auth context current user', {
-            userId: currentUser?.id,
-            email: currentUser?.email,
-            name: currentUser?.name,
-            storeName: currentUser?.storeName,
-          });
+          if (!isMounted) {
+            return;
+          }
+
           setUser(currentUser);
         } catch (error) {
           console.error('Failed to fetch user:', error);
           clearStoredAuthTokens();
-          setUser(null);
+          if (isMounted) {
+            setUser(null);
+          }
         }
       } else {
-        setUser(null);
+        if (isMounted) {
+          setUser(null);
+        }
       }
 
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    };
+
+    const handleAuthInvalidated = () => {
+      if (!isMounted) {
+        return;
+      }
+
+      setUser(null);
       setIsLoading(false);
     };
 
+    window.addEventListener('sidoku-auth-invalidated', handleAuthInvalidated);
     checkAuth();
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('sidoku-auth-invalidated', handleAuthInvalidated);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -100,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshUser = async () => {
-    const hasStoredSession = Boolean(localStorage.getItem('authToken') || localStorage.getItem('refreshToken'));
+    const hasStoredSession = authService.isAuthenticated();
 
     if (!hasStoredSession) {
       setUser(null);
@@ -108,12 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const currentUser = await authService.getCurrentUser();
-    console.log('auth context refresh user', {
-      userId: currentUser?.id,
-      email: currentUser?.email,
-      name: currentUser?.name,
-      storeName: currentUser?.storeName,
-    });
     setUser(currentUser);
   };
 

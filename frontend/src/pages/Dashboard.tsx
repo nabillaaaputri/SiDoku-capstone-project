@@ -62,9 +62,60 @@ interface ForecastTrendPoint {
   predictedQuantity: number;
 }
 
+function DashboardLoadingState() {
+  return (
+    <DashboardLayout>
+      <div className="w-full max-w-full space-y-3 overflow-x-hidden sm:space-y-3.5">
+        <section className="section-shell overflow-hidden">
+          <div className="bg-[linear-gradient(135deg,_rgba(29,78,216,0.06),_rgba(56,189,248,0.04))] p-4 sm:p-4.5 lg:p-5">
+            <div className="space-y-3">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-8 w-80 max-w-full animate-pulse rounded-full bg-slate-100" />
+              <div className="h-4 w-96 max-w-full animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+        </section>
+
+        <section className="section-shell space-y-3 p-4 sm:p-4.5 lg:p-5">
+          <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 sm:gap-3.5 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`dashboard-loading-summary-${index}`}
+                className="rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+              >
+                <div className="h-3 w-24 animate-pulse rounded-full bg-slate-100" />
+                <div className="mt-4 h-8 w-32 animate-pulse rounded-full bg-slate-100" />
+                <div className="mt-3 h-3 w-20 animate-pulse rounded-full bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="h-6 w-40 animate-pulse rounded-full bg-slate-100" />
+          <div className="h-[420px] animate-pulse rounded-[24px] bg-slate-100" />
+        </section>
+
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="h-6 w-44 animate-pulse rounded-full bg-slate-100" />
+          <div className="space-y-2.5">
+            <div className="h-20 animate-pulse rounded-2xl bg-slate-100" />
+            <div className="h-20 animate-pulse rounded-2xl bg-slate-100" />
+          </div>
+        </section>
+
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="h-6 w-52 animate-pulse rounded-full bg-slate-100" />
+          <div className="h-56 animate-pulse rounded-[24px] bg-slate-100" />
+        </section>
+      </div>
+    </DashboardLayout>
+  );
+}
+
 export default function Dashboard() {
-  const { products, salesRecords } = useBusinessContext();
-  const { user } = useAuth();
+  const { products, salesRecords, isLoading: isBusinessLoading } = useBusinessContext();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -78,6 +129,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (isAuthLoading || !user?.id) {
+      setSummary(null);
+      setTrends([]);
+      setTrendTotals({
+        totalIncome: 0,
+        totalHpp: 0,
+        totalExpense: 0,
+      });
+      setIsLoadingDashboard(false);
+
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const loadDashboard = async () => {
       setIsLoadingDashboard(true);
@@ -134,7 +200,7 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthLoading, user?.id]);
 
   const chartData = useMemo<ChartPoint[]>(() => {
     return trends.map((item) => ({
@@ -166,6 +232,7 @@ export default function Dashboard() {
   const activeProductIds = new Set(activeProducts.map((product) => product.id));
   const lowStockProducts = activeProducts.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
+  const isPageLoading = isAuthLoading || isBusinessLoading || isLoadingDashboard;
 
   const restockRecommendations = useMemo(() => {
     return [...activeProducts]
@@ -231,6 +298,10 @@ export default function Dashboard() {
 
     return points.map(({ key, date: _date, ...point }) => point);
   }, [activeProductIds, salesRecords]);
+
+  if (isPageLoading) {
+    return <DashboardLoadingState />;
+  }
 
   return (
     <DashboardLayout>

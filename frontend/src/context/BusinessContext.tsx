@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import axios from "axios";
 import apiClient from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -72,6 +72,7 @@ interface BackendStockOut {
 }
 
 interface BusinessContextType {
+  isLoading: boolean;
   products: Product[];
   addProduct: (product: Omit<Product, "id" | "createdAt">) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
@@ -322,6 +323,8 @@ const buildDailyRecap = (
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesRecords, setSalesRecords] = useState<SalesRecord[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -345,7 +348,9 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     knownExpenseCreatedAt.current.clear();
   };
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
+    setIsRefreshing(true);
+
     try {
       const [productsResult, expensesResult, stockInsResult, stockOutsResult] =
         await Promise.allSettled([
@@ -384,23 +389,24 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to load business data:", error);
+    } finally {
+      setIsRefreshing(false);
+      setHasLoadedInitialData(true);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       resetBusinessState();
+      setHasLoadedInitialData(false);
+      setIsRefreshing(false);
       return;
     }
 
-    console.log('business context load', {
-      userId: user.id,
-      email: user.email,
-    });
-
     resetBusinessState();
-    refreshData();
-  }, [isAuthenticated, user?.id]);
+    setHasLoadedInitialData(false);
+    void refreshData();
+  }, [isAuthenticated, refreshData, user?.id]);
 
   useEffect(() => {
     setSalesRecords(buildSalesRecords(products, stockOuts));
@@ -632,7 +638,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     return recaps;
   };
 
+  const isLoading = isRefreshing || (isAuthenticated && !!user?.id && !hasLoadedInitialData);
+
   const value: BusinessContextType = {
+    isLoading,
     products, addProduct, updateProduct, deleteProduct, archiveProduct, restoreProduct, getProductById,
     salesRecords, addSalesRecord, deleteSalesRecord, getSalesRecordsByDateRange,
     expenses, addExpense, deleteExpense, getExpensesByDateRange, getExpensesByCategory,
