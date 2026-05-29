@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
               <div className="hidden sm:block min-w-0 leading-tight">
                 <p className="text-sm font-bold tracking-tight text-slate-900">SiDoku</p>
-                <p className="text-[11px] text-slate-500">Identitas tim dan dashboard operasional</p>
+                <p className="text-[11px] text-slate-500">Sistem Data Operasional dan Keuangan Usaha</p>
               </div>
             </Link>
           </div>
