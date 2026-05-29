@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, BarChart3, Package, Star } from "lucide-react";
 import apiClient from "@/services/api";
 import { useBusinessContext } from "@/context";
-import { formatRupiahCompact } from "@/lib/utils";
+import { formatRupiah } from "@/lib/utils";
 
 interface AiApiResponse<T> {
   status: string;
@@ -173,7 +173,7 @@ export default function Insights() {
       id: `top-seller-${topSeller.productId}`,
       type: "positive",
       title: "Produk Paling Laris",
-      description: `${topSeller.productName} memimpin penjualan dengan ${formatQuantity(topSeller.totalQuantity)} dan omzet ${formatRupiahCompact(topSeller.totalRevenue)}.`,
+      description: `${topSeller.productName} memimpin penjualan dengan ${formatQuantity(topSeller.totalQuantity)} dan omzet ${formatRupiah(topSeller.totalRevenue)}.`,
       metric: formatQuantity(topSeller.totalQuantity),
       icon: <Star size={20} />,
     };
@@ -212,24 +212,63 @@ export default function Insights() {
   const restockCard = useMemo<InsightCard | null>(() => {
     const restock = restockCards[0];
 
-    if (!restock) {
+    if (restock) {
+      const isCritical = restock.status === "critical";
+      const isIncreasing = restock.status === "increasing";
+
+      return {
+        id: restock.id,
+        type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
+        title: "Restok Prioritas",
+        description: isCritical
+          ? `${restock.productName} perlu restock sekitar ${formatQuantity(restock.reorderQty)} agar tidak kehabisan stok.`
+          : `${restock.productName} disarankan tambah ${formatQuantity(restock.reorderQty)} berdasarkan stok ${formatQuantity(restock.currentStock)} dan prediksi ${formatQuantity(restock.predictedDemand)}.`,
+        metric: formatQuantity(restock.reorderQty),
+        icon: <Package size={20} />,
+      };
+    }
+
+    const lowStockProduct = [...activeProducts]
+      .filter((product) => Number(product.minimumStock) > 0)
+      .sort((a, b) => {
+        const aGap = Number(a.minimumStock) - Number(a.stock);
+        const bGap = Number(b.minimumStock) - Number(b.stock);
+
+        if (bGap !== aGap) {
+          return bGap - aGap;
+        }
+
+        return Number(a.stock) - Number(b.stock);
+      })[0];
+
+    if (lowStockProduct) {
+      const shortage = Math.max(0, Number(lowStockProduct.minimumStock) - Number(lowStockProduct.stock));
+
+      return {
+        id: `restock-fallback-${lowStockProduct.id}`,
+        type: shortage > 0 ? "warning" : "neutral",
+        title: shortage > 0 ? "Restok Prioritas" : "Stok Aman",
+        description: shortage > 0
+          ? `${lowStockProduct.name} perlu tambah sekitar ${formatQuantity(shortage)} agar kembali ke batas minimum stok.`
+          : `${lowStockProduct.name} masih aman dengan stok ${formatQuantity(Number(lowStockProduct.stock))}.`,
+        metric: shortage > 0 ? formatQuantity(shortage) : formatQuantity(Number(lowStockProduct.stock)),
+        icon: <Package size={20} />,
+      };
+    }
+
+    if (!activeProducts.length) {
       return null;
     }
 
-    const isCritical = restock.status === "critical";
-    const isIncreasing = restock.status === "increasing";
-
     return {
-      id: restock.id,
-      type: isCritical ? "warning" : isIncreasing ? "positive" : "neutral",
-      title: "Restok Prioritas",
-      description: isCritical
-        ? `${restock.productName} perlu restock sekitar ${formatQuantity(restock.reorderQty)} agar tidak kehabisan stok.`
-        : `${restock.productName} disarankan tambah ${formatQuantity(restock.reorderQty)} berdasarkan stok ${formatQuantity(restock.currentStock)} dan prediksi ${formatQuantity(restock.predictedDemand)}.`,
-      metric: formatQuantity(restock.reorderQty),
+      id: "restock-health",
+      type: "neutral",
+      title: "Kondisi Stok",
+      description: `Tidak ada rekomendasi restock mendesak. ${activeProducts.length} produk aktif masih terpantau.`,
+      metric: `${activeProducts.length} produk`,
       icon: <Package size={20} />,
     };
-  }, [restockCards]);
+  }, [activeProducts, restockCards]);
 
   const performanceCard = useMemo<InsightCard | null>(() => {
     const now = new Date();
@@ -264,7 +303,7 @@ export default function Insights() {
       id: "sales-performance-summary",
       type: isStable ? "neutral" : difference > 0 ? "positive" : "warning",
       title: "Rangkuman Performa Penjualan",
-      description: `Minggu ini ${formatRupiahCompact(currentWeekTotals.totalAmount)} dari ${currentWeekTotals.totalTransactions} catatan penjualan, dibanding ${formatRupiahCompact(previousWeekTotals.totalAmount)} pada minggu sebelumnya. Performa ${status.toLowerCase()} dan penjualan ${paceLabel}.`,
+      description: `Minggu ini ${formatRupiah(currentWeekTotals.totalAmount)} dari ${currentWeekTotals.totalTransactions} catatan penjualan, dibanding ${formatRupiah(previousWeekTotals.totalAmount)} pada minggu sebelumnya. Performa ${status.toLowerCase()} dan penjualan ${paceLabel}.`,
       metric: `${status} ${formatPercentChange(percentChange)}`.trim(),
       icon: <BarChart3 size={20} />,
     };

@@ -9,12 +9,10 @@ import {
 import { AlertCircle, Sparkles } from "lucide-react";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/ui/chart";
-import { formatRupiahCompact } from "@/lib/utils";
+import { formatRupiah } from "@/lib/utils";
 
 interface ForecastTrendPoint {
   label: string;
@@ -122,7 +120,7 @@ export default function ForecastTrendChart({
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 min-w-0">
           <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Penjualan</p>
-            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiahCompact(totals.revenue)}</p>
+            <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.revenue)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Total Unit</p>
@@ -157,7 +155,7 @@ export default function ForecastTrendChart({
               tickMargin={10}
               width={76}
               stroke="#64748b"
-              tickFormatter={(value) => formatRupiahCompact(Number(value))}
+              tickFormatter={(value) => formatRupiah(Number(value))}
               fontSize={12}
               fontWeight={600}
             />
@@ -172,13 +170,12 @@ export default function ForecastTrendChart({
                   formatter={(value) => (
                     <div className="flex w-full items-center justify-between gap-4">
                       <span className="text-slate-600">Penjualan</span>
-                      <span className="font-mono font-semibold tabular-nums text-slate-900">{formatRupiahCompact(Number(value))}</span>
+                      <span className="font-mono font-semibold tabular-nums text-slate-900">{formatRupiah(Number(value))}</span>
                     </div>
                   )}
                 />
               }
             />
-            <ChartLegend content={<ChartLegendContent />} />
             <Line
               type="monotone"
               dataKey="predictedRevenue"
