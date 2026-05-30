@@ -28,7 +28,7 @@ export const getAllStockOuts = async ({
     queryText += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  queryText += ' ORDER BY date DESC, created_at DESC';
+  queryText += ' ORDER BY date DESC, time DESC, created_at DESC';
 
   const result = await query(queryText, values);
   return result.rows;

@@ -28,7 +28,7 @@ export const getAllExpenses = async ({
     queryText += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  queryText += ' ORDER BY date DESC, created_at DESC';
+  queryText += ' ORDER BY date DESC, time DESC, created_at DESC';
 
   const result = await query(queryText, values);
   return result.rows;
@@ -42,6 +42,7 @@ export const addExpense = async ({
   categoryLabel,
   amount,
   date,
+  time,
   description,
 }) => {
   const result = await query(
@@ -53,9 +54,10 @@ export const addExpense = async ({
       category_label,
       amount,
       date,
+      time,
       description
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *`,
     [
       id,
@@ -65,6 +67,7 @@ export const addExpense = async ({
       categoryLabel,
       amount,
       date,
+      time,
       description,
     ],
   );

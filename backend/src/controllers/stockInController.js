@@ -4,6 +4,35 @@ import { NotFoundError } from '../exceptions/index.js';
 import * as stockInRepository from '../repositories/stockInRepository.js';
 import * as productRepository from '../repositories/productRepository.js';
 
+const getCurrentTime = () => {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date());
+};
+
+const formatDate = (date) => {
+  if (!date) return date;
+
+  if (typeof date === 'string') {
+    return date.split('T')[0];
+  }
+
+  return date.toISOString().split('T')[0];
+};
+
+const formatTime = (time) => {
+  if (!time) return null;
+
+  if (typeof time === 'string') {
+    return time.slice(0, 5);
+  }
+
+  return time;
+};
+
 const getStockStatus = (stock, minimumStock) => {
   if (stock <= minimumStock) {
     return 'low';
@@ -18,7 +47,8 @@ const mapStockInResponse = (stockIn) => ({
   productName: stockIn.product_name,
   quantity: stockIn.quantity,
   unit: stockIn.unit,
-  date: stockIn.date,
+  date: formatDate(stockIn.date),
+  time: formatTime(stockIn.time),
   note: stockIn.note,
   currentStock: stockIn.current_stock,
 });
@@ -58,6 +88,7 @@ export const addStockIn = async (req, res, next) => {
       productId,
       quantity,
       date,
+      time,
       note,
     } = req.body;
 
@@ -85,6 +116,7 @@ export const addStockIn = async (req, res, next) => {
       quantity: Number(quantity),
       unit: updatedProduct.unit,
       date,
+      time: time || getCurrentTime(),
       note: note || '',
       currentStock: updatedProduct.stock,
     });

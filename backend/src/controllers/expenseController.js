@@ -3,6 +3,35 @@ import response from '../utils/response.js';
 import { NotFoundError } from '../exceptions/index.js';
 import * as expenseRepository from '../repositories/expenseRepository.js';
 
+const getCurrentTime = () => {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date());
+};
+
+const formatDate = (date) => {
+  if (!date) return date;
+
+  if (typeof date === 'string') {
+    return date.split('T')[0];
+  }
+
+  return date.toISOString().split('T')[0];
+};
+
+const formatTime = (time) => {
+  if (!time) return null;
+
+  if (typeof time === 'string') {
+    return time.slice(0, 5);
+  }
+
+  return time;
+};
+
 const getCategoryLabel = (category) => {
   const labels = {
     restock: 'Restock Barang',
@@ -15,7 +44,8 @@ const getCategoryLabel = (category) => {
 
 const mapExpenseResponse = (expense) => ({
   id: expense.id,
-  date: expense.date,
+  date: formatDate(expense.date),
+  time: formatTime(expense.time),
   expenseName: expense.expense_name,
   category: expense.category,
   categoryLabel: expense.category_label,
@@ -109,6 +139,7 @@ export const addExpense = async (req, res, next) => {
       category,
       amount,
       date,
+      time,
       description,
     } = req.body;
 
@@ -120,6 +151,7 @@ export const addExpense = async (req, res, next) => {
       categoryLabel: getCategoryLabel(category),
       amount: Number(amount),
       date,
+      time: time || getCurrentTime(),
       description: description || '-',
     });
 

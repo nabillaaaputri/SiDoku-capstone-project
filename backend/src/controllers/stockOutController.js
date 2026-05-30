@@ -8,13 +8,32 @@ import * as stockOutRepository from '../repositories/stockOutRepository.js';
 import * as productRepository from '../repositories/productRepository.js';
 
 const getCurrentTime = () => {
-  const now = new Date();
-
-  return now.toLocaleTimeString('id-ID', {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  });
+  }).format(new Date());
+};
+
+const formatDate = (date) => {
+  if (!date) return date;
+
+  if (typeof date === 'string') {
+    return date.split('T')[0];
+  }
+
+  return date.toISOString().split('T')[0];
+};
+
+const formatTime = (time) => {
+  if (!time) return null;
+
+  if (typeof time === 'string') {
+    return time.slice(0, 5);
+  }
+
+  return time;
 };
 
 const getStockStatus = (stock, minimumStock) => {
@@ -31,8 +50,8 @@ const mapStockOutResponse = (stockOut) => ({
   productName: stockOut.product_name,
   quantity: stockOut.quantity,
   unit: stockOut.unit,
-  date: stockOut.date,
-  time: stockOut.time,
+  date: formatDate(stockOut.date),
+  time: formatTime(stockOut.time),
   note: stockOut.note,
   currentStock: stockOut.current_stock,
 });
@@ -79,6 +98,7 @@ export const addStockOut = async (req, res, next) => {
       productId,
       quantity,
       date,
+      time,
       note,
     } = req.body;
 
@@ -110,7 +130,7 @@ export const addStockOut = async (req, res, next) => {
       quantity: Number(quantity),
       unit: updatedProduct.unit,
       date,
-      time: getCurrentTime(),
+      time: time || getCurrentTime(),
       note: note || '-',
       currentStock: updatedProduct.stock,
     });

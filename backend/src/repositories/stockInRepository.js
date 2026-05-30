@@ -29,7 +29,7 @@ export const getAllStockIns = async ({
     queryText += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  queryText += ' ORDER BY date DESC, created_at DESC';
+  queryText += ' ORDER BY date DESC, time DESC, created_at DESC';
 
   const result = await query(queryText, values);
   return result.rows;
@@ -43,6 +43,7 @@ export const addStockIn = async ({
   quantity,
   unit,
   date,
+  time,
   note,
   currentStock,
 }) => {
@@ -55,10 +56,11 @@ export const addStockIn = async ({
       quantity,
       unit,
       date,
+      time,
       note,
       current_stock
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING *`,
     [
       id,
@@ -68,6 +70,7 @@ export const addStockIn = async ({
       quantity,
       unit,
       date,
+      time,
       note,
       currentStock,
     ],
