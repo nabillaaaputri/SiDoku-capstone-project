@@ -80,7 +80,11 @@ export default function Expenses() {
 
         return matchesDate && matchesSearch && matchesCategory;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => {
+        const bTime = (b.createdAt ?? b.date).getTime();
+        const aTime = (a.createdAt ?? a.date).getTime();
+        return bTime - aTime;
+      });
   }, [historyDateFilter, historySearchQuery, historyCategoryFilter, expenses]);
 
   const totalExpenseAll = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -125,7 +129,7 @@ export default function Expenses() {
         name: expenseForm.name,
         amount: expenseForm.amount,
         category: expenseForm.category,
-        date: new Date(expenseForm.date),
+        date: expenseForm.date,
         description: expenseForm.description,
       });
 
@@ -344,7 +348,7 @@ export default function Expenses() {
                         <td className="px-5 py-4 align-top text-sm text-slate-600">
                           <div className="space-y-1">
                             <p className="font-semibold text-slate-900">{formatJakartaDate(expense.date)}</p>
-                            <p className="text-xs text-slate-500">{expense.createdAt ? formatJakartaTime(expense.createdAt) : "-"}</p>
+                            <p className="text-xs text-slate-500">{formatJakartaTime(expense.createdAt ?? expense.date)}</p>
                           </div>
                         </td>
                         <td className="px-5 py-4 align-top">
@@ -371,7 +375,7 @@ export default function Expenses() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900">{expense.name}</p>
-                        <p className="text-xs text-slate-500">{formatJakartaDate(expense.date)} {expense.createdAt ? `• ${formatJakartaTime(expense.createdAt)}` : ''}</p>
+                        <p className="text-xs text-slate-500">{formatJakartaDate(expense.date)} • {formatJakartaTime(expense.createdAt ?? expense.date)}</p>
                         <div className="mt-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold tracking-wide uppercase ${categoryColors[expense.category]}`}>{categoryLabels[expense.category]}</span>
                         </div>

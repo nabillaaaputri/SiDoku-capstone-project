@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
 import apiClient from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +12,7 @@ import {
   DailySalesRecapSummary,
   DailySalesRecapDetail,
 } from "@/types";
-import { toSafeDate } from "@/lib/timezone";
+import { parseJakartaDateTime, toSafeDate } from "@/lib/timezone";
 
 const STOCK_OUT_ENDPOINTS = ["/stocks-out", "/stock-out"];
 
@@ -39,6 +39,9 @@ interface BackendProduct {
 interface BackendExpense {
   id: string;
   date: string;
+  time?: string;
+  timestamp?: string;
+  createdAt?: string;
   created_at?: string;
   expenseName: string;
   category: "restock" | "operational" | "others";
@@ -53,6 +56,9 @@ interface BackendStockIn {
   quantity: number;
   unit: string;
   date: string;
+  time?: string;
+  timestamp?: string;
+  createdAt?: string;
   created_at?: string;
   note?: string;
   currentStock: number;
@@ -66,6 +72,8 @@ interface BackendStockOut {
   unit: string;
   date: string;
   time?: string;
+  timestamp?: string;
+  createdAt?: string;
   created_at?: string;
   note?: string;
   currentStock: number;
@@ -87,15 +95,15 @@ interface BusinessContextType {
   getSalesRecordsByDateRange: (startDate: Date, endDate: Date) => SalesRecord[];
 
   expenses: Expense[];
-  addExpense: (expense: Omit<Expense, "id">) => Promise<void>;
+  addExpense: (expense: Omit<Expense, "id"> & { date: Date | string }) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   getExpensesByDateRange: (startDate: Date, endDate: Date) => Expense[];
   getExpensesByCategory: (category: string) => Expense[];
 
   stockIns: StockIn[];
   stockOuts: StockOut[];
-  addStockIn: (stockIn: Omit<StockIn, "id" | "createdAt">) => Promise<void>;
-  addStockOut: (stockOut: Omit<StockOut, "id" | "createdAt">) => Promise<void>;
+  addStockIn: (stockIn: Omit<StockIn, "id" | "createdAt"> & { date: Date | string }) => Promise<void>;
+  addStockOut: (stockOut: Omit<StockOut, "id" | "createdAt"> & { date: Date | string }) => Promise<void>;
   deleteStockIn: (id: string) => Promise<void>;
   deleteStockOut: (id: string) => Promise<void>;
   getStockInByDate: (date: Date) => StockIn[];
@@ -130,6 +138,12 @@ const mapProductResponse = (product: BackendProduct): Product => ({
   createdAt: new Date(),
 });
 
+const getBackendTimestamp = (
+  timestamp?: string,
+  createdAt?: string,
+  created_at?: string,
+) => timestamp || createdAt || created_at || undefined;
+
 const mapUiCategoryToBackend = (category: string) => {
   if (category === "operasional") return "operational";
   if (category === "lain-lain") return "others";
@@ -152,28 +166,39 @@ const isDateOnly = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value.
  * Ambil createdAt yang valid dari backend.
  * Kembalikan null kalau tidak ada atau hanya format tanggal.
  */
-const parseBackendCreatedAt = (raw: string | undefined): Date | null => {
-  if (!raw || isDateOnly(raw)) return null;
-  return toSafeDate(raw) || null;
+const parseBackendCreatedAt = (
+  raw: string | undefined,
+  date?: string,
+  time?: string,
+): Date | null => {
+  if (!raw || isDateOnly(raw)) {
+    if (!date) return null;
+    return parseJakartaDateTime(date, time) || null;
+  }
+
+  return parseJakartaDateTime(raw) || null;
 };
 
-const mapExpenseResponse = (expense: BackendExpense, knownCreatedAt?: Date): Expense => ({
+const mapExpenseResponse = (expense: BackendExpense): Expense => ({
   id: expense.id,
   name: expense.expenseName,
   amount: Number(expense.amount),
   category: mapBackendCategoryToUi(expense.category) as Expense["category"],
-  date: toSafeDate(expense.date) || new Date(),
+  date: parseJakartaDateTime(expense.date, expense.time) || toSafeDate(expense.date) || new Date(),
   description: expense.description || undefined,
-  // Pakai knownCreatedAt kalau ada, lalu coba dari backend, fallback ke date
-  createdAt: knownCreatedAt
-    ?? parseBackendCreatedAt(expense.created_at)
+  createdAt: parseBackendCreatedAt(
+    getBackendTimestamp(expense.timestamp, expense.createdAt, expense.created_at),
+    expense.date,
+    expense.time,
+  )
+    ?? parseJakartaDateTime(expense.date, expense.time)
     ?? toSafeDate(expense.date)
     ?? new Date(),
 });
 
-const mapStockInResponse = (stockIn: BackendStockIn, knownCreatedAt?: Date): StockIn => {
+const mapStockInResponse = (stockIn: BackendStockIn): StockIn => {
   // Mengonversi string tanggal dari backend menjadi objek Date yang valid
-  const fallbackDate = toSafeDate(stockIn.date) || new Date();
+  const fallbackDate = parseJakartaDateTime(stockIn.date, stockIn.time) || toSafeDate(stockIn.date) || new Date();
 
   return {
     id: stockIn.id,
@@ -181,24 +206,27 @@ const mapStockInResponse = (stockIn: BackendStockIn, knownCreatedAt?: Date): Sto
     productName: stockIn.productName,
     quantity: Number(stockIn.quantity),
     date: fallbackDate,
-    // Kunci jam: utamakan waktu lokal saat klik, lalu backend created_at, 
-    // jika keduanya tidak ada, fallback ke jam asli yang melekat di data 'date'
-    createdAt: knownCreatedAt
-      ?? parseBackendCreatedAt(stockIn.created_at)
+    createdAt: parseBackendCreatedAt(
+      getBackendTimestamp(stockIn.timestamp, stockIn.createdAt, stockIn.created_at),
+      stockIn.date,
+      stockIn.time,
+    )
       ?? fallbackDate, 
     notes: stockIn.note || undefined,
   };
 };
 
-const mapStockOutResponse = (stockOut: BackendStockOut, knownCreatedAt?: Date): StockOut => {
+const mapStockOutResponse = (stockOut: BackendStockOut): StockOut => {
   // Mengonversi string tanggal dari backend menjadi objek Date yang valid
-  const fallbackDate = toSafeDate(stockOut.date) || new Date();
+  const fallbackDate = parseJakartaDateTime(stockOut.date, stockOut.time) || toSafeDate(stockOut.date) || new Date();
 
   const fromBackend =
-    parseBackendCreatedAt(stockOut.created_at) ||
-    (stockOut.time && stockOut.time !== "00:00:00"
-      ? toSafeDate(`${stockOut.date}T${stockOut.time}`)
-      : null);
+    parseBackendCreatedAt(
+      getBackendTimestamp(stockOut.timestamp, stockOut.createdAt, stockOut.created_at),
+      stockOut.date,
+      stockOut.time,
+    ) ||
+    fallbackDate;
 
   return {
     id: stockOut.id,
@@ -206,13 +234,12 @@ const mapStockOutResponse = (stockOut: BackendStockOut, knownCreatedAt?: Date): 
     productName: stockOut.productName,
     quantity: Number(stockOut.quantity),
     date: fallbackDate,
-    // Jika backend tidak melempar info jam di 'created_at', gunakan 'fallbackDate' (jam dari properti date asli)
-    createdAt: knownCreatedAt ?? fromBackend ?? fallbackDate,
+    createdAt: fromBackend,
     notes: stockOut.note || undefined,
   };
 };
 
-const toApiDateTime = (date: Date) => date.toISOString();
+const toApiDateTime = (date: Date | string) => (typeof date === "string" ? date : date.toISOString());
 
 const toApiDate = (date: Date) => {
   const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -331,21 +358,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [stockIns, setStockIns] = useState<StockIn[]>([]);
   const [stockOuts, setStockOuts] = useState<StockOut[]>([]);
 
-  // Simpan createdAt yang sudah kita tahu (dari waktu user klik simpan)
-  // supaya refreshData tidak menimpa jam yang benar dengan new Date()
-  const knownStockInCreatedAt = useRef<Map<string, Date>>(new Map());
-  const knownStockOutCreatedAt = useRef<Map<string, Date>>(new Map());
-  const knownExpenseCreatedAt = useRef<Map<string, Date>>(new Map());
-
   const resetBusinessState = () => {
     setProducts([]);
     setSalesRecords([]);
     setExpenses([]);
     setStockIns([]);
     setStockOuts([]);
-    knownStockInCreatedAt.current.clear();
-    knownStockOutCreatedAt.current.clear();
-    knownExpenseCreatedAt.current.clear();
   };
 
   const refreshData = useCallback(async () => {
@@ -367,24 +385,17 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       }
       if (expensesResult.status === "fulfilled") {
         setExpenses(
-          expensesResult.value.data.data.records.map((e) =>
-            // Gunakan jam yang kita simpan kalau ada, supaya tidak berubah saat refresh
-            mapExpenseResponse(e, knownExpenseCreatedAt.current.get(e.id)),
-          ),
+          expensesResult.value.data.data.records.map((e) => mapExpenseResponse(e)),
         );
       }
       if (stockInsResult.status === "fulfilled") {
         setStockIns(
-          stockInsResult.value.data.data.map((s) =>
-            mapStockInResponse(s, knownStockInCreatedAt.current.get(s.id)),
-          ),
+          stockInsResult.value.data.data.map((s) => mapStockInResponse(s)),
         );
       }
       if (stockOutsResult.status === "fulfilled") {
         setStockOuts(
-          stockOutsResult.value.data.data.records.map((s) =>
-            mapStockOutResponse(s, knownStockOutCreatedAt.current.get(s.id)),
-          ),
+          stockOutsResult.value.data.data.records.map((s) => mapStockOutResponse(s)),
         );
       }
     } catch (error) {
@@ -472,8 +483,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       return d ? d >= startDate && d <= endDate : false;
     });
 
-  const addExpense = async (expense: Omit<Expense, "id">) => {
-    const submittedAt = new Date();
+  const addExpense = async (expense: Omit<Expense, "id"> & { date: Date | string }) => {
     const response = await apiClient.post<BackendResponse<BackendExpense>>("/expenses", {
       expenseName: expense.name,
       category: mapUiCategoryToBackend(expense.category),
@@ -481,17 +491,11 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       date: toApiDateTime(expense.date),
       description: expense.description || undefined,
     });
-    const id = response.data.data.id;
-    knownExpenseCreatedAt.current.set(id, submittedAt);
-    setExpenses((current) => [
-      ...current,
-      mapExpenseResponse(response.data.data, submittedAt),
-    ]);
+    setExpenses((current) => [...current, mapExpenseResponse(response.data.data)]);
   };
 
   const deleteExpense = async (id: string) => {
     await apiClient.delete(`/expenses/${id}`);
-    knownExpenseCreatedAt.current.delete(id);
     setExpenses((current) => current.filter((e) => e.id !== id));
   };
 
@@ -504,18 +508,14 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const getExpensesByCategory = (category: string) =>
     expenses.filter((e) => e.category === category);
 
-  const addStockIn = async (stockIn: Omit<StockIn, "id" | "createdAt">) => {
-    const submittedAt = new Date();
+  const addStockIn = async (stockIn: Omit<StockIn, "id" | "createdAt"> & { date: Date | string }) => {
     const response = await apiClient.post<BackendResponse<BackendStockIn>>("/stocks-in", {
       productId: stockIn.productId,
       quantity: stockIn.quantity,
       date: toApiDateTime(stockIn.date),
       note: stockIn.notes || undefined,
     });
-    const id = response.data.data.id;
-    // Simpan jam ini supaya refreshData tidak menimpanya
-    knownStockInCreatedAt.current.set(id, submittedAt);
-    const mapped = mapStockInResponse(response.data.data, submittedAt);
+    const mapped = mapStockInResponse(response.data.data);
     setStockIns((current) => [...current, mapped]);
     setProducts((current) =>
       current.map((p) =>
@@ -527,8 +527,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     await refreshData();
   };
 
-  const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt">) => {
-    const submittedAt = new Date();
+  const addStockOut = async (stockOut: Omit<StockOut, "id" | "createdAt"> & { date: Date | string }) => {
     const response = await requestStockOut((endpoint) =>
       apiClient.post<BackendResponse<BackendStockOut>>(endpoint, {
         productId: stockOut.productId,
@@ -537,9 +536,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         note: stockOut.notes || undefined,
       }),
     );
-    const id = response.data.data.id;
-    knownStockOutCreatedAt.current.set(id, submittedAt);
-    const mapped = mapStockOutResponse(response.data.data, submittedAt);
+    const mapped = mapStockOutResponse(response.data.data);
     setStockOuts((current) => [...current, mapped]);
     setProducts((current) =>
       current.map((p) =>
@@ -554,7 +551,6 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const deleteStockIn = async (id: string) => {
     const stockIn = stockIns.find((item) => item.id === id);
     await apiClient.delete(`/stocks-in/${id}`);
-    knownStockInCreatedAt.current.delete(id);
     if (stockIn) {
       setProducts((current) =>
         current.map((p) =>
@@ -571,7 +567,6 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const deleteStockOut = async (id: string) => {
     const stockOut = stockOuts.find((item) => item.id === id);
     await requestStockOut((endpoint) => apiClient.delete(`${endpoint}/${id}`));
-    knownStockOutCreatedAt.current.delete(id);
     if (stockOut) {
       setProducts((current) =>
         current.map((p) =>

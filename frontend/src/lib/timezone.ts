@@ -1,4 +1,5 @@
 const JAKARTA_TIME_ZONE = "Asia/Jakarta";
+const JAKARTA_UTC_OFFSET_HOURS = 7;
 
 const INVALID_DATE_FALLBACK = "-";
 
@@ -13,6 +14,64 @@ export const toSafeDate = (value: Date | string | number | null | undefined) => 
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const hasExplicitTimeZone = (value: string) => /([zZ]|[+-]\d{2}:?\d{2})$/.test(value);
+
+const parseTimeParts = (timeValue: string) => {
+  const [hourPart = "0", minutePart = "0", secondPart = "0"] = timeValue.trim().split(":");
+
+  return {
+    hour: Number(hourPart) || 0,
+    minute: Number(minutePart) || 0,
+    second: Number(secondPart) || 0,
+  };
+};
+
+const createJakartaDateTime = (dateValue: string, timeValue = "00:00") => {
+  const [yearPart = "1970", monthPart = "1", dayPart = "1"] = dateValue.trim().split("-");
+  const { hour, minute, second } = parseTimeParts(timeValue);
+
+  return new Date(
+    Date.UTC(
+      Number(yearPart) || 1970,
+      (Number(monthPart) || 1) - 1,
+      Number(dayPart) || 1,
+      hour - JAKARTA_UTC_OFFSET_HOURS,
+      minute,
+      second,
+    ),
+  );
+};
+
+export const parseJakartaDateTime = (
+  value: Date | string | number | null | undefined,
+  timeValue?: string | null,
+) => {
+  if (value instanceof Date || typeof value === "number") {
+    return toSafeDate(value);
+  }
+
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (hasExplicitTimeZone(trimmed)) {
+    return toSafeDate(trimmed);
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return createJakartaDateTime(trimmed, timeValue || "00:00");
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+    const [datePart = "1970-01-01", timePart = "00:00"] = trimmed.split("T");
+    return createJakartaDateTime(datePart, timeValue || timePart);
+  }
+
+  return toSafeDate(trimmed);
 };
 
 const getDateParts = (date: Date) => {

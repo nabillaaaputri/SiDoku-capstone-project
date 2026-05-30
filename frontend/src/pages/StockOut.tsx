@@ -234,7 +234,7 @@ export default function StockOut() {
         productId: stockOutForm.productId,
         productName: product.name,
         quantity: stockOutForm.quantity,
-        date: new Date(stockOutForm.date),
+        date: stockOutForm.date,
         notes: stockOutForm.notes || undefined,
       });
 
