@@ -1,5 +1,5 @@
 fastapi==0.135.0
-uvicorn[standard]==0.27.0
+uvicorn==0.27.0
 python-dotenv==1.0.0
 pydantic==2.7.0
 
@@ -7,7 +7,7 @@ pydantic==2.7.0
 # Data & ML
 numpy>=1.26.0,<2.0.0
 pandas==2.2.0
-scikit-learn==1.4.0
+scikit-learn==1.6.1
 tensorflow-cpu==2.16.2
 # Note: keras is bundled inside tensorflow-cpu 2.16+, do NOT add keras as separate dependency
 joblib==1.5.3

@@ -7,6 +7,7 @@ Feature engineering MUST match the training notebook exactly.
 Any divergence (different names, order, or computation) causes wrong predictions.
 """
 
+import gc
 import logging
 from pathlib import Path
 from typing import List, Optional
@@ -45,16 +46,17 @@ _scaler = None
 _feature_cols: List[str] = []
 _features_to_scale: List[str] = []
 _product_map: dict = {}
+_infer_fn = None  # tf.function-compiled model call — set in load_model()
 
 WINDOW_SIZE = 28  # model expects exactly 28 timesteps
 
 
 def load_model():
     """Load all model artefacts from disk. Call once at startup."""
-    global _model, _scaler, _feature_cols, _features_to_scale, _product_map
+    global _model, _scaler, _feature_cols, _features_to_scale, _product_map, _infer_fn
 
     try:
-        import tensorflow as tf  # noqa: F401
+        import tensorflow as tf
         from tensorflow import keras
 
         _model = keras.models.load_model(_MODELS_DIR / "sales_forecasting_store1.keras")
@@ -70,10 +72,19 @@ def load_model():
         _features_to_scale = list(joblib.load(_MODELS_DIR / "features_to_scale.joblib"))
         _product_map = joblib.load(_MODELS_DIR / "product_map.joblib")
 
+        # Compile model call once so TF doesn't retrace on every request.
+        # reduce_retracing=True prevents graph cache from growing indefinitely.
+        @tf.function(reduce_retracing=True)
+        def _compiled_infer(x_seq, x_prod):
+            return _model([x_seq, x_prod], training=False)
+
+        _infer_fn = _compiled_infer
+
         logger.info(
             "Forecasting model loaded. features=%d, scalable=%d, products=%d",
             len(_feature_cols), len(_features_to_scale), len(_product_map),
         )
+        return True
 
     except Exception as e:
         # Fallback: use known feature list so service can still attempt inference
@@ -238,15 +249,17 @@ def _scale_window(window: np.ndarray) -> np.ndarray:
 
 def _infer(window: np.ndarray, product_name: str) -> float:
     """Run one forward pass: scale → model → inverse-transform → expm1."""
+    import tensorflow as tf
+
     window_scaled = _scale_window(window)
 
     product_id = _product_map.get(product_name, 0)
-    X_seq  = window_scaled[np.newaxis, ...]              # (1, 28, n_features)
-    X_prod = np.array([[product_id]], dtype=np.float32)  # (1, 1)
+    X_seq  = tf.constant(window_scaled[np.newaxis, ...], dtype=tf.float32)  # (1, 28, n_features)
+    X_prod = tf.constant([[product_id]], dtype=tf.float32)                   # (1, 1)
 
-    # Gunakan pemanggilan model langsung alih-alih .predict() untuk mencegah memory leak
-    # .predict() dirancang untuk iterasi batch besar dan membuat tf.data.Dataset baru tiap dipanggil.
-    raw_pred_tensor = _model([X_seq, X_prod], training=False)
+    # Use the tf.function-compiled callable to avoid per-request graph retracing,
+    # which is the primary cause of unbounded RAM growth in long-running servers.
+    raw_pred_tensor = _infer_fn(X_seq, X_prod)
     raw_pred = raw_pred_tensor.numpy()
 
     # Two-stage inverse transform (matches README):
@@ -291,10 +304,20 @@ def predict_sales(
     df = _build_daily_series(stok_keluar, stok_masuk, harga_jual)
     last_date = df["tanggal"].max()
 
-    predictions = []
+    # Pre-allocate future rows to avoid pd.concat inside the loop
+    # (each pd.concat creates a new DataFrame copy — O(n²) allocations)
+    future_rows: List[dict] = []
+    predictions: List[dict] = []
 
     for i in range(days_ahead):
         # Recompute features on the full (growing) series each step
+        if future_rows:
+            df = pd.concat(
+                [df, pd.DataFrame(future_rows)],
+                ignore_index=True,
+            )
+            future_rows = []
+
         feat_df = _build_features(df)
 
         # Prepare (WINDOW_SIZE, n_features) input
@@ -309,14 +332,16 @@ def predict_sales(
             "predicted_qty": pred_qty,
         })
 
-        # Slide: append predicted row so next iteration uses it as a lag.
-        # SalesQuantity is set in _build_features() from qty, so only qty is needed here.
-        new_row = pd.DataFrame({
-            "tanggal": [future_date],
-            "qty":     [pred_qty],
-            "price":   [float(harga_jual)],
+        # Slide: stage the predicted row for the next iteration
+        future_rows.append({
+            "tanggal": future_date,
+            "qty":     pred_qty,
+            "price":   float(harga_jual),
         })
-        df = pd.concat([df, new_row], ignore_index=True)
+
+    # Explicit cleanup — TF tensors and pandas frames from this request
+    del df, feat_df, future_rows
+    gc.collect()
 
     return predictions
 

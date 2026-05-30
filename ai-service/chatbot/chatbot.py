@@ -45,16 +45,14 @@ def fix_slangwords(text):
     fixed_words = [slangwords.get(word.lower(), word) for word in words]
     return ' '.join(fixed_words)
 
+# Pre-build stopword set once at module load (not per-request)
+_STOPWORDS = set(stopwords.words('indonesian'))
+_STOPWORDS.update(set(stopwords.words('english')))
+_STOPWORDS -= {'tidak', 'bukan', 'belum', 'kurang', 'jangan', 'berapa', 'apa', 'bagaimana', 'siapa'}
+_STOPWORDS.update(['iya', 'yaa', 'gak', 'nya', 'na', 'sih', 'ku', 'di', 'ga', 'ya', 'gaa', 'loh', 'kah'])
+
 def filteringText(text):
-    listStopwords = set(stopwords.words('indonesian'))
-    listStopwords.update(set(stopwords.words('english')))
-
-    exceptions = {'tidak', 'bukan', 'belum', 'kurang', 'jangan', 'berapa', 'apa', 'bagaimana', 'siapa'}
-    listStopwords = listStopwords - exceptions
-    listStopwords.update(['iya','yaa','gak','nya','na','sih','ku',"di","ga","ya","gaa","loh","kah"])
-
-    filtered = [txt for txt in text if txt not in listStopwords]
-    return filtered
+    return [txt for txt in text if txt not in _STOPWORDS]
 
 def full_preprocess(text):
     """Membersihkan teks menjadi sekumpulan kata bermakna (list of words)"""
