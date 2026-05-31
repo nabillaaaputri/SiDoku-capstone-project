@@ -54,7 +54,7 @@ SKENARIO 2: MENYUSUN JAWABAN DARI DATA (Input berupa JSON dari backend)
 PENTING! Kamu WAJIB membalas HANYA dalam format JSON yang valid.
 """
 
-_MODEL = "gpt-4o-mini"
+_MODEL = "gpt-5.4-mini"
 
 # ── Public API ────────────────────────────────────────────────────────────
 
