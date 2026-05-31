@@ -66,6 +66,7 @@ export default function Account() {
     confirmNewPassword: "",
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -169,6 +170,7 @@ export default function Account() {
       newPassword: "",
       confirmNewPassword: "",
     });
+    setShowCurrentPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
   };
@@ -189,6 +191,15 @@ export default function Account() {
       toast({
         title: "Error",
         description: "Password baru minimal 5 karakter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword === passwordData.currentPassword) {
+      toast({
+        title: "Error",
+        description: "Password baru tidak boleh sama dengan password lama.",
         variant: "destructive",
       });
       return;
@@ -550,14 +561,24 @@ export default function Account() {
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Password Lama
                   </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Masukkan password lama"
-                    className={inputClass}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      name="currentPassword"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Masukkan password lama"
+                      className={`${inputClass} pr-11`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword((current) => !current)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                      aria-label={showCurrentPassword ? "Sembunyikan password lama" : "Tampilkan password lama"}
+                    >
+                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
