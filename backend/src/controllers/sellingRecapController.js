@@ -7,6 +7,26 @@ const isValidDateFormat = (date) => {
   return dateRegex.test(date);
 };
 
+const calculateGrossMargin = (profit, income) => {
+  const numericIncome = Number(income);
+
+  if (numericIncome === 0) {
+    return 0;
+  }
+
+  return Number(((Number(profit) / numericIncome) * 100).toFixed(2));
+};
+
+const calculateNetMargin = (profit, income) => {
+  const numericIncome = Number(income);
+
+  if (numericIncome === 0) {
+    return 0;
+  }
+
+  return Number(((Number(profit) / numericIncome) * 100).toFixed(2));
+};
+
 export const getSellingRecap = async (req, res, next) => {
   try {
     const { date } = req.query;
@@ -59,6 +79,7 @@ export const getSellingRecap = async (req, res, next) => {
       const hpp = sold * Number(product.purchase_price);
       const salesValue = sold * Number(product.selling_price);
       const profit = salesValue - hpp;
+      const grossMargin = calculateGrossMargin(profit, salesValue);
 
       return {
         productId: product.id,
@@ -70,6 +91,7 @@ export const getSellingRecap = async (req, res, next) => {
         hpp,
         salesValue,
         profit,
+        grossMargin,
       };
     });
 
@@ -83,7 +105,10 @@ export const getSellingRecap = async (req, res, next) => {
       0,
     );
 
+    const grossProfit = totalIncome - totalHpp;
     const totalProfit = totalIncome - totalHpp - totalExpense;
+    const grossMargin = calculateGrossMargin(grossProfit, totalIncome);
+    const netMargin = calculateNetMargin(totalProfit, totalIncome);
 
     return response(
       res,
@@ -96,8 +121,11 @@ export const getSellingRecap = async (req, res, next) => {
         summary: {
           totalIncome,
           totalHpp,
-          totalProfit,
+          grossProfit,
           totalExpense,
+          totalProfit,
+          grossMargin,
+          netMargin,
         },
         products: recapProducts,
       },

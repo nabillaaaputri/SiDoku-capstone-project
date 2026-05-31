@@ -8,7 +8,17 @@ import * as productRepository from '../repositories/productRepository.js';
 import productCategories from '../constants/productCategories.js';
 
 const calculateMargin = (purchasePrice, sellingPrice) => {
-  return Number((((sellingPrice - purchasePrice) / purchasePrice) * 100).toFixed(2));
+  const numericPurchasePrice = Number(purchasePrice);
+  const numericSellingPrice = Number(sellingPrice);
+
+  if (numericSellingPrice === 0) {
+    return 0;
+  }
+
+  return Number(
+    (((numericSellingPrice - numericPurchasePrice) / numericSellingPrice) * 100)
+      .toFixed(2),
+  );
 };
 
 const getStockStatus = (stock, minimumStock) => {

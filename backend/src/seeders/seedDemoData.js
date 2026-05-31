@@ -125,8 +125,18 @@ const getStockStatus = (stock, minimumStock) => {
   return 'safe';
 };
 
-const getMargin = (sellingPrice, purchasePrice) => {
-  return sellingPrice - purchasePrice;
+const getMargin = (purchasePrice, sellingPrice) => {
+  const numericPurchasePrice = Number(purchasePrice);
+  const numericSellingPrice = Number(sellingPrice);
+
+  if (numericSellingPrice === 0) {
+    return 0;
+  }
+
+  return Number(
+    (((numericSellingPrice - numericPurchasePrice) / numericSellingPrice) * 100)
+      .toFixed(2),
+  );
 };
 
 const getDailySoldQuantity = (productIndex, dayIndex) => {
@@ -269,7 +279,7 @@ const seedUser = async () => {
 
 const seedProducts = async () => {
   for (const product of PRODUCTS) {
-    const margin = getMargin(product.sellingPrice, product.purchasePrice);
+    const margin = getMargin(product.purchasePrice, product.sellingPrice);
     const stockStatus = getStockStatus(product.initialStock, product.minimumStock);
 
     await query(
@@ -327,10 +337,11 @@ const seedStockMovements = async () => {
             quantity,
             unit,
             date,
+            time,
             note,
             current_stock
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
             randomUUID(),
             DEMO_USER.id,
@@ -339,6 +350,7 @@ const seedStockMovements = async () => {
             stockInQuantity,
             product.unit,
             date,
+            '09:00',
             'Restock berkala warung retail untuk data historis AI.',
             currentStock,
           ],
@@ -413,9 +425,10 @@ const seedExpenses = async () => {
         category_label,
         amount,
         date,
+        time,
         description
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         randomUUID(),
         DEMO_USER.id,
@@ -424,6 +437,7 @@ const seedExpenses = async () => {
         expense.categoryLabel,
         amount,
         date,
+        '10:00',
         expense.description,
       ],
     );

@@ -21,6 +21,16 @@ const getDayName = (dateString) => {
   });
 };
 
+const calculateNetMargin = (profit, income) => {
+  const numericIncome = Number(income);
+
+  if (numericIncome === 0) {
+    return 0;
+  }
+
+  return Number(((Number(profit) / numericIncome) * 100).toFixed(2));
+};
+
 export const getSummary = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -55,6 +65,7 @@ export const getSummary = async (req, res, next) => {
     );
 
     const profit = totalIncome - totalHpp - totalExpense;
+    const netMargin = calculateNetMargin(profit, totalIncome);
 
     const roi = totalHpp + totalExpense === 0
       ? 0
@@ -65,6 +76,7 @@ export const getSummary = async (req, res, next) => {
       hpp: totalHpp,
       expense: totalExpense,
       profit,
+      netMargin,
       roi,
     });
   } catch (error) {
@@ -194,6 +206,7 @@ export const getTrends = async (req, res, next) => {
         );
 
         const profit = income - hpp - expense;
+        const netMargin = calculateNetMargin(profit, income);
 
         return {
           date,
@@ -202,6 +215,7 @@ export const getTrends = async (req, res, next) => {
           hpp,
           expense,
           profit,
+          netMargin,
         };
       }),
     );
@@ -226,6 +240,8 @@ export const getTrends = async (req, res, next) => {
       0,
     );
 
+    const totalNetMargin = calculateNetMargin(totalProfit, totalIncome);
+
     return response(res, 200, 'Dashboard trends retrieved successfully', {
       period: '7 days',
       items,
@@ -233,6 +249,7 @@ export const getTrends = async (req, res, next) => {
       totalHpp,
       totalExpense,
       totalProfit,
+      totalNetMargin,
     });
   } catch (error) {
     return next(error);
