@@ -78,7 +78,11 @@ const handleUnauthorizedError = (error: unknown) => {
   if (status === 401 || status === 403) {
     const requestUrl = axios.isAxiosError(error) ? error.config?.url || "" : "";
 
-    if (!requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/register")) {
+    if (
+      !requestUrl.includes("/auth/login") &&
+      !requestUrl.includes("/auth/register") &&
+      !requestUrl.includes("/settings/password")
+    ) {
       clearStoredAuthTokens();
     }
   }
