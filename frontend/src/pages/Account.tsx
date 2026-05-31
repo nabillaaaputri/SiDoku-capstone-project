@@ -4,7 +4,8 @@ import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { authService, getPreferredUserName } from "@/services/auth.service";
-import { Camera, Lock, Shield, Store, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Camera, Eye, EyeOff, Lock, Shield, Store, User } from "lucide-react";
 
 const MAX_PROFILE_IMAGE_SIZE = 1 * 1024 * 1024;
 
@@ -21,7 +22,8 @@ interface ProfileData {
 
 export default function Account() {
   const { toast } = useToast();
-  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { user, refreshUser, logout } = useAuth();
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
@@ -61,8 +63,11 @@ export default function Account() {
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: "",
+    confirmNewPassword: "",
   });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -158,35 +163,72 @@ export default function Account() {
     }
   };
 
-  const handleChangePassword = () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Password baru tidak cocok",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password harus minimal 6 karakter",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Berhasil",
-      description: "Password Anda telah diubah",
-    });
-
+  const resetPasswordForm = () => {
     setPasswordData({
       currentPassword: "",
       newPassword: "",
-      confirmPassword: "",
+      confirmNewPassword: "",
     });
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const handleChangePassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!passwordData.currentPassword.trim()) {
+      toast({
+        title: "Error",
+        description: "Password lama wajib diisi.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 5) {
+      toast({
+        title: "Error",
+        description: "Password baru minimal 5 karakter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      toast({
+        title: "Error",
+        description: "Password baru dan konfirmasi password tidak sama.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      await authService.updatePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmNewPassword: passwordData.confirmNewPassword,
+      });
+
+      toast({
+        title: "Berhasil",
+        description: "Password berhasil diubah. Silakan login ulang.",
+      });
+
+      resetPasswordForm();
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: authService.getErrorMessage(error, "Gagal mengubah password."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const initials = formData.ownerName
@@ -503,7 +545,7 @@ export default function Account() {
                 <p className="text-sm text-slate-600">Ubah password untuk menjaga keamanan akun Anda.</p>
               </div>
 
-              <div className="space-y-4">
+              <form className="space-y-4" onSubmit={handleChangePassword}>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Password Lama
@@ -522,39 +564,60 @@ export default function Account() {
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Password Baru
                   </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Masukkan password baru"
-                    className={inputClass}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      name="newPassword"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Masukkan password baru"
+                      className={`${inputClass} pr-11`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((current) => !current)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                      aria-label={showNewPassword ? "Sembunyikan password baru" : "Tampilkan password baru"}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Konfirmasi Password Baru
                   </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Ulangi password baru"
-                    className={inputClass}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmNewPassword"
+                      value={passwordData.confirmNewPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Ulangi password baru"
+                      className={`${inputClass} pr-11`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((current) => !current)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+                      aria-label={showConfirmPassword ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
               <div className="pt-2">
                 <Button
-                  onClick={handleChangePassword}
+                  type="submit"
+                  disabled={isChangingPassword}
                   className="h-11 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700"
                 >
-                  Ubah Password
+                  {isChangingPassword ? "Menyimpan..." : "Ubah Password"}
                 </Button>
               </div>
+              </form>
             </div>
 
             {/* Security Tips */}

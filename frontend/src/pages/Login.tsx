@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/ui/button";
 import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 
 type AlertState = {
   title: string;
@@ -56,7 +57,7 @@ export default function Login() {
 
       setAlertState({
         title: "Login gagal",
-        description: "Periksa email dan password.",
+        description: authService.getErrorMessage(error, "Periksa email dan password."),
         tone: "error",
       });
     } finally {

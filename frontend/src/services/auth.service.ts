@@ -367,6 +367,18 @@ export const authService = {
     return response.data;
   },
 
+  updatePassword: async (
+    payload: {
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+    },
+  ): Promise<ApiResponse<null>> => {
+    const response = await apiClient.put<ApiResponse<null>>('/settings/password', payload);
+
+    return response.data;
+  },
+
   refreshAccessToken: async (): Promise<string | null> => {
     return refreshStoredAccessToken();
   },
