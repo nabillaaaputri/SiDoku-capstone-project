@@ -90,7 +90,7 @@ Project ini terdiri dari beberapa tahapan utama:
 # 📁 Project Structure
 
 ```bash
-SiDoku-capstone-project/
+data-science/
 │
 ├── dashboard/
 │   └── dashboard.py
