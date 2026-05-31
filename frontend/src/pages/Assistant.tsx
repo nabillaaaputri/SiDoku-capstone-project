@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertCircle,
@@ -20,6 +21,11 @@ interface Message {
   error?: string;
 }
 
+type AssistantBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "bullet"; items: string[] }
+  | { type: "numbered"; items: string[] };
+
 const QUICK_QUESTIONS = [
   "Produk paling laris",
   "Stok hampir habis",
@@ -38,6 +44,166 @@ const DEFAULT_MESSAGES: Message[] = [
     timestamp: Date.now(),
   },
 ];
+
+const MARKDOWN_BOLD_PATTERN = /\*\*(.+?)\*\*/g;
+
+const normalizeAssistantText = (content: string) => content.replace(/\r\n/g, "\n").trim();
+
+const parseAssistantBlocks = (content: string): AssistantBlock[] => {
+  const normalizedContent = normalizeAssistantText(content);
+
+  if (!normalizedContent) {
+    return [];
+  }
+
+  const lines = normalizedContent.split("\n");
+  const blocks: AssistantBlock[] = [];
+  let paragraphLines: string[] = [];
+  let listType: "bullet" | "numbered" | null = null;
+  let listItems: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) return;
+
+    blocks.push({
+      type: "paragraph",
+      text: paragraphLines.join("\n"),
+    });
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (listType && listItems.length > 0) {
+      blocks.push({
+        type: listType,
+        items: listItems,
+      });
+    }
+
+    listType = null;
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.*)$/);
+    const numberedMatch = trimmed.match(/^\d+[.)]\s+(.*)$/);
+
+    if (bulletMatch || numberedMatch) {
+      flushParagraph();
+
+      const nextType: "bullet" | "numbered" = bulletMatch ? "bullet" : "numbered";
+      const nextItem = (bulletMatch || numberedMatch)?.[1]?.trim() || "";
+
+      if (listType && listType !== nextType) {
+        flushList();
+      }
+
+      listType = nextType;
+      listItems.push(nextItem);
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(trimmed);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
+};
+
+const renderInlineMarkdown = (text: string): ReactNode[] => {
+  const fragments: ReactNode[] = [];
+  let lastIndex = 0;
+
+  text.replace(MARKDOWN_BOLD_PATTERN, (match, boldText, offset) => {
+    if (offset > lastIndex) {
+      const rawText = text.slice(lastIndex, offset);
+      const rawSegments = rawText.split("\n");
+
+      rawSegments.forEach((segment, segmentIndex) => {
+        if (segmentIndex > 0) {
+          fragments.push(<br key={`br-${lastIndex}-${segmentIndex}`} />);
+        }
+
+        if (segment) {
+          fragments.push(segment);
+        }
+      });
+    }
+
+    fragments.push(
+      <strong key={`bold-${offset}`} className="font-semibold text-slate-900">
+        {boldText}
+      </strong>,
+    );
+
+    lastIndex = offset + match.length;
+    return match;
+  });
+
+  if (lastIndex < text.length) {
+    const tailText = text.slice(lastIndex);
+    tailText.split("\n").forEach((segment, segmentIndex) => {
+      if (segmentIndex > 0) {
+        fragments.push(<br key={`tail-br-${lastIndex}-${segmentIndex}`} />);
+      }
+
+      if (segment) {
+        fragments.push(segment);
+      }
+    });
+  }
+
+  return fragments;
+};
+
+const renderAssistantMessage = (content: string) => {
+  const blocks = parseAssistantBlocks(content);
+
+  if (blocks.length === 0) {
+    return null;
+  }
+
+  return blocks.map((block, blockIndex) => {
+    if (block.type === "paragraph") {
+      return (
+        <p
+          key={`paragraph-${blockIndex}`}
+          className="whitespace-pre-wrap break-words text-[13px] leading-7 text-slate-700 sm:text-sm md:text-[15px]"
+        >
+          {renderInlineMarkdown(block.text)}
+        </p>
+      );
+    }
+
+    const ListTag = block.type === "bullet" ? "ul" : "ol";
+
+    return (
+      <ListTag
+        key={`${block.type}-${blockIndex}`}
+        className={`space-y-1.5 pl-5 text-[13px] leading-7 text-slate-700 sm:text-sm md:text-[15px] ${
+          block.type === "bullet" ? "list-disc" : "list-decimal"
+        }`}
+      >
+        {block.items.map((item, itemIndex) => (
+          <li key={`${block.type}-${blockIndex}-${itemIndex}`} className="break-words">
+            {renderInlineMarkdown(item)}
+          </li>
+        ))}
+      </ListTag>
+    );
+  });
+};
 
 const loadStoredMessages = (): Message[] => {
   if (typeof window === "undefined") return DEFAULT_MESSAGES;
@@ -177,7 +343,7 @@ export default function Assistant() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-clip flex flex-col bg-[radial-gradient(circle_at_top,_rgba(219,234,254,0.9),_rgba(248,250,252,1)_42%,_rgba(239,246,255,1)_100%)] text-slate-900">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-[radial-gradient(circle_at_top,_rgba(219,234,254,0.9),_rgba(248,250,252,1)_42%,_rgba(239,246,255,1)_100%)] text-slate-900">
       <header className="sticky top-0 z-40 border-b border-white/70 bg-white/75 shadow-[0_8px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6 md:py-3.5">
           <div className="flex min-w-0 items-center gap-3">
@@ -352,13 +518,13 @@ export default function Assistant() {
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.85)_0%,rgba(255,255,255,1)_56%,rgba(239,246,255,0.45)_100%)] px-3 py-3 space-y-3.5 sm:px-4 sm:py-4 md:px-5 md:py-5">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[linear-gradient(180deg,rgba(248,250,252,0.85)_0%,rgba(255,255,255,1)_56%,rgba(239,246,255,0.45)_100%)] px-3 py-3 space-y-4 sm:px-4 sm:py-4 md:px-5 md:py-5">
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   {message.role === "assistant" ? (
-                    <div className="max-w-[84%] sm:max-w-[82%] md:max-w-[78%] lg:max-w-[66%]">
+                    <div className="max-w-[92%] sm:max-w-[84%] md:max-w-[78%] lg:max-w-[66%]">
                       <div
-                        className={`rounded-[20px] rounded-tl-md px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-3 ${
+                        className={`rounded-[22px] rounded-tl-md px-4 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-3.5 ${
                           message.error
                             ? "border border-red-200 bg-red-50"
                             : message.content === "Sedang memproses..."
@@ -367,24 +533,40 @@ export default function Assistant() {
                         }`}
                       >
                         {message.content === "Sedang memproses..." ? (
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" />
-                            <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: "0.15s" }} />
-                            <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: "0.3s" }} />
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-2">
+                              <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" />
+                              <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: "0.15s" }} />
+                              <div className="h-2.5 w-2.5 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: "0.3s" }} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-semibold text-slate-800 sm:text-sm">SiDoku sedang mengetik...</p>
+                              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
+                                Menyiapkan jawaban yang lebih rapi untuk Anda.
+                              </p>
+                            </div>
                           </div>
                         ) : message.error ? (
-                          <div className="flex items-start gap-2">
+                          <div className="flex items-start gap-2.5">
                             <AlertCircle size={16} className="mt-0.5 flex-shrink-0 text-red-600" />
-                            <p className="text-[13px] leading-relaxed text-red-700 sm:text-sm md:text-[15px]">{message.content}</p>
+                            <div className="min-w-0 flex-1">
+                              <p className="whitespace-pre-wrap break-words text-[13px] leading-7 text-red-700 sm:text-sm md:text-[15px]">
+                                {message.content}
+                              </p>
+                            </div>
                           </div>
                         ) : (
-                          <p className="text-[13px] leading-relaxed text-slate-700 sm:text-sm md:text-[15px]">{message.content}</p>
+                          <div className="space-y-3 text-[13px] leading-7 text-slate-700 sm:text-sm md:text-[15px]">
+                            {renderAssistantMessage(message.content) ?? (
+                              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div className="max-w-[84%] rounded-[20px] rounded-br-md bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 py-2.5 text-white shadow-[0_16px_32px_rgba(37,99,235,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,99,235,0.28)] sm:max-w-[72%] lg:max-w-[60%] sm:px-4 sm:py-3">
-                      <p className="text-[13px] leading-relaxed sm:text-sm md:text-[15px]">{message.content}</p>
+                    <div className="max-w-[92%] rounded-[20px] rounded-br-md bg-gradient-to-r from-blue-600 to-sky-500 px-4 py-3 text-white shadow-[0_16px_32px_rgba(37,99,235,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_rgba(37,99,235,0.28)] sm:max-w-[74%] lg:max-w-[60%] sm:px-4 sm:py-3.5">
+                      <p className="whitespace-pre-wrap break-words text-[13px] leading-7 sm:text-sm md:text-[15px]">{message.content}</p>
                     </div>
                   )}
                 </div>
@@ -408,7 +590,7 @@ export default function Assistant() {
                     disabled={isLoading}
                     placeholder="Tulis pertanyaan Anda..."
                     rows={1}
-                    className="w-full min-h-[48px] resize-none rounded-[18px] border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[52px] sm:px-4 sm:py-3"
+                    className="w-full min-h-[48px] resize-none rounded-[18px] border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[52px] sm:px-4 sm:py-3 [overflow-wrap:anywhere]"
                   />
                 </div>
 
