@@ -50,24 +50,80 @@ Teknologi:
 sidoku-backend/
 ├── src/
 │   ├── config/
-│   │   └── database.js
+│   │   └── database.js               (konfigurasi koneksi PostgreSQL)
 │   ├── constants/
-│   │   └── productCategories.js
-│   ├── controllers/
-│   ├── exceptions/
-│   ├── middlewares/
-│   ├── repositories/
-│   ├── routes/
-│   ├── services/
-│   ├── utils/
-│   ├── validators/
-│   ├── app.js
-│   ├── server.js
-│   └── test-db.js
+│   │   └── productCategories.js      (daftar kategori produk: Bahan Baku, Makanan, Minuman, Peralatan, Lainnya)
+│   ├── controllers/                  (logika bisnis untuk setiap fitur)
+│   │   ├── aiChatbotController.js
+│   │   ├── aiController.js
+│   │   ├── authController.js
+│   │   ├── dashboardController.js
+│   │   ├── expenseController.js
+│   │   ├── productController.js
+│   │   ├── sellingRecapController.js
+│   │   ├── settingsController.js
+│   │   ├── stockInController.js
+│   │   └── stockOutController.js
+│   ├── data/                         (dummy data untuk testing)
+│   ├── exceptions/                   (custom error classes)
+│   │   ├── authentication-error.js
+│   │   ├── authorization-error.js
+│   │   ├── client-error.js
+│   │   ├── conflict-error.js
+│   │   ├── invariant-error.js
+│   │   ├── not-found-error.js
+│   │   └── index.js
+│   ├── middlewares/                  (middleware untuk autentikasi, validasi, error handling)
+│   │   ├── auth.js
+│   │   ├── error.js
+│   │   ├── validatePayload.js
+│   │   └── validateQuery.js
+│   ├── repositories/                 (akses database untuk setiap fitur)
+│   │   ├── aiRepository.js
+│   │   ├── authenticationRepository.js
+│   │   ├── dashboardRepository.js
+│   │   ├── expenseRepository.js
+│   │   ├── productRepository.js
+│   │   ├── sellingRecapRepository.js
+│   │   ├── settingsRepository.js
+│   │   ├── stockInRepository.js
+│   │   ├── stockOutRepository.js
+│   │   └── userRepository.js
+│   ├── routes/                       (definisi API endpoints)
+│   │   ├── aiChatbotRoutes.js
+│   │   ├── aiRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── dashboardRoutes.js
+│   │   ├── expenseRoutes.js
+│   │   ├── productRoutes.js
+│   │   ├── sellingRecapRoutes.js
+│   │   ├── settingsRoutes.js
+│   │   ├── stockInsRoutes.js
+│   │   └── stockOutsRoutes.js
+│   ├── services/                     (layanan eksternal, e.g., AI service)
+│   │   └── aiService.js
+│   ├── utils/                        (utilitas helper)
+│   │   └── response.js
+│   ├── validators/                   (validasi input menggunakan Joi)
+│   │   ├── aiChatbotValidator.js
+│   │   ├── aiValidator.js
+│   │   ├── authValidator.js
+│   │   ├── expenseValidator.js
+│   │   ├── productValidator.js
+│   │   ├── sellingRecapValidator.js
+│   │   ├── settingsValidator.js
+│   │   ├── stockInValidator.js
+│   │   └── stockOutValidator.js
+│   ├── seeders/                      (database seeding untuk demo data)
+│   │   └── seedDemoData.js
+│   ├── app.js                        (konfigurasi Express app)
+│   ├── server.js                     (entry point aplikasi)
+│   └── test-db.js                    (script untuk test koneksi database)
 ├── docs/
-├── .env
+│   └── SiDoku.txt                    (dokumentasi API detail)
+├── .env                              (environment variables - jangan commit)
 ├── .gitignore
-├── eslint.config.js
+├── eslint.config.js                  (konfigurasi ESLint)
 ├── package.json
 └── README.md
 ```
@@ -214,10 +270,11 @@ Semua endpoint berada di bawah prefix `/v1`.
 ### Pengeluaran
 
 - `GET /v1/expenses`
-  - query: `category=restock|operational|others`, `startDate`, `endDate`
+  - query: `category=restock|operational|others`, `date`, `startDate`, `endDate`
+  - Response mencakup `summary` (total, kategori breakdown, percentage) dan `records`
 
 - `POST /v1/expenses`
-  - body: `{ expenseName, category, amount, date, description? }`
+  - body: `{ expenseName, category, amount, date, time?, description? }`
 
 - `DELETE /v1/expenses/:expenseId`
 
@@ -482,10 +539,96 @@ Untuk setiap produk, data yang dikirim ke AI service meliputi:
 
 ## Catatan Penting
 
-- AI analytics dan chatbot tergantung pada `AI_SERVICE_URL`.
-- `AI_SERVICE_URL` harus diarahkan ke layanan AI yang mendukung endpoint dan payload yang disyaratkan oleh `src/services/aiService.js`.
-- Endpoint `/v1/products` mendukung archive dan restore produk.
-- Konsistensi data sangat penting: gunakan `productId` yang valid untuk stok masuk, stok keluar, dan AI forecast.
+### Fitur & Fungsionalitas
+
+1. **Autentikasi**
+   - Semua endpoint (kecuali register/login) membutuhkan JWT access token
+   - Access token aktif 1 hari, refresh token aktif 7 hari
+   - Logout menyimpan refresh token ke blacklist
+
+2. **Manajemen Produk**
+   - Produk dapat di-archive dan di-restore
+   - Stok tracking otomatis berdasarkan stok masuk dan keluar
+   - Support 5 kategori: Bahan Baku, Makanan, Minuman, Peralatan, Lainnya
+   - Stok status: Active atau Archived
+
+3. **Dashboard**
+   - Summary: ringkasan pemasukan, pengeluaran, profit/loss, jumlah produk
+   - Insights: tip & rekomendasi berbasis data
+   - Low Stocks: produk dengan stok di bawah minimum
+   - Trends: grafik income & expense 7 hari terakhir
+
+4. **Pengeluaran**
+   - Kategori: Restock Barang, Biaya Operasional, Lainnya
+   - Setiap pengeluaran mencatat waktu pembayaran
+   - Response termasuk summary: total, per kategori, dan percentage
+
+5. **Stok Masuk & Stok Keluar**
+   - Tracking otomatis update stok produk
+   - Support query filter berdasarkan produk, tanggal, atau range tanggal
+   - Setiap pencatatan menyimpan note opsional
+
+6. **AI Analytics & Chatbot**
+   - Prediksi penjualan per produk (sales forecasting)
+   - Analisis stok dan identifikasi kritis (insights)
+   - Rekomendasi restock optimal (recommendations)
+   - Chat bot interaktif untuk analisis bisnis real-time
+   - Semua fitur AI bergantung pada AI_SERVICE_URL
+
+7. **Selling Recap**
+   - Laporan penjualan berdasarkan tanggal
+   - Menampilkan detail produk terjual, kuantitas, dan total income
+
+8. **Settings**
+   - Profile: data owner (nama, email, telepon, foto)
+   - Store Account: data toko (nama, kategori, alamat, deskripsi)
+   - Password: update password dengan verifikasi password lama
+
+### Validasi Input
+
+- **Semua payload** divalidasi menggunakan Joi schema
+- **Kategori Produk** valid: `Bahan Baku`, `Makanan`, `Minuman`, `Peralatan`, `Lainnya`
+- **Kategori Pengeluaran** valid: `restock`, `operational`, `others`
+- **Date format**: ISO date string (YYYY-MM-DD)
+- **Time format**: HH:mm (24-hour format)
+- **Password**: minimal 5 karakter
+- **Confirmation fields**: confirmPassword dan confirmNewPassword harus cocok
+
+### Error Handling
+
+Middleware error handling menangani semua jenis error:
+
+- `ClientError` (400): Input validation error
+- `AuthenticationError` (401): Token tidak valid atau sesi berakhir
+- `AuthorizationError` (403): User tidak berhak akses resource
+- `NotFoundError` (404): Resource tidak ditemukan
+- `ConflictError` (409): Data sudah exist (e.g., email duplikat)
+- `InvariantError` (500): Server error umum
+
+### AI Service Integration
+
+- **Requirements**: AI service harus support endpoint POST untuk chat, forecast, insights, dan recommendations
+- **Error Handling**: Jika AI service error, akan return status 502/503 dengan pesan error dari service
+- **Data Sent**: Product profile lengkap termasuk stok, harga, history stok masuk/keluar
+
+### Debugging & Development
+
+```bash
+# Test koneksi database
+node src/test-db.js
+
+# Seed demo data (jika ada)
+node src/seeders/seedDemoData.js
+```
+
+### Best Practices
+
+- Jangan hardcode environment variables, selalu gunakan .env file
+- Backup DATABASE_URL dan JWT secrets dengan aman
+- Pastikan AI_SERVICE_URL accessible dari server
+- Monitor response time AI service, set timeout jika perlu
+- Gunakan query filters (category, date, startDate, endDate) untuk optimize database queries
+- Archive produk bukan delete untuk menjaga historical data
 
 ---
 

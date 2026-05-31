@@ -4,6 +4,7 @@ import response from '../utils/response.js';
 import {
   AuthorizationError,
   NotFoundError,
+  InvariantError,
 } from '../exceptions/index.js';
 import * as settingsRepository from '../repositories/settingsRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
@@ -170,6 +171,12 @@ export const updatePassword = async (req, res, next) => {
 
     if (!isPasswordMatch) {
       return next(new AuthorizationError('Password saat ini salah.'));
+    }
+
+    if (currentPassword === newPassword) {
+      return next(
+        new InvariantError('Password baru tidak boleh sama dengan password lama.'),
+      );
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
