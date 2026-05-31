@@ -10,7 +10,7 @@ Menyediakan layanan autentikasi, manajemen produk, stok, pengeluaran, dan logika
 https://sidoku.up.railway.app
 
 ### AI Service
-Menyediakan layanan chatbot berbasis OpenAI API dan forecasting untuk rekomendasi restock produk.
+Menyediakan layanan chatbot berbasis Groq API (Llama) dan forecasting untuk rekomendasi restock produk.
 https://sidoku-ai.up.railway.app
 
 ### Dashboard Data Science
@@ -71,9 +71,9 @@ SiDoku hadir sebagai solusi digital yang membantu pelaku usaha mengelola data op
 * Informasi performa bisnis secara umum.
 
 ### 🤖 AI Assistant
-* Chatbot berbasis OpenAI API.
-* Membantu pengguna memahami fitur aplikasi.
-* Menjawab pertanyaan seputar pengelolaan usaha.
+* Chatbot berbasis Groq API (model `llama-3.3-70b-versatile`).
+* Menjawab pertanyaan seputar penjualan, pengeluaran, stok, dan performa bisnis.
+* Mendukung prediksi penjualan per produk dengan durasi yang dapat ditentukan (maks 14 hari).
 * Memberikan informasi dan bantuan secara interaktif.
 
 ### 📈 Forecasting dan Rekomendasi Restock
@@ -119,7 +119,9 @@ Dashboard analitik berbasis Streamlit yang digunakan oleh tim Data Science untuk
 
 ### Artificial Intelligence
 * Python
-* OpenAI API
+* FastAPI
+* Groq API (`llama-3.3-70b-versatile`)
+* TensorFlow / Keras (GRU model forecasting)
 
 ### Data Science
 * Pandas
@@ -219,7 +221,7 @@ npm run dev
 ```bash
 cd ai-service
 pip install -r requirements.txt
-python app.py
+python main.py
 ```
 
 ### Menjalankan Dashboard Data Science
