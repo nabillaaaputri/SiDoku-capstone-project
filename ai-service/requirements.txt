@@ -3,7 +3,6 @@ uvicorn==0.27.0
 python-dotenv==1.0.0
 pydantic==2.7.0
 
-
 # Data & ML
 numpy>=1.26.0,<2.0.0
 pandas==2.2.0
@@ -14,6 +13,9 @@ joblib==1.5.3
 
 # Text Processing
 nltk==3.9.1
+
+# OpenAI
+openai>=1.0.0
 
 # Testing
 pytest==7.4.0

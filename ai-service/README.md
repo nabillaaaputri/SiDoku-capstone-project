@@ -21,9 +21,7 @@ Folder ini merupakan folder utama dari AI-Service yang digunakan pada aplikasi s
 ```
 ai-service/
 ├── chatbot/
-│   ├── chatbot.py          # Engine chatbot NLTK
-│   ├── chat_data.json      # Dataset intent chatbot
-│   └── slangwords.json     # Kamus kata slang bahasa Indonesia
+│   └── chatbot.py          # Engine chatbot menggunakan OpenAI (Intent Routing & NLG)
 ├── models/
 │   ├── sales_forecasting_store1.keras  # Model GRU hasil training
 │   ├── scaler.joblib                   # MinMaxScaler
@@ -65,7 +63,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> Catatan: `tensorflow-cpu` lumayan berat berat (200MB). Untuk pengembangan lokal tanpa prediksi, endpoint `/predict`, `/insights`, `/recommend` akan mengembalikan **503** (model tidak tersedia), tetapi `/chat` tetap berfungsi normal.
+> Catatan: `tensorflow-cpu` lumayan berat (200MB). Untuk pengembangan lokal tanpa prediksi, endpoint `/predict`, `/insights`, `/recommend` akan mengembalikan **503** (model tidak tersedia), tetapi `/chat` tetap berfungsi normal.
 
 ### 3. Buat File `.env`
 
@@ -73,7 +71,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-> Catatan: Edit sesuai konfigurasi lokal.
+> Catatan: Edit sesuai konfigurasi lokal, pastikan menambahkan `OPENAI_API_KEY`.
 
 ### 4. Jalankan Server
 
@@ -97,6 +95,7 @@ Salin `.env.example` menjadi `.env` dan sesuaikan:
 | ----------------------- | ----------------------- | ------------------------------------------------- |
 | `FASTAPI_ENV`           | `development`           | Set `production` untuk Railway                    |
 | `API_PORT`              | `8000`                  | Port lokal (Railway menggunakan `$PORT` otomatis) |
+| `OPENAI_API_KEY`        | _(kosong)_              | Kunci API OpenAI untuk Chatbot LLM                |
 | `BACKEND_URL`           | `http://localhost:3001` | URL Express.js backend (untuk CORS)               |
 | `FRONTEND_URL`          | `http://localhost:5173` | URL frontend (untuk CORS)                         |
 | `RAILWAY_PUBLIC_DOMAIN` | _(kosong)_              | Diisi otomatis oleh Railway                       |
@@ -116,132 +115,66 @@ Swagger UI otomatis di-generate oleh FastAPI dari kode endpoint yang ada.
 
 ---
 
-## Chatbot Actions
+## Chatbot Actions & Alur NLG
 
-Endpoint `POST /chat` mengembalikan field `action` yang memberitahu backend **apa yang harus dilakukan** setelah chatbot menjawab. Backend Express wajib membaca field ini dan menentukan tindak lanjut yang sesuai.
+Endpoint `POST /chat` tidak lagi membalas dengan kalimat templat statis, melainkan menggunakan OpenAI untuk **dua tujuan utama**:
+1. **Tahap 1 (Intent Routing):** Menganalisis pertanyaan awal untuk menentukan `action` (data apa yang harus dicari backend).
+2. **Tahap 2 (Natural Language Generation/NLG):** Merangkai kalimat jawaban natural setelah diberikan *raw data* dari backend.
 
-### Alur Umum
+### Alur Umum 2 Tahap
 
 ```
 Frontend kirim pesan
-    → Express POST /chat ke AI Service
-    → AI Service balas { response, action, tag }
-    → Express baca `action`
-    → Express eksekusi sesuai tabel di bawah
-    → Express kirim { response, data } ke Frontend
+    → Express POST /chat ke AI Service (Tahap 1: hanya teks)
+    → AI Service membalas { action: "fetch_xxx" }
+    → Express query data mentah dari Database / Model ML
+    → Express POST /chat kembali (Tahap 2: mengirim JSON berisi question + data)
+    → AI Service merangkai jawaban ramah dari data
+    → Express kirim jawaban akhir AI ke Frontend
 ```
 
-### Tabel Semua Action
+### Tabel Semua Action Tahap 1
 
 | `action`                           | Yang Harus Dilakukan Backend                                                              |
 | ---------------------------------- | ----------------------------------------------------------------------------------------- |
-| `""`                               | Langsung kembalikan `response` ke frontend                                                |
+| `""` (string kosong)               | AI Service sudah menjawab (misal: sapaan/luar konteks). Langsung kembalikan `response`.   |
 | `fetch_daily_sales`                | Query total penjualan hari ini dari tabel `Stok_Keluar` (`tanggal_keluar = CURRENT_DATE`) |
 | `fetch_best_selling`               | Query produk dengan penjualan tertinggi (terlaris) dari DB (misal dalam 7 hari terakhir)  |
 | `fetch_expenses`                   | Query total pengeluaran dari tabel `Pengeluaran`                                          |
 | `fetch_profit_loss`                | Hitung laba = total pemasukan − total pengeluaran dari DB                                 |
 | `fetch_inventory`                  | Query semua produk beserta stok terkini dari tabel `Produk`                               |
-| `predict_inventory_depletion`      | Ambil semua produk + histori stok → `POST /insights` → kirim hasil ke frontend            |
-| `predict_future_sales`             | Ambil produk + histori stok → `POST /predict` → kirim prediksi ke frontend                |
-| `generate_strategy_recommendation` | Ambil semua produk + histori → `POST /recommend` → kirim rekomendasi ke frontend          |
+| `predict_inventory_depletion`      | Ambil semua produk + histori stok → `POST /insights`                                      |
+| `predict_future_sales`             | Ambil produk + histori stok → `POST /predict`                                             |
+| `generate_strategy_recommendation` | Ambil semua produk + histori → `POST /recommend`                                          |
 
 ### Contoh Implementasi di Express.js
 
 ```js
 // POST /api/chat
+// TAHAP 1: Ambil Action
 const aiRes = await axios.post(`${AI_URL}/chat`, { message: req.body.message });
 const { response, action } = aiRes.data;
 
-let data = null;
-
-switch (action) {
-  case "fetch_daily_sales": {
-    const result = await db.query(
-      `SELECT SUM(jumlah) AS total_terjual
-       FROM Stok_Keluar sk
-       JOIN Produk p ON sk.produk_id = p.produk_id
-       WHERE sk.tanggal_keluar = CURRENT_DATE
-         AND p.user_id = $1`,
-      [req.user.id],
-    );
-    data = result.rows[0];
-    break;
-  }
-
-  case "fetch_best_selling": {
-    const result = await db.query(
-      `SELECT p.nama_produk, SUM(sk.jumlah) AS total_terjual
-       FROM Stok_Keluar sk
-       JOIN Produk p ON sk.produk_id = p.produk_id
-       WHERE p.user_id = $1
-         AND sk.tanggal_keluar >= CURRENT_DATE - INTERVAL '7 days'
-       GROUP BY p.produk_id, p.nama_produk
-       ORDER BY total_terjual DESC
-       LIMIT 5`,
-      [req.user.id],
-    );
-    data = result.rows;
-    break;
-  }
-
-  case "fetch_expenses": {
-    const result = await db.query(
-      `SELECT SUM(nominal) AS total_pengeluaran
-       FROM Pengeluaran
-       WHERE user_id = $1
-         AND DATE_TRUNC('month', tanggal) = DATE_TRUNC('month', CURRENT_DATE)`,
-      [req.user.id],
-    );
-    data = result.rows[0];
-    break;
-  }
-
-  case "fetch_profit_loss": {
-    // hitung sendiri dari DB atau endpoint terpisah di Express
-    data = await getProfitLossFromDB(req.user.id);
-    break;
-  }
-
-  case "fetch_inventory": {
-    const result = await db.query(
-      "SELECT nama_produk, stok, kategori FROM Produk WHERE user_id = $1",
-      [req.user.id],
-    );
-    data = result.rows;
-    break;
-  }
-
-  case "predict_inventory_depletion":
-  case "generate_strategy_recommendation": {
-    const products = await buildProductsPayload(req.user.id); // ambil produk + histori
-    const endpoint =
-      action === "predict_inventory_depletion" ? "/insights" : "/recommend";
-    const aiData = await axios.post(`${AI_URL}${endpoint}`, { products });
-    data = aiData.data;
-    break;
-  }
-
-  case "predict_future_sales": {
-    const products = await buildProductsPayload(req.user.id);
-    // predict untuk semua produk atau produk tertentu
-    const aiData = await axios.post(`${AI_URL}/predict`, {
-      ...products[0],
-      days_ahead: 7,
-    });
-    data = aiData.data;
-    break;
-  }
-
-  case "exit_chat":
-    // Frontend handles session close
-    break;
-
-  default:
-    // action kosong — hanya tampilkan response text
-    break;
+// Jika action kosong, ini hanya sapaan santai atau di luar konteks
+if (!action) {
+  return res.json({ answer: response });
 }
 
-res.json({ response, data });
+let data = null;
+
+// Eksekusi data berdasarkan action
+switch (action) {
+  case "fetch_daily_sales": 
+    data = await getDailySalesFromDB(req.user.id);
+    break;
+  // ... tangani action lainnya
+}
+
+// TAHAP 2: Generate Jawaban Natural dari Data
+const finalPrompt = JSON.stringify({ question: req.body.message, data });
+const finalAiRes = await axios.post(`${AI_URL}/chat`, { message: finalPrompt });
+
+res.json({ answer: finalAiRes.data.response });
 ```
 
 ---
