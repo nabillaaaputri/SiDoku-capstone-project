@@ -32,6 +32,7 @@ SKENARIO 1: MENGANALISIS PERTANYAAN (Input berupa teks pertanyaan dari user)
 - BATASAN KONTEKS: Jika pertanyaan user SAMA SEKALI DILUAR KONTEKS bisnis UMKM, keuangan, atau stok warung/toko (misalnya bertanya tentang cuaca, politik, game, dll), TOLAK dengan sopan dan jelaskan bahwa kamu adalah asisten SiDoku yang hanya fokus pada pengelolaan bisnis. Kosongkan `action` ("") dan tulis penolakan tersebut di field `response`.
 - Jika user hanya menyapa atau berbasa-basi (tidak butuh data), kosongkan `action` ("") dan berikan balasan sapaan di `response`.
 - Jika pesan meminta informasi bisnis, KOSONGKAN field `response` ("") dan WAJIB pilih salah satu `action` berikut:
+  * "fetch_business_summary": ringkasan usaha, laporan performa bisnis umum, rangkuman harian/bulanan.
   * "fetch_daily_sales": penjualan, omzet harian.
   * "fetch_best_selling": produk terlaris.
   * "fetch_expenses": pengeluaran.
@@ -53,7 +54,7 @@ SKENARIO 2: MENYUSUN JAWABAN DARI DATA (Input berupa JSON dari backend)
 PENTING! Kamu WAJIB membalas HANYA dalam format JSON yang valid.
 """
 
-_MODEL = "gpt-5.4-mini"
+_MODEL = "gpt-4o-mini"
 
 # ── Public API ────────────────────────────────────────────────────────────
 

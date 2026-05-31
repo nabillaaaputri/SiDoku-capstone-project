@@ -138,6 +138,7 @@ Frontend kirim pesan
 | `action`                           | Yang Harus Dilakukan Backend                                                              |
 | ---------------------------------- | ----------------------------------------------------------------------------------------- |
 | `""` (string kosong)               | AI Service sudah menjawab (misal: sapaan/luar konteks). Langsung kembalikan `response`.   |
+| `fetch_business_summary`           | Ambil ringkasan performa gabungan (penjualan, laba/rugi, produk terlaris) dari DB         |
 | `fetch_daily_sales`                | Query total penjualan hari ini dari tabel `Stok_Keluar` (`tanggal_keluar = CURRENT_DATE`) |
 | `fetch_best_selling`               | Query produk dengan penjualan tertinggi (terlaris) dari DB (misal dalam 7 hari terakhir)  |
 | `fetch_expenses`                   | Query total pengeluaran dari tabel `Pengeluaran`                                          |
@@ -164,6 +165,9 @@ let data = null;
 
 // Eksekusi data berdasarkan action
 switch (action) {
+  case "fetch_business_summary":
+    data = await getBusinessSummaryFromDB(req.user.id);
+    break;
   case "fetch_daily_sales": 
     data = await getDailySalesFromDB(req.user.id);
     break;

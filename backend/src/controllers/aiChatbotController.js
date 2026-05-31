@@ -79,6 +79,19 @@ const handleChatAction = async ({ action, userId }) => {
     return getMonthlyProfitLossSummary(userId);
   }
 
+  case 'fetch_business_summary': {
+    const [sales, profitLoss, bestSelling] = await Promise.all([
+      getTodaySalesSummary(userId),
+      getMonthlyProfitLossSummary(userId),
+      getBestSellingProducts({ userId, days: 7, limit: 3 }),
+    ]);
+    return {
+      sales_hari_ini: sales,
+      laba_rugi_bulan_ini: profitLoss,
+      produk_terlaris_mingguan: bestSelling,
+    };
+  }
+
   case 'fetch_inventory': {
     return getInventorySummary(userId);
   }
