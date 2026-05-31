@@ -37,12 +37,15 @@ export default function Landing() {
           : 'bg-[#EAF2FB]/90 backdrop-blur-sm border-slate-200/70 shadow-[0_8px_20px_rgba(15,23,42,0.06)]'
         }`}>
           <div className="flex justify-between items-center h-14 px-4 sm:px-5 lg:px-6">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <div className="w-8 h-8 rounded-2xl bg-white text-slate-900 border border-white/80 flex items-center justify-center p-1.5 shadow-sm">
-                  <img src={logoImage} alt="SiDoku Logo" className="w-5 h-5 object-contain" />
+            <div className="flex-shrink-0 flex items-center min-w-0">
+              <Link to="/" className="flex items-center gap-2 min-w-0">
+                <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center overflow-hidden ring-1 ring-blue-100/80 shrink-0">
+                  <img src={logoImage} alt="SiDoku" className="w-5 h-5 object-contain" />
                 </div>
-                SiDoku
+                <div className="hidden sm:block min-w-0 leading-tight">
+                  <p className="text-sm font-bold tracking-tight text-slate-900">SiDoku</p>
+                  <p className="text-[11px] text-slate-500">Sistem Data Operasional dan Keuangan Usaha</p>
+                </div>
               </Link>
             </div>
 
