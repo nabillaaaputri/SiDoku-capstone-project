@@ -5,6 +5,7 @@ import { CheckCircle2, LogOut, Settings, Menu, MessageCircle, ChevronDown, Store
 import { getPreferredUserName } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import logoImage from "/logo.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -83,8 +84,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
 
             <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
-              <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center overflow-hidden ring-1 ring-blue-100/80">
-                <img src="/logo.png" alt="SiDoku" className="w-5 h-5 object-contain" />
+              <div className="h-8 w-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center overflow-hidden ring-1 ring-blue-100/80 shrink-0">
+                <img src={logoImage} alt="SiDoku" className="w-5 h-5 object-contain" />
               </div>
               <div className="hidden sm:block min-w-0 leading-tight">
                 <p className="text-sm font-bold tracking-tight text-slate-900">SiDoku</p>
