@@ -20,6 +20,12 @@ Project ini berfokus pada:
 - Data Preprocessing
 - Business Analytics Dashboard
 - A/B Testing
+=======
+- analisis penjualan retail
+- exploratory data analysis (EDA)
+- preprocessing data
+- feature engineering
+- forecasting penjualan
 
 Dataset yang digunakan merupakan dataset retail sales sintetis dengan data transaksi penjualan harian periode 2021–2023.
 
@@ -29,12 +35,20 @@ Dataset yang digunakan merupakan dataset retail sales sintetis dengan data trans
 
 Project ini bertujuan untuk:
 
+<<<<<<< HEAD
 - Memahami pola penjualan harian
 - Mengidentifikasi produk dengan performa terbaik
 - Menganalisis hubungan harga terhadap penjualan
 - Mengevaluasi efektivitas promo terhadap penjualan
 - Menemukan insight bisnis berbasis data
 - Membantu pengambilan keputusan melalui dashboard interaktif
+=======
+- memahami pola penjualan harian
+- menganalisis performa produk
+- mengidentifikasi pengaruh harga dan promosi terhadap penjualan
+- menemukan insight bisnis berbasis data
+- mempersiapkan dataset untuk machine learning dan forecasting
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ---
 
@@ -45,11 +59,24 @@ Pada tahap ini dilakukan identifikasi permasalahan bisnis dan penyusunan pertany
 ## Business Questions
 
 1. Bagaimana distribusi penjualan harian pada dataset store selama periode 2021–2023?
+<<<<<<< HEAD
 2. Produk apa yang memiliki jumlah penjualan tertinggi selama periode pengamatan?
 3. Bagaimana hubungan antara harga produk dan jumlah penjualan?
 4. Apakah terdapat pola penjualan tertentu berdasarkan waktu?
 5. Variabel apa yang memiliki korelasi paling kuat terhadap penjualan?
 6. Apakah terdapat outlier pada data penjualan?
+=======
+
+2. Produk apa yang memiliki jumlah penjualan tertinggi dan terendah selama periode 2021–2023?
+
+3. Bagaimana hubungan antara harga produk dan jumlah penjualan?
+
+4. Apakah terdapat pola penjualan tertentu berdasarkan waktu?
+
+5. Variabel apa yang memiliki korelasi paling kuat terhadap penjualan?
+
+6. Apakah terdapat outlier pada data penjualan yang dapat mempengaruhi analisis?
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ---
 
@@ -62,12 +89,20 @@ https://www.kaggle.com/datasets/dhruvangtalukdar/store-item-demand-forecasting-d
 ## Dataset Features
 
 | Feature | Description |
+<<<<<<< HEAD
 |----------|-------------|
+=======
+|---|---|
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 | date | tanggal transaksi |
 | item_id | identitas produk |
 | sales | jumlah penjualan |
 | price | harga produk |
+<<<<<<< HEAD
 | promo | status promo |
+=======
+| promo | status promosi |
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 | weekday | hari transaksi |
 | month | bulan transaksi |
 
@@ -77,6 +112,7 @@ https://www.kaggle.com/datasets/dhruvangtalukdar/store-item-demand-forecasting-d
 
 Project ini terdiri dari beberapa tahapan utama:
 
+<<<<<<< HEAD
 1. Data Wrangling
 2. Exploratory Data Analysis (EDA)
 3. Explanatory Analysis
@@ -84,12 +120,22 @@ Project ini terdiri dari beberapa tahapan utama:
 5. Data Preprocessing
 6. Dashboard Development
 7. A/B Testing
+=======
+1. Data Wrangling  
+2. Exploratory Data Analysis (EDA)  
+3. Data Visualization  
+4. Explanatory Analysis  
+5. Feature Engineering  
+6. Data Preprocessing  
+7. Forecasting Preparation  
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ---
 
 # 📁 Project Structure
 
 ```bash
+<<<<<<< HEAD
 data-science/
 │
 ├── dashboard/
@@ -106,6 +152,29 @@ data-science/
 │   ├── 3_preprocessing.ipynb
 │   └── 4_ab_testing.ipynb
 │
+=======
+SiDoku-capstone-project/
+│
+├── data-science/
+│   ├── dashboard/
+│   │   └── dashboard.py
+│   │
+│   ├── data/
+│   │   ├── dataset_store.csv
+│   │   ├── wrangled_data.csv
+│   │   └── preprocessed_dataset.csv
+│   │
+│   ├── notebook/
+│   │   ├── 1_data_wrangling.ipynb
+│   │   ├── 2_eda.ipynb
+│   │   ├── 3_preprocessing.ipynb
+│   │   └── 4_ab_testing.ipynb
+│   │
+│   └── README.md
+│
+├── backend/
+├── frontend/
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 └── README.md
 ```
 
@@ -120,12 +189,20 @@ Pada tahap data wrangling dilakukan proses persiapan data sebelum masuk ke tahap
 - Gathering Data
 - Assessing Data
 - Cleaning Data
+<<<<<<< HEAD
 - Handling Missing Values
+=======
+- Handling Missing Value
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 - Handling Duplicate Data
 - Data Validation
 
 ## Output
 
+<<<<<<< HEAD
+=======
+Dataset hasil wrangling:
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 ```bash
 wrangled_data.csv
 ```
@@ -144,6 +221,7 @@ Tahap EDA dilakukan untuk memahami pola, distribusi, dan insight dari dataset pe
 
 ## Analisis yang Dilakukan
 
+<<<<<<< HEAD
 - Distribusi penjualan
 - Analisis produk terlaris
 - Analisis korelasi
@@ -158,6 +236,22 @@ Tahap EDA dilakukan untuk memahami pola, distribusi, dan insight dari dataset pe
 - Scatter Plot
 - Boxplot
 - Heatmap
+=======
+- distribusi penjualan
+- analisis produk terlaris
+- analisis korelasi
+- analisis pola penjualan berdasarkan waktu
+- analisis hubungan harga dan penjualan
+- identifikasi outlier
+
+## Visualisasi yang Digunakan
+
+- histogram
+- line chart
+- boxplot
+- heatmap
+- scatter plot
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ## Notebook
 
@@ -169,6 +263,7 @@ Tahap EDA dilakukan untuk memahami pola, distribusi, dan insight dari dataset pe
 
 # 📉 Explanatory Analysis
 
+<<<<<<< HEAD
 Explanatory Analysis dilakukan untuk membantu menjawab pertanyaan bisnis melalui visualisasi data dan interpretasi insight.
 
 ## Insight yang Dihasilkan
@@ -178,11 +273,23 @@ Explanatory Analysis dilakukan untuk membantu menjawab pertanyaan bisnis melalui
 - Hubungan harga terhadap penjualan
 - Pengaruh promo terhadap penjualan
 - Pola musiman penjualan
+=======
+Explanatory analysis dilakukan untuk membantu menjawab pertanyaan bisnis melalui visualisasi data dan interpretasi insight.
+
+## Insight yang Dihasilkan
+
+- pola penjualan harian
+- pengaruh promosi terhadap penjualan
+- hubungan harga dengan sales
+- pola musiman penjualan
+- distribusi produk berdasarkan kategori
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ---
 
 # ⚙️ Feature Engineering & Preprocessing
 
+<<<<<<< HEAD
 Tahap preprocessing dilakukan untuk meningkatkan kualitas data sebelum digunakan dalam analisis lanjutan.
 
 ## Proses yang Dilakukan
@@ -203,11 +310,29 @@ Mengidentifikasi outlier menggunakan metode statistik.
 
 Membuat fitur baru dari variabel waktu seperti:
 
+=======
+Tahap preprocessing dilakukan untuk meningkatkan kualitas data sebelum digunakan pada tahap modeling dan forecasting.
+
+## Proses yang Dilakukan
+
+### 1. Handling Missing Value
+Menghapus atau menangani data kosong agar dataset lebih konsisten.
+
+### 2. Handling Duplicate Data
+Menghapus data duplikat untuk menghindari bias analisis.
+
+### 3. Handling Outlier
+Mengidentifikasi dan menangani outlier menggunakan metode IQR dan RobustScaler.
+
+### 4. Feature Extraction
+Membuat fitur baru dari variabel waktu seperti:
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 - year
 - month
 - day
 - day_of_week
 
+<<<<<<< HEAD
 ### Encoding
 
 Mengubah fitur kategorikal menjadi format numerik.
@@ -218,6 +343,20 @@ Melakukan scaling agar distribusi fitur lebih stabil terhadap outlier.
 
 ## Output
 
+=======
+### 5. Feature Transformation
+Melakukan log transformation untuk membantu mengurangi skewness pada distribusi data.
+
+### 6. Encoding Feature
+Mengubah fitur kategorikal menjadi bentuk numerik agar dapat diproses model machine learning.
+
+### 7. Feature Scaling
+Melakukan scaling menggunakan RobustScaler agar distribusi fitur lebih stabil terhadap outlier.
+
+## Output
+
+Dataset hasil preprocessing:
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 ```bash
 preprocessed_dataset.csv
 ```
@@ -234,6 +373,7 @@ preprocessed_dataset.csv
 
 Dashboard interaktif dibangun menggunakan Streamlit untuk membantu eksplorasi data penjualan secara visual dan interaktif.
 
+<<<<<<< HEAD
 ## Dashboard Features
 
 ### 📈 Sales Trend Over Time
@@ -276,21 +416,40 @@ Dashboard menyediakan filter interaktif berupa:
 - Promo Status
 
 ## Run Dashboard
+=======
+## Fitur Dashboard
+
+* Sales Trend Over Time
+* Sales Distribution
+* Top Selling Products
+* Lowest Selling Products
+* Price vs Sales Analysis
+* Promo Impact Analysis
+* Monthly Sales Pattern
+* Correlation Heatmap
+* Outlier Analysis
+
+## Menjalankan Dashboard
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ```bash
 streamlit run dashboard.py
 ```
 
+<<<<<<< HEAD
 ## Dashboard File
 
 ```bash
 dashboard.py
 ```
 
+=======
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 ---
 
 # 🧪 A/B Testing
 
+<<<<<<< HEAD
 A/B Testing dilakukan untuk mengevaluasi efektivitas promo terhadap jumlah penjualan.
 
 ## Business Question
@@ -335,6 +494,24 @@ Hasil pengujian menunjukkan bahwa:
 ## Conclusion
 
 Promo terbukti memberikan pengaruh yang signifikan terhadap peningkatan jumlah penjualan sehingga dapat digunakan sebagai strategi pemasaran yang efektif.
+=======
+Analisis A/B Testing dilakukan untuk mengukur pengaruh promo terhadap penjualan menggunakan Independent Two Sample T-Test.
+
+## Hipotesis
+
+H0 : Tidak terdapat perbedaan rata-rata penjualan antara transaksi promo dan non promo.
+
+H1 : Terdapat perbedaan rata-rata penjualan antara transaksi promo dan non promo.
+
+## Metode
+
+* Uji Normalitas
+* Independent Two Sample T-Test
+
+## Hasil
+
+Hasil pengujian menunjukkan bahwa transaksi yang menggunakan promo menghasilkan rata-rata penjualan yang lebih tinggi dibandingkan transaksi tanpa promo dan perbedaannya signifikan secara statistik (p-value < 0,05).
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ## Notebook
 
@@ -342,6 +519,7 @@ Promo terbukti memberikan pengaruh yang signifikan terhadap peningkatan jumlah p
 4_ab_testing.ipynb
 ```
 
+<<<<<<< HEAD
 ---
 
 # 📊 Key Findings
@@ -370,6 +548,8 @@ Terdapat pola musiman pada periode tertentu yang memengaruhi penjualan.
 
 ---
 
+=======
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 # 🚀 Technologies Used
 
 Project ini menggunakan beberapa library dan tools berikut:
@@ -389,6 +569,7 @@ Project ini menggunakan beberapa library dan tools berikut:
 
 # 📊 Results
 
+<<<<<<< HEAD
 Hasil project meliputi:
 
 - Insight bisnis berbasis data
@@ -397,6 +578,18 @@ Hasil project meliputi:
 - Dashboard analitik interaktif menggunakan Streamlit
 - Analisis efektivitas promo menggunakan A/B Testing
 - Dataset siap digunakan untuk analisis lanjutan
+=======
+Hasil dari project ini meliputi:
+
+- insight bisnis berbasis data
+- workflow preprocessing yang terstruktur
+- visualisasi data penjualan
+- dashboard analitik interaktif menggunakan Streamlit
+- analisis efektivitas promo menggunakan A/B Testing
+- dataset siap modeling
+- feature engineering yang lebih informatif
+- preprocessing pipeline yang konsisten
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
 
 ---
 
@@ -404,6 +597,7 @@ Hasil project meliputi:
 
 Pengembangan selanjutnya yang direncanakan:
 
+<<<<<<< HEAD
 - machine learning modeling untuk prediksi penjualan
 - time series forecasting untuk memprediksi tren penjualan di masa mendatang
 - deployment web application agar dapat diakses secara online
@@ -416,3 +610,11 @@ Pengembangan selanjutnya yang direncanakan:
 Project ini berhasil mengimplementasikan proses analisis data end-to-end mulai dari data wrangling, exploratory data analysis, preprocessing, visualisasi interaktif melalui Streamlit Dashboard, hingga pengujian hipotesis menggunakan A/B Testing.
 
 Hasil analisis menunjukkan bahwa promo memberikan pengaruh signifikan terhadap peningkatan penjualan sehingga dapat dijadikan dasar dalam pengambilan keputusan bisnis berbasis data.
+=======
+- machine learning modeling
+- time series forecasting
+- deployment web application
+- integrasi backend dan frontend
+
+---
+>>>>>>> 4f737e1 (Add dashboard and A/B testing analysis)
