@@ -246,10 +246,8 @@ export default function Account() {
       }
       setIsEditing(false);
 
-      await Promise.allSettled([
-        loadAccountData(),
-        refreshUser(),
-      ]);
+      await refreshUser();
+      await loadAccountData();
 
       toast({
         title: "Berhasil",
