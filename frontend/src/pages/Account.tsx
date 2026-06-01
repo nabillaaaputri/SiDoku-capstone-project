@@ -148,7 +148,13 @@ export default function Account() {
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.currentTarget;
+
+    if (name === "shopName") {
+      setFormData((prev) => ({ ...prev, shopName: value }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -225,6 +231,7 @@ export default function Account() {
       }
 
       if (activeTab === "shop") {
+        console.log("SAVE SHOP FORM DATA:", formData);
         await authService.updateStoreAccount({
           storeName: formData.shopName,
           storeCategory: formData.shopCategory,
