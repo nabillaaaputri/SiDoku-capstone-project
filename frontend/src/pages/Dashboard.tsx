@@ -75,6 +75,17 @@ interface SalesForecastPoint {
   predictedQuantity: number;
 }
 
+const forecastDateFormatter = new Intl.DateTimeFormat("id-ID", {
+  timeZone: "Asia/Jakarta",
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+});
+
+function formatForecastLabel(date: Date) {
+  return forecastDateFormatter.format(date);
+}
+
 function DashboardLoadingState() {
   return (
     <DashboardLayout>
@@ -151,6 +162,25 @@ export default function Dashboard() {
     () => activeProducts.filter((product) => salesRecords.some((record) => record.productId === product.id)),
     [activeProducts, salesRecords],
   );
+  const latestHistoricalForecastDateKey = useMemo(() => {
+    return salesRecords
+      .filter((record) => activeProductIds.has(record.productId))
+      .reduce<string | null>((latestKey, record) => {
+        const recordDate = new Date(record.date);
+
+        if (Number.isNaN(recordDate.getTime())) {
+          return latestKey;
+        }
+
+        const recordKey = getJakartaDateInputValue(recordDate);
+
+        if (!latestKey || recordKey > latestKey) {
+          return recordKey;
+        }
+
+        return latestKey;
+      }, null);
+  }, [activeProductIds, salesRecords]);
 
   useEffect(() => {
     let isMounted = true;
@@ -304,16 +334,16 @@ export default function Dashboard() {
         }
 
         const baseForecast = validResults[0].value.forecast;
-        const futurePoints = baseForecast.predictions.map((prediction) => {
-          const predictionDate = new Date(`${prediction.date}T00:00:00+07:00`);
+        const forecastStartDate = latestHistoricalForecastDateKey
+          ? new Date(`${latestHistoricalForecastDateKey}T00:00:00+07:00`)
+          : new Date(`${baseForecast.predictions[0].date}T00:00:00+07:00`);
+
+        const futurePoints = baseForecast.predictions.map((_, index) => {
+          const predictionDate = new Date(forecastStartDate);
+          predictionDate.setDate(forecastStartDate.getDate() + index + 1);
 
           return {
-            label: new Intl.DateTimeFormat("id-ID", {
-              timeZone: "Asia/Jakarta",
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-            }).format(predictionDate),
+            label: formatForecastLabel(predictionDate),
             predictedRevenue: 0,
             predictedQuantity: 0,
           };
