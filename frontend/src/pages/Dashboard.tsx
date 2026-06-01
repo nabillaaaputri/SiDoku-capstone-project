@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
-import ForecastTrendChart from "@/components/ForecastTrendChart";
+import SalesTrendChart from "@/components/SalesTrendChart";
 import SalesChart from "@/components/SalesChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
@@ -61,10 +61,10 @@ interface ChartPoint {
   profit: number;
 }
 
-interface ForecastTrendPoint {
+interface SalesTrendPoint {
   label: string;
-  predictedRevenue: number;
-  predictedQuantity: number;
+  revenue: number;
+  quantity: number;
 }
 
 function DashboardLoadingState() {
@@ -293,7 +293,7 @@ export default function Dashboard() {
     });
   };
 
-  const salesTrendData = useMemo<ForecastTrendPoint[]>(() => {
+  const salesTrendData = useMemo<SalesTrendPoint[]>(() => {
     const today = new Date();
     const points = Array.from({ length: 7 }, (_, index) => {
       const date = new Date(today);
@@ -309,8 +309,8 @@ export default function Dashboard() {
           day: "2-digit",
           month: "2-digit",
         }).format(date),
-        predictedRevenue: 0,
-        predictedQuantity: 0,
+        revenue: 0,
+        quantity: 0,
       };
     });
 
@@ -325,8 +325,8 @@ export default function Dashboard() {
         continue;
       }
 
-      targetPoint.predictedRevenue += Number(record.totalAmount) || 0;
-      targetPoint.predictedQuantity += Number(record.quantity) || 0;
+      targetPoint.revenue += Number(record.totalAmount) || 0;
+      targetPoint.quantity += Number(record.quantity) || 0;
     }
 
     return points.map(({ key, date: _date, ...point }) => point);
@@ -622,11 +622,11 @@ export default function Dashboard() {
         <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <h2 className="section-heading">Tren Penjualan Selama 7 Hari</h2>
-              <p className="mt-1 text-sm text-slate-500">Pantau arah penjualan mingguan dalam satu grafik ringkas.</p>
+              <h2 className="section-heading">Tren Penjualan 7 Hari Terakhir</h2>
+              <p className="mt-1 text-sm text-slate-500">Data penjualan berdasarkan transaksi yang tercatat dalam 7 hari terakhir.</p>
             </div>
           </div>
-          <ForecastTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
+          <SalesTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
         </section>
 
         <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
