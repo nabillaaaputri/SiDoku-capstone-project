@@ -33,6 +33,7 @@ class PredictRequest(BaseModel):
     stok_keluar: List[StokKeluarRow]
     stok_masuk: Optional[List[StokMasukRow]] = []
     days_ahead: Optional[int] = 7
+    today: Optional[str] = None
 
 
 class PredictionPoint(BaseModel):
@@ -73,6 +74,7 @@ def predict(body: PredictRequest):
             stok_masuk=[r.model_dump() for r in body.stok_masuk],
             harga_jual=body.harga_jual,
             days_ahead=body.days_ahead,
+            today=body.today,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
