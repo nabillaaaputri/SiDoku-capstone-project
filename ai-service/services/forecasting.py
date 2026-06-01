@@ -174,10 +174,13 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    # SalesQuantity — the raw qty value for each timestep.
-    # 'SalesQuantity' is the first feature in feature_cols; it's the actual
-    # daily sales count that the model also uses as a direct input feature.
-    df["SalesQuantity"] = df["qty"]
+    # Transform qty to log-space using log1p BEFORE calculating any lag or rolling features.
+    # During training, the target was sales_log (log1p), and all lags/rolling means
+    # were engineered from sales_log, not from raw quantity.
+    df["qty_log"] = np.log1p(df["qty"])
+
+    # SalesQuantity — log1p-transformed qty value for each timestep (target feature)
+    df["SalesQuantity"] = df["qty_log"]
 
     # --- Temporal (used to derive cyclical & categorical features) ---
     dow          = df["tanggal"].dt.dayofweek     # 0=Mon … 6=Sun
@@ -197,15 +200,15 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # --- Lag Features (matching training: 1, 2, 3, 7, 14, 21, 28) ---
     for lag in [1, 2, 3, 7, 14, 21, 28]:
-        df[f"lag_{lag}"] = df["qty"].shift(lag)
+        df[f"lag_{lag}"] = df["qty_log"].shift(lag)
 
     # --- Rolling Mean ---
     for w in [3, 7, 14]:
-        df[f"rolling_mean_{w}"] = df["qty"].shift(1).rolling(w, min_periods=1).mean()
+        df[f"rolling_mean_{w}"] = df["qty_log"].shift(1).rolling(w, min_periods=1).mean()
 
     # --- Rolling Min & Max ---
-    df["rolling_min_7"] = df["qty"].shift(1).rolling(7, min_periods=1).min()
-    df["rolling_max_7"] = df["qty"].shift(1).rolling(7, min_periods=1).max()
+    df["rolling_min_7"] = df["qty_log"].shift(1).rolling(7, min_periods=1).min()
+    df["rolling_max_7"] = df["qty_log"].shift(1).rolling(7, min_periods=1).max()
 
     # --- Seasonal features (from EDA findings in training) ---
     df["is_peak_season"]  = month.isin([3, 4, 5]).astype(int)
@@ -286,12 +289,20 @@ def _infer(window: np.ndarray, product_name: str) -> float:
     # Two-stage inverse transform (matches README):
     #   1. inverse_transform: scaled space → log space
     #   2. expm1: log space → original unit space
-    scale_indices = [_feature_cols.index(c) for c in _features_to_scale if c in _feature_cols]
-    if scale_indices:
-        inv_input = np.zeros((1, len(scale_indices)), dtype=np.float32)
-        inv_input[0, 0] = raw_pred[0, 0]
-        inv = _scaler.inverse_transform(inv_input)
-        return float(np.expm1(inv[0, 0]))
+    if _features_to_scale:
+        try:
+            target_idx = _features_to_scale.index("SalesQuantity")
+            inv_input = np.zeros((1, len(_features_to_scale)), dtype=np.float32)
+            inv_input[0, target_idx] = raw_pred[0, 0]
+            inv = _scaler.inverse_transform(inv_input)
+            pred_val = inv[0, target_idx]
+        except ValueError:
+            # Fallback if SalesQuantity is not in features_to_scale
+            inv_input = np.zeros((1, len(_features_to_scale)), dtype=np.float32)
+            inv_input[0, 0] = raw_pred[0, 0]
+            inv = _scaler.inverse_transform(inv_input)
+            pred_val = inv[0, 0]
+        return float(np.expm1(pred_val))
     else:
         return float(np.expm1(raw_pred[0, 0]))
 
@@ -365,6 +376,28 @@ def predict_sales(
     del df, feat_df, future_rows
     gc.collect()
 
+    # --- Post-processing Calibration ---
+    # The global model was trained on high-volume data, causing it to over-predict 
+    # for low-volume products. We calibrate the magnitude to match the product's history.
+    if stok_keluar and predictions:
+        past_qtys = [float(r.get("jumlah", 0)) for r in stok_keluar]
+        max_past = max(past_qtys)
+        
+        avg_pred = sum(p["predicted_qty"] for p in predictions) / len(predictions)
+        
+        if max_past == 0:
+            # If there's literally 0 sales in the history window, predict 0
+            for p in predictions:
+                p["predicted_qty"] = 0.0
+        else:
+            # If the model predicts significantly higher than historical max, scale it down
+            # We use max_past * 1.2 to allow for some legitimate growth trends.
+            target_avg = max_past * 1.2
+            if avg_pred > target_avg:
+                scale_factor = target_avg / avg_pred
+                for p in predictions:
+                    p["predicted_qty"] = round(p["predicted_qty"] * scale_factor, 2)
+
     return predictions
 
 
@@ -394,6 +427,9 @@ def get_status(
         return "critical"
     if current_stock >= predicted_demand_7d * 2.0:
         return "overstock"
-    if avg_past_demand > 0 and predicted_demand_7d > avg_past_demand * 1.15:
+    
+    # Compare 7-day predicted demand with 7-day historical average
+    past_demand_7d = avg_past_demand * 7
+    if past_demand_7d > 0 and predicted_demand_7d > past_demand_7d * 1.15:
         return "increasing"
     return "normal"
