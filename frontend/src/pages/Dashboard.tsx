@@ -360,15 +360,24 @@ export default function Dashboard() {
         }
 
         if (validResults.length === 0) {
-          setForecastTrends([]);
-          setForecastError("Prediksi penjualan belum tersedia saat ini.");
-          return;
-        }
+  setForecastTrends([]);
+  setForecastError("Prediksi penjualan belum tersedia saat ini.");
+  return;
+}
 
-        const baseForecast = validResults[0].value.forecast;
-        const forecastStartDate = latestHistoricalForecastDateKey
-          ? new Date(`${latestHistoricalForecastDateKey}T00:00:00+07:00`)
-          : new Date(`${baseForecast.predictions[0].date}T00:00:00+07:00`);
+const baseForecast = validResults[0].value.forecast;
+
+const forecastStartDate = latestHistoricalForecastDateKey
+  ? new Date(`${latestHistoricalForecastDateKey}T00:00:00+07:00`)
+  : new Date(`${baseForecast.predictions[0].date}T00:00:00+07:00`);
+
+console.log("latestHistoricalForecastDateKey", latestHistoricalForecastDateKey);
+console.log("forecastStartDate", forecastStartDate);
+
+      console.group("Forecast Date Debug");
+      console.log("latestHistoricalForecastDateKey:", latestHistoricalForecastDateKey);
+      console.log("forecastStartDate:", forecastStartDate);
+      console.groupEnd();
 
         const futurePoints = baseForecast.predictions.map((_, index) => {
           const predictionDate = new Date(forecastStartDate);
