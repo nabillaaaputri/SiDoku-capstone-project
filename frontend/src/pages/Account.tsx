@@ -231,14 +231,13 @@ export default function Account() {
       }
 
       if (activeTab === "shop") {
-        console.log("SAVE SHOP FORM DATA:", formData);
-        await authService.updateStoreAccount({
-          storeName: formData.shopName,
-          storeCategory: formData.shopCategory,
-          storeAddress: formData.shopAddress,
-          storeDescription: formData.shopDescription,
-        });
-      }
+  await authService.updateStoreAccount({
+    storeName: formData.shopName,
+    storeCategory: formData.shopCategory,
+    storeAddress: formData.shopAddress,
+    storeDescription: formData.shopDescription,
+  });
+}
 
       savedProfileDataRef.current = formData;
       if (profileImageInputRef.current) {
@@ -246,8 +245,11 @@ export default function Account() {
       }
       setIsEditing(false);
 
-      await refreshUser();
-      await loadAccountData();
+      if (activeTab === "profile") {
+  await refreshUser();
+}
+
+await loadAccountData();
 
       toast({
         title: "Berhasil",
