@@ -129,7 +129,7 @@ export default function SalesTrendChart({
         <div className="flex flex-wrap items-center gap-5 px-1 text-[13px] font-semibold text-slate-600">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb] shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
-            Penjualan
+            Omzet
           </div>
         </div>
 
