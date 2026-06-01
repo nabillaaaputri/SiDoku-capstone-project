@@ -109,6 +109,7 @@ def _build_daily_series(
     stok_keluar: List[dict],
     stok_masuk: List[dict],
     harga_jual: float,
+    today: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Convert raw Stok_Keluar / Stok_Masuk DB rows into a daily time-series DataFrame.
@@ -125,9 +126,29 @@ def _build_daily_series(
     df_out = df_out.groupby("tanggal")["jumlah"].sum().reset_index()
     df_out.rename(columns={"jumlah": "qty"}, inplace=True)
 
+    # Determine max date (use today if provided, else default to current Jakarta date)
+    min_date = df_out["tanggal"].min()
+    if today:
+        try:
+            max_date = pd.to_datetime(today)
+            if max_date < min_date:
+                max_date = df_out["tanggal"].max()
+        except Exception:
+            max_date = df_out["tanggal"].max()
+    else:
+        try:
+            from datetime import timezone
+            jakarta_tz = timezone(timedelta(hours=7))
+            current_local = datetime.now(jakarta_tz).strftime("%Y-%m-%d")
+            max_date = pd.to_datetime(current_local)
+            if max_date < min_date:
+                max_date = df_out["tanggal"].max()
+        except Exception:
+            max_date = df_out["tanggal"].max()
+
     # Full date range — fill missing days with 0 sales
     full_range = pd.DataFrame({
-        "tanggal": pd.date_range(df_out["tanggal"].min(), df_out["tanggal"].max(), freq="D")
+        "tanggal": pd.date_range(min_date, max_date, freq="D")
     })
     df = full_range.merge(df_out, on="tanggal", how="left")
     df["qty"] = df["qty"].fillna(0)
@@ -285,6 +306,7 @@ def predict_sales(
     stok_masuk: List[dict],
     harga_jual: float,
     days_ahead: int = 7,
+    today: Optional[str] = None,
 ) -> List[dict]:
     """
     Predict daily sales quantity for `days_ahead` future days using a sliding window.
@@ -301,7 +323,7 @@ def predict_sales(
         raise RuntimeError("Forecasting model is not loaded.")
 
     # Build base series from raw DB rows
-    df = _build_daily_series(stok_keluar, stok_masuk, harga_jual)
+    df = _build_daily_series(stok_keluar, stok_masuk, harga_jual, today)
     last_date = df["tanggal"].max()
 
     # Pre-allocate future rows to avoid pd.concat inside the loop
