@@ -57,7 +57,9 @@ const buildAiProducts = async (userId) => {
   }));
 };
 
-const handleChatAction = async ({ action, userId }) => {
+const MAX_DAYS_AHEAD = 14; // GRU model reliability boundary (WINDOW_SIZE=28, autoregressive error accumulation)
+
+const handleChatAction = async ({ action, userId, params = {} }) => {
   switch (action) {
   case 'fetch_daily_sales': {
     return getTodaySalesSummary(userId);
@@ -119,7 +121,20 @@ const handleChatAction = async ({ action, userId }) => {
       };
     }
 
-    return getRecommendations(products);
+    // Enrich with business context so the LLM can produce meaningful strategy advice
+    const [stockRecommendations, salesSummary, profitLoss, bestSelling] = await Promise.all([
+      getRecommendations(products),
+      getTodaySalesSummary(userId),
+      getMonthlyProfitLossSummary(userId),
+      getBestSellingProducts({ userId, days: 7, limit: 5 }),
+    ]);
+
+    return {
+      rekomendasi_stok: stockRecommendations,
+      ringkasan_penjualan_hari_ini: salesSummary,
+      laba_rugi_bulan_ini: profitLoss,
+      produk_terlaris_minggu_ini: bestSelling,
+    };
   }
 
   case 'predict_future_sales': {
@@ -132,19 +147,38 @@ const handleChatAction = async ({ action, userId }) => {
       };
     }
 
-    const firstProduct = products[0];
+    // Find product by name from params (case-insensitive partial match),
+    // fallback to the product with the most sales history.
+    const targetName = (params.product_name || '').toLowerCase().trim();
+    const matched = targetName
+      ? products.find((p) =>
+          p.product_name.toLowerCase().includes(targetName),
+        )
+      : null;
+    const targetProduct =
+      matched ??
+      products.reduce((best, p) =>
+        p.stok_keluar.length > best.stok_keluar.length ? p : best,
+      );
 
-    if (firstProduct.stok_keluar.length < 1) {
+    if (targetProduct.stok_keluar.length < 1) {
       return {
-        product_name: firstProduct.product_name,
+        product_name: targetProduct.product_name,
         predictions: [],
         note: 'Data stok keluar produk belum cukup untuk prediksi.',
       };
     }
 
+    // Cap days_ahead at MAX_DAYS_AHEAD regardless of LLM output,
+    // to prevent error accumulation beyond the model's reliable range.
+    const daysAhead = Math.min(
+      Number(params.days_ahead) || 7,
+      MAX_DAYS_AHEAD,
+    );
+
     return predictSales({
-      ...firstProduct,
-      days_ahead: 7,
+      ...targetProduct,
+      days_ahead: daysAhead,
     });
   }
 
@@ -167,11 +201,12 @@ export const askAiChatbot = async (req, res, next) => {
 
     try {
       const chatResult = await sendChatMessage(question);
-      const { response: aiResponse, action, tag } = chatResult;
+      const { response: aiResponse, action, tag, params = {} } = chatResult;
 
       const data = await handleChatAction({
         action,
         userId,
+        params,
       });
 
       let finalAnswer = "";
@@ -182,8 +217,9 @@ export const askAiChatbot = async (req, res, next) => {
         finalAnswer = aiResponse || 'Maaf, saya belum bisa menjawab pertanyaan itu.';
       } else {
         const promptWithData = JSON.stringify({
+          _scenario: 2,
           question,
-          data
+          data,
         });
         const finalChatResult = await sendChatMessage(promptWithData);
         finalAnswer = finalChatResult.response || 'Maaf, saya sedang memproses sesuatu.';

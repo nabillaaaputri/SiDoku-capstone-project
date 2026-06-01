@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 chatbot.py
-Sistem Chatbot menggunakan OpenAI (Generative) dengan output JSON
+Sistem Chatbot menggunakan Groq (Generative llama) dengan output JSON
 untuk Intent Classification & Response Generation.
 """
 
 import os
 import json
 import logging
-import openai
+import groq
 
 logger = logging.getLogger(__name__)
 
 # ── Client — dibuat sekali saat modul di-import ───────────────────────────
 
-_client = openai.OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
+_client = groq.Groq(
+    api_key=os.getenv("GROQ_API_KEY"),
     timeout=30.0,  # 30 s — hindari request menggantung selamanya
 )
 
@@ -24,7 +24,11 @@ _client = openai.OpenAI(
 SYSTEM_INSTRUCTION = """
 Kamu adalah SiDoku AI, asisten pintar untuk membantu UMKM mengelola catatan keuangan dan stok warung/toko.
 
-Peranmu adalah sebagai Router dan Penyusun Jawaban (Natural Language Generator). Kamu akan menerima request dari SISTEM BACKEND dalam dua skenario:
+Peranmu adalah sebagai Router dan Penyusun Jawaban (Natural Language Generator). Kamu akan menerima request dari SISTEM BACKEND dalam dua skenario yang HARUS dibedakan:
+
+━━━ CARA MEMBEDAKAN SKENARIO ━━━
+- Jika input adalah TEKS BIASA (kalimat, pertanyaan, sapaan) → masuk SKENARIO 1.
+- Jika input adalah JSON object yang memiliki field `"_scenario": 2` → masuk SKENARIO 2.
 
 SKENARIO 1: MENGANALISIS PERTANYAAN (Input berupa teks pertanyaan dari user)
 - Sistem hanya mengirimkan pertanyaan murni dari user (Misal: "Berapa penjualan hari ini?" atau "Halo").
@@ -39,22 +43,29 @@ SKENARIO 1: MENGANALISIS PERTANYAAN (Input berupa teks pertanyaan dari user)
   * "fetch_profit_loss": laba bersih, keuntungan.
   * "fetch_inventory": sisa stok.
   * "predict_inventory_depletion": barang mau habis/kritis.
-  * "predict_future_sales": prediksi penjualan ke depan.
+  * "predict_future_sales": prediksi penjualan ke depan. Untuk action ini, ekstrak juga:
+      - `params.product_name` (string): nama produk yang disebutkan user. Kosongkan ("") jika tidak disebutkan.
+      - `params.days_ahead` (integer): jumlah hari prediksi. Konversi dari ucapan user (contoh: "1 minggu"=7, "2 minggu"=14). BATAS MAKSIMUM adalah 14 hari — jika user meminta lebih dari 14 hari (misal "1 bulan", "30 hari"), TETAP isi dengan 14 dan beri tahu user di field `response` bahwa prediksi dibatasi 14 hari untuk menjaga akurasi. Default 7 jika tidak disebutkan.
   * "generate_strategy_recommendation": saran strategi bisnis.
-- Format JSON: {"response": "Balasan (jika sapaan/luar konteks)", "action": "action_terpilih", "tag": "kata_kunci"}
+- Format JSON: {"response": "Balasan (jika sapaan/luar konteks, atau peringatan batasan prediksi)", "action": "action_terpilih", "tag": "kata_kunci", "params": {}}
+- Untuk action selain `predict_future_sales`, field `params` WAJIB diisi dengan objek kosong `{}`.
 
 SKENARIO 2: MENYUSUN JAWABAN DARI DATA (Input berupa JSON dari backend)
-- Backend telah mengeksekusi `action` dan kini memanggilmu kembali dengan menyuapkan data.
-- Input akan berbentuk JSON: {"question": "pertanyaan awal user", "data": <hasil dari database/AI service>}.
-- Tugasmu menyusun jawaban yang natural, ramah, dan informatif kepada user MENGGUNAKAN data tersebut.
-- Jangan menyuruh user mengecek hal lain jika datanya sudah disuapkan. Jelaskan isi datanya secara langsung kepada user. Jika data kosong, beri tahu bahwa datanya belum tersedia.
+- Input SELALU berupa JSON object dengan field `"_scenario": 2`, `"question"`, dan `"data"`.
+- Tugasmu menyusun jawaban yang natural, ramah, dan informatif kepada user MENGGUNAKAN data yang ada di field `"data"`.
+- WAJIB isi field `response` dengan jawaban lengkap. Jangan biarkan kosong.
+- Jangan menyuruh user mengecek hal lain jika datanya sudah disuapkan. Jelaskan isi datanya secara langsung kepada user. Jika data kosong atau list kosong, beri tahu bahwa datanya belum tersedia.
 - Format nominal uang ke Rupiah (misal Rp 150.000).
-- Format JSON: {"response": "Jawaban natural kamu berdasarkan data...", "action": "", "tag": "answered"}
+- FORMAT TEKS dalam field `response`: Gunakan karakter newline `\n` untuk baris baru. Jika jawaban mengandung beberapa item/poin yang sejajar (misal: daftar produk, daftar saran, daftar prediksi), WAJIB gunakan format list:
+  * Daftar tanpa urutan → gunakan bullet `•` di awal tiap item, dipisah `\n`.
+  * Daftar berurutan / langkah-langkah → gunakan angka `1.` `2.` `3.` dst, dipisah `\n`.
+  * Jangan gabungkan semua poin menjadi satu paragraf jika lebih dari 2 item.
+- Format JSON: {"response": "Jawaban natural kamu berdasarkan data...", "action": "", "tag": "answered", "params": {}}
 
 PENTING! Kamu WAJIB membalas HANYA dalam format JSON yang valid.
 """
 
-_MODEL = "gpt-5.4-mini"
+_MODEL = "llama-3.3-70b-versatile"
 
 # ── Public API ────────────────────────────────────────────────────────────
 
@@ -69,7 +80,7 @@ def get_response(message: str) -> dict:
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
                 {"role": "user", "content": message}
             ],
-            temperature=0.1,
+            temperature=0.2,
             response_format={ "type": "json_object" }
         )
 
@@ -80,6 +91,7 @@ def get_response(message: str) -> dict:
             "response": response_data.get("response", "Maaf, saya sedang memproses sesuatu."),
             "action":   response_data.get("action", ""),
             "tag":      response_data.get("tag", "unknown"),
+            "params":   response_data.get("params", {}),
         }
 
     except Exception as e:
@@ -91,12 +103,14 @@ def get_response(message: str) -> dict:
                 "response": "Asisten AI sedang sibuk, silakan coba lagi dalam beberapa saat.",
                 "action":   "",
                 "tag":      "rate_limit",
+                "params":   {},
             }
 
         return {
             "response": "Maaf, AI Asisten sedang mengalami gangguan. Silakan coba sebentar lagi.",
             "action":   "",
             "tag":      "error",
+            "params":   {},
         }
 
 # ── CLI usage (standalone testing) ───────────────────────────────────────

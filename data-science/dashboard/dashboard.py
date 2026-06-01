@@ -63,7 +63,7 @@ section[data-testid="stSidebar"] {
 @st.cache_data
 def load_data():
 
-    df = pd.read_csv("../data/wrangled_data.csv")
+    df = pd.read_csv("data-science/data/wrangled_data.csv")
 
     df['date'] = pd.to_datetime(df['date'])
 

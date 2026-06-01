@@ -1,6 +1,6 @@
 # SiDoku AI Service
 
-Folder ini merupakan folder utama dari AI-Service yang digunakan pada aplikasi siDoku, terdapat beberapa model
+Folder ini merupakan folder utama dari AI-Service yang digunakan pada aplikasi siDoku, terdapat dua AI dengan model utama adalah forecasting menggunakan GRU dan chatbot sebagai asisten berbasis API LLM dari Groq dengan model llama
 
 ---
 
@@ -21,7 +21,9 @@ Folder ini merupakan folder utama dari AI-Service yang digunakan pada aplikasi s
 ```
 ai-service/
 ├── chatbot/
-│   └── chatbot.py          # Engine chatbot menggunakan OpenAI (Intent Routing & NLG)
+│   ├── __init__.py            # Package marker
+│   ├── chatbot.py             # Engine chatbot menggunakan Groq API (llama-3.3-70b-versatile)
+│   └── test_chatbot.py        # Unit tests (pytest, tanpa network call)
 ├── models/
 │   ├── sales_forecasting_store1.keras  # Model GRU hasil training
 │   ├── scaler.joblib                   # MinMaxScaler
@@ -71,7 +73,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-> Catatan: Edit sesuai konfigurasi lokal, pastikan menambahkan `OPENAI_API_KEY`.
+> Catatan: Edit sesuai konfigurasi lokal, pastikan menambahkan `GROQ_API_KEY`.
 
 ### 4. Jalankan Server
 
@@ -95,7 +97,7 @@ Salin `.env.example` menjadi `.env` dan sesuaikan:
 | ----------------------- | ----------------------- | ------------------------------------------------- |
 | `FASTAPI_ENV`           | `development`           | Set `production` untuk Railway                    |
 | `API_PORT`              | `8000`                  | Port lokal (Railway menggunakan `$PORT` otomatis) |
-| `OPENAI_API_KEY`        | _(kosong)_              | Kunci API OpenAI untuk Chatbot LLM                |
+| `GROQ_API_KEY`          | _(kosong)_              | Kunci API Groq untuk Chatbot LLM                  |
 | `BACKEND_URL`           | `http://localhost:3001` | URL Express.js backend (untuk CORS)               |
 | `FRONTEND_URL`          | `http://localhost:5173` | URL frontend (untuk CORS)                         |
 | `RAILWAY_PUBLIC_DOMAIN` | _(kosong)_              | Diisi otomatis oleh Railway                       |
@@ -117,8 +119,8 @@ Swagger UI otomatis di-generate oleh FastAPI dari kode endpoint yang ada.
 
 ## Chatbot Actions & Alur NLG
 
-Endpoint `POST /chat` tidak lagi membalas dengan kalimat templat statis, melainkan menggunakan OpenAI untuk **dua tujuan utama**:
-1. **Tahap 1 (Intent Routing):** Menganalisis pertanyaan awal untuk menentukan `action` (data apa yang harus dicari backend).
+Endpoint `POST /chat` menggunakan **Groq API** (model `llama-3.3-70b-versatile`) untuk **dua tujuan utama**:
+1. **Tahap 1 (Intent Routing):** Menganalisis pertanyaan awal untuk menentukan `action` dan mengekstrak `params` jika diperlukan.
 2. **Tahap 2 (Natural Language Generation/NLG):** Merangkai kalimat jawaban natural setelah diberikan *raw data* dari backend.
 
 ### Alur Umum 2 Tahap
@@ -135,26 +137,26 @@ Frontend kirim pesan
 
 ### Tabel Semua Action Tahap 1
 
-| `action`                           | Yang Harus Dilakukan Backend                                                              |
-| ---------------------------------- | ----------------------------------------------------------------------------------------- |
-| `""` (string kosong)               | AI Service sudah menjawab (misal: sapaan/luar konteks). Langsung kembalikan `response`.   |
-| `fetch_business_summary`           | Ambil ringkasan performa gabungan (penjualan, laba/rugi, produk terlaris) dari DB         |
-| `fetch_daily_sales`                | Query total penjualan hari ini dari tabel `Stok_Keluar` (`tanggal_keluar = CURRENT_DATE`) |
-| `fetch_best_selling`               | Query produk dengan penjualan tertinggi (terlaris) dari DB (misal dalam 7 hari terakhir)  |
-| `fetch_expenses`                   | Query total pengeluaran dari tabel `Pengeluaran`                                          |
-| `fetch_profit_loss`                | Hitung laba = total pemasukan − total pengeluaran dari DB                                 |
-| `fetch_inventory`                  | Query semua produk beserta stok terkini dari tabel `Produk`                               |
-| `predict_inventory_depletion`      | Ambil semua produk + histori stok → `POST /insights`                                      |
-| `predict_future_sales`             | Ambil produk + histori stok → `POST /predict`                                             |
-| `generate_strategy_recommendation` | Ambil semua produk + histori → `POST /recommend`                                          |
+| `action`                           | Yang Harus Dilakukan Backend                                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `""` (string kosong)               | AI Service sudah menjawab (misal: sapaan/luar konteks). Langsung kembalikan `response`.                               |
+| `fetch_business_summary`           | Ambil ringkasan performa gabungan (penjualan, laba/rugi, produk terlaris) dari DB                                     |
+| `fetch_daily_sales`                | Query total penjualan hari ini dari tabel `Stok_Keluar` (`tanggal_keluar = CURRENT_DATE`)                             |
+| `fetch_best_selling`               | Query produk dengan penjualan tertinggi (terlaris) dari DB (misal dalam 7 hari terakhir)                              |
+| `fetch_expenses`                   | Query total pengeluaran dari tabel `Pengeluaran`                                                                      |
+| `fetch_profit_loss`                | Hitung laba = total pemasukan − total pengeluaran dari DB                                                             |
+| `fetch_inventory`                  | Query semua produk beserta stok terkini dari tabel `Produk`                                                           |
+| `predict_inventory_depletion`      | Ambil semua produk + histori stok → `POST /insights`                                                                  |
+| `predict_future_sales`             | Ambil produk + histori stok → `POST /predict`. LLM mengekstrak `params.product_name` dan `params.days_ahead` (maks 14 hari) |
+| `generate_strategy_recommendation` | Ambil semua produk + histori + ringkasan bisnis → `POST /recommend`                                                   |
 
 ### Contoh Implementasi di Express.js
 
 ```js
 // POST /api/chat
-// TAHAP 1: Ambil Action
+// TAHAP 1: Ambil Action + Params
 const aiRes = await axios.post(`${AI_URL}/chat`, { message: req.body.message });
-const { response, action } = aiRes.data;
+const { response, action, tag, params = {} } = aiRes.data;
 
 // Jika action kosong, ini hanya sapaan santai atau di luar konteks
 if (!action) {
@@ -168,14 +170,19 @@ switch (action) {
   case "fetch_business_summary":
     data = await getBusinessSummaryFromDB(req.user.id);
     break;
-  case "fetch_daily_sales": 
+  case "fetch_daily_sales":
     data = await getDailySalesFromDB(req.user.id);
+    break;
+  case "predict_future_sales":
+    // Gunakan params.product_name dan params.days_ahead (sudah di-cap 14 hari oleh backend)
+    data = await predictSalesForProduct(req.user.id, params.product_name, params.days_ahead ?? 7);
     break;
   // ... tangani action lainnya
 }
 
 // TAHAP 2: Generate Jawaban Natural dari Data
-const finalPrompt = JSON.stringify({ question: req.body.message, data });
+// Tambahkan _scenario:2 agar LLM tidak salah mengidentifikasi sebagai Skenario 1
+const finalPrompt = JSON.stringify({ _scenario: 2, question: req.body.message, data });
 const finalAiRes = await axios.post(`${AI_URL}/chat`, { message: finalPrompt });
 
 res.json({ answer: finalAiRes.data.response });
@@ -282,7 +289,7 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 Di environment variables Express.js, tambahkan:
 
 ```
-AI_SERVICE_URL= (https://sidoku-ai.up.railway.app)
+AI_SERVICE_URL= (https://example.up.railway.app)
 ```
 
 ---
@@ -296,3 +303,8 @@ AI_SERVICE_URL= (https://sidoku-ai.up.railway.app)
 3. **`/chat` tidak bergantung pada model** — endpoint ini selalu aktif meski tensorflow tidak ter-load. Endpoint `/predict`, `/insights`, `/recommend` membutuhkan model dan akan return `503` jika model gagal load.
 
 4. **Jangan cache respons prediksi terlalu lama** — prediksi penjualan sebaiknya di-refresh minimal 1x sehari karena data `stok_keluar` terus berubah.
+
+5. **`predict_future_sales` dibatasi maksimal 14 hari** (`days_ahead` ≤ 14) — model GRU menggunakan sliding window autoregressive dengan `WINDOW_SIZE = 28`. Setiap langkah ke depan menggunakan prediksi sebelumnya sebagai input, sehingga error berakumulasi. Batas 14 hari menjaga ~50% window tetap berisi data historis nyata.
+.
+
+

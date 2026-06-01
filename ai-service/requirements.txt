@@ -14,8 +14,8 @@ joblib==1.5.3
 # Text Processing
 nltk==3.9.1
 
-# OpenAI
-openai>=1.0.0
+# Groq (LLM provider — menggantikan OpenAI)
+groq>=0.9.0
 
 # Testing
 pytest==7.4.0
