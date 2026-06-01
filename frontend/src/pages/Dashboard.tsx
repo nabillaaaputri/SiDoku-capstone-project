@@ -381,8 +381,71 @@ export default function Dashboard() {
           };
         });
 
+        console.groupCollapsed("[Dashboard Forecast Debug]");
+        console.log("forecastSourceProducts", forecastSourceProducts.map((product) => ({
+          productId: product.id,
+          product_name: product.name,
+          sellPrice: Number(product.sellPrice) || 0,
+        })));
+        console.log("forecastStartDate", forecastStartDate.toISOString());
+
+        const perProductDebugRows = validResults.map(({ value }) => {
+          const { product, forecast } = value;
+          const sellPrice = Number(product.sellPrice) || 0;
+
+          return {
+            productId: product.id,
+            product_name: product.name,
+            sellPrice,
+            predictions: forecast.predictions.map((prediction, index) => {
+              const predictedQty = Number(prediction.predictedQty) || 0;
+              const predictionDate = new Date(forecastStartDate);
+              predictionDate.setDate(forecastStartDate.getDate() + index + 1);
+
+              return {
+                date: prediction.date,
+                label: formatForecastLabel(predictionDate),
+                predictedQty,
+                predictedRevenue: predictedQty * sellPrice,
+              };
+            }),
+          };
+        });
+
+        console.table(
+          perProductDebugRows.flatMap((row) =>
+            row.predictions.map((prediction) => ({
+              product_name: row.product_name,
+              sellPrice: row.sellPrice,
+              date: prediction.date,
+              label: prediction.label,
+              predictedQty: prediction.predictedQty,
+              predictedRevenue: prediction.predictedRevenue,
+            })),
+          ),
+        );
+
         for (const result of validResults) {
           const { product, forecast } = result.value;
+          const sellPrice = Number(product.sellPrice) || 0;
+
+          console.log("[Dashboard Forecast Product]", {
+            productId: product.id,
+            product_name: product.name,
+            sellPrice,
+            predictions: forecast.predictions.map((prediction, index) => {
+              const predictedQty = Number(prediction.predictedQty) || 0;
+              const predictionDate = new Date(forecastStartDate);
+              predictionDate.setDate(forecastStartDate.getDate() + index + 1);
+
+              return {
+                date: prediction.date,
+                label: formatForecastLabel(predictionDate),
+                predictedQty,
+                predictedRevenue: predictedQty * sellPrice,
+              };
+            }),
+          });
 
           forecast.predictions.forEach((prediction, index) => {
             const predictedQuantity = prediction.predictedQty;
@@ -391,6 +454,15 @@ export default function Dashboard() {
               return;
             }
 
+
+                    console.table(
+                      futurePoints.map((point) => ({
+                        label: point.label,
+                        aggregatedPredictedQty: point.predictedQuantity,
+                        aggregatedPredictedRevenue: point.predictedRevenue,
+                      })),
+                    );
+                    console.groupEnd();
             const predictedRevenue = predictedQuantity * (Number(product.sellPrice) || 0);
 
             futurePoints[index].predictedQuantity += predictedQuantity;
