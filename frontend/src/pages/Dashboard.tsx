@@ -360,24 +360,16 @@ export default function Dashboard() {
         }
 
         if (validResults.length === 0) {
-  setForecastTrends([]);
-  setForecastError("Prediksi penjualan belum tersedia saat ini.");
-  return;
-}
+          setForecastTrends([]);
+          setForecastError("Prediksi penjualan belum tersedia saat ini.");
+          return;
+        }
 
-const baseForecast = validResults[0].value.forecast;
+        const baseForecast = validResults[0].value.forecast;
 
-const forecastStartDate = latestHistoricalForecastDateKey
-  ? new Date(`${latestHistoricalForecastDateKey}T00:00:00+07:00`)
-  : new Date(`${baseForecast.predictions[0].date}T00:00:00+07:00`);
-
-console.log("latestHistoricalForecastDateKey", latestHistoricalForecastDateKey);
-console.log("forecastStartDate", forecastStartDate);
-
-      console.group("Forecast Date Debug");
-      console.log("latestHistoricalForecastDateKey:", latestHistoricalForecastDateKey);
-      console.log("forecastStartDate:", forecastStartDate);
-      console.groupEnd();
+        const forecastStartDate = latestHistoricalForecastDateKey
+          ? new Date(`${latestHistoricalForecastDateKey}T00:00:00+07:00`)
+          : new Date(`${baseForecast.predictions[0].date}T00:00:00+07:00`);
 
         const futurePoints = baseForecast.predictions.map((_, index) => {
           const predictionDate = new Date(forecastStartDate);
@@ -390,71 +382,8 @@ console.log("forecastStartDate", forecastStartDate);
           };
         });
 
-        console.groupCollapsed("[Dashboard Forecast Debug]");
-        console.log("forecastSourceProducts", forecastSourceProducts.map((product) => ({
-          productId: product.id,
-          product_name: product.name,
-          sellPrice: Number(product.sellPrice) || 0,
-        })));
-        console.log("forecastStartDate", forecastStartDate.toISOString());
-
-        const perProductDebugRows = validResults.map(({ value }) => {
-          const { product, forecast } = value;
-          const sellPrice = Number(product.sellPrice) || 0;
-
-          return {
-            productId: product.id,
-            product_name: product.name,
-            sellPrice,
-            predictions: forecast.predictions.map((prediction, index) => {
-              const predictedQty = Number(prediction.predictedQty) || 0;
-              const predictionDate = new Date(forecastStartDate);
-              predictionDate.setDate(forecastStartDate.getDate() + index + 1);
-
-              return {
-                date: prediction.date,
-                label: formatForecastLabel(predictionDate),
-                predictedQty,
-                predictedRevenue: predictedQty * sellPrice,
-              };
-            }),
-          };
-        });
-
-        console.table(
-          perProductDebugRows.flatMap((row) =>
-            row.predictions.map((prediction) => ({
-              product_name: row.product_name,
-              sellPrice: row.sellPrice,
-              date: prediction.date,
-              label: prediction.label,
-              predictedQty: prediction.predictedQty,
-              predictedRevenue: prediction.predictedRevenue,
-            })),
-          ),
-        );
-
         for (const result of validResults) {
           const { product, forecast } = result.value;
-          const sellPrice = Number(product.sellPrice) || 0;
-
-          console.log("[Dashboard Forecast Product]", {
-            productId: product.id,
-            product_name: product.name,
-            sellPrice,
-            predictions: forecast.predictions.map((prediction, index) => {
-              const predictedQty = Number(prediction.predictedQty) || 0;
-              const predictionDate = new Date(forecastStartDate);
-              predictionDate.setDate(forecastStartDate.getDate() + index + 1);
-
-              return {
-                date: prediction.date,
-                label: formatForecastLabel(predictionDate),
-                predictedQty,
-                predictedRevenue: predictedQty * sellPrice,
-              };
-            }),
-          });
 
           forecast.predictions.forEach((prediction, index) => {
             const predictedQuantity = prediction.predictedQty;
@@ -462,16 +391,6 @@ console.log("forecastStartDate", forecastStartDate);
             if (predictedQuantity === null) {
               return;
             }
-
-
-                    console.table(
-                      futurePoints.map((point) => ({
-                        label: point.label,
-                        aggregatedPredictedQty: point.predictedQuantity,
-                        aggregatedPredictedRevenue: point.predictedRevenue,
-                      })),
-                    );
-                    console.groupEnd();
             const predictedRevenue = predictedQuantity * (Number(product.sellPrice) || 0);
 
             futurePoints[index].predictedQuantity += predictedQuantity;
@@ -625,9 +544,6 @@ console.log("forecastStartDate", forecastStartDate);
                   <h1 className="text-2xl font-black leading-tight tracking-tighter text-slate-900 sm:text-3xl lg:text-4xl">
                     Selamat Datang Kembali, {displayName}
                   </h1>
-                  <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-                    Pantau ringkasan usaha, insight penting, stok menipis, dan tren performa dalam satu tampilan.
-                  </p>
                 </div>
               </div>
 
