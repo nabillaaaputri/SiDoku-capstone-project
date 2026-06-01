@@ -77,7 +77,7 @@ export default function SalesForecastChart({
             </span>
             <div>
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Hasil forecasting penjualan menggunakan model AI berdasarkan riwayat transaksi.
+                Estimasi omzet harian 7 hari ke depan dari model AI berdasarkan cohort produk yang sama dengan tren 7 hari terakhir.
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function SalesForecastChart({
 
         <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="rounded-2xl border border-orange-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-700">Total Prediksi Penjualan</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-700">Total Prediksi Omzet</p>
             <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.revenue)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
@@ -127,7 +127,7 @@ export default function SalesForecastChart({
         <div className="flex flex-wrap items-center gap-5 px-1 text-[13px] font-semibold text-slate-600">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#f97316] shadow-[0_0_8px_rgba(249,115,22,0.55)]" />
-            Prediksi Penjualan
+            Prediksi Omzet
           </div>
         </div>
 

@@ -108,14 +108,14 @@ export default function SalesTrendChart({
               <Sparkles size={18} />
             </span>
             <div>
-              <p className="mt-1 text-sm font-medium text-slate-500">Data penjualan 7 hari terakhir</p>
+              <p className="mt-1 text-sm font-medium text-slate-500">Omzet harian 7 hari terakhir</p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-2 min-w-0 sm:grid-cols-2">
           <div className="rounded-2xl border border-blue-100 bg-white px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Penjualan</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">Total Omzet</p>
             <p className="mt-1 text-sm font-black text-slate-950 tabular-nums">{formatRupiah(totals.revenue)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">

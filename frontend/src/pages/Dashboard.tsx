@@ -158,9 +158,41 @@ export default function Dashboard() {
 
   const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
   const activeProductIds = useMemo(() => new Set(activeProducts.map((product) => product.id)), [activeProducts]);
+  const historicalTrendDateKeys = useMemo(() => {
+    const today = new Date();
+
+    return new Set(
+      Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (6 - index));
+        date.setHours(0, 0, 0, 0);
+
+        return getJakartaDateInputValue(date);
+      }),
+    );
+  }, []);
+  const historicalTrendProductIds = useMemo(() => {
+    const productIds = new Set<string>();
+
+    for (const record of salesRecords.filter((item) => activeProductIds.has(item.productId))) {
+      const recordDate = new Date(record.date);
+
+      if (Number.isNaN(recordDate.getTime())) {
+        continue;
+      }
+
+      const recordKey = getJakartaDateInputValue(recordDate);
+
+      if (historicalTrendDateKeys.has(recordKey)) {
+        productIds.add(record.productId);
+      }
+    }
+
+    return productIds;
+  }, [activeProductIds, historicalTrendDateKeys, salesRecords]);
   const forecastSourceProducts = useMemo(
-    () => activeProducts.filter((product) => salesRecords.some((record) => record.productId === product.id)),
-    [activeProducts, salesRecords],
+    () => activeProducts.filter((product) => historicalTrendProductIds.has(product.id)),
+    [activeProducts, historicalTrendProductIds],
   );
   const latestHistoricalForecastDateKey = useMemo(() => {
     return salesRecords
