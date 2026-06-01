@@ -3,7 +3,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { authService, getPreferredUserName } from "@/services/auth.service";
+import { authService } from "@/services/auth.service";
+import apiClient from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { Camera, Eye, EyeOff, Lock, Shield, Store, User } from "lucide-react";
 
@@ -20,18 +21,53 @@ interface ProfileData {
   profileImage: string;
 }
 
-const buildProfileData = (currentUser: ReturnType<typeof useAuth>["user"]): ProfileData => {
-  const displayName = getPreferredUserName(currentUser);
+interface ApiResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
+interface ProfileResponseData {
+  id: string;
+  ownerName: string;
+  email: string;
+  phoneNumber?: string;
+  profileImage?: string;
+}
+
+interface StoreAccountResponseData {
+  id: string;
+  storeName: string;
+  storeCategory?: string;
+  storeAddress?: string;
+  storeDescription?: string;
+}
+
+const createEmptyProfileData = (): ProfileData => ({
+  ownerName: "",
+  email: "",
+  phone: "",
+  shopName: "",
+  shopCategory: "",
+  shopAddress: "",
+  shopDescription: "",
+  profileImage: "",
+});
+
+const buildProfileData = (
+  profile: ProfileResponseData,
+  storeAccount: StoreAccountResponseData,
+): ProfileData => {
 
   return {
-    ownerName: displayName,
-    email: currentUser?.email || "pemilik@sidoku.id",
-    phone: "+62 812 3456 7890",
-    shopName: currentUser?.storeName || displayName,
-    shopCategory: "Retail",
-    shopAddress: "Jl. Contoh No. 123, Jakarta",
-    shopDescription: "Toko online yang menjual berbagai produk berkualitas",
-    profileImage: currentUser?.profileImage || "",
+    ownerName: profile.ownerName || "",
+    email: profile.email || "",
+    phone: profile.phoneNumber || "",
+    shopName: storeAccount.storeName || "",
+    shopCategory: storeAccount.storeCategory || "",
+    shopAddress: storeAccount.storeAddress || "",
+    shopDescription: storeAccount.storeDescription || "",
+    profileImage: profile.profileImage || "",
   };
 };
 
@@ -40,26 +76,64 @@ export default function Account() {
   const navigate = useNavigate();
   const { user, refreshUser, logout } = useAuth();
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
-  const savedProfileDataRef = useRef<ProfileData>(buildProfileData(user));
+  const savedProfileDataRef = useRef<ProfileData>(createEmptyProfileData());
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const displayName = getPreferredUserName(user);
-  const [formData, setFormData] = useState<ProfileData>(() => buildProfileData(user));
+  const [formData, setFormData] = useState<ProfileData>(() => createEmptyProfileData());
 
-  // Update form data when user changes
+  const loadAccountData = async () => {
+    const [profileResponse, storeAccountResponse] = await Promise.all([
+      apiClient.get<ApiResponse<ProfileResponseData>>("/settings/profile"),
+      apiClient.get<ApiResponse<StoreAccountResponseData>>("/settings/store-account"),
+    ]);
+
+    const nextProfileData = buildProfileData(
+      profileResponse.data.data,
+      storeAccountResponse.data.data,
+    );
+
+    savedProfileDataRef.current = nextProfileData;
+    setFormData(nextProfileData);
+
+    return nextProfileData;
+  };
+
   useEffect(() => {
-    if (user) {
-      const nextProfileData = buildProfileData(user);
-      savedProfileDataRef.current = nextProfileData;
-
-      if (!isEditing) {
-        setFormData(nextProfileData);
-      }
+    if (!user?.id) {
+      return;
     }
-  }, [isEditing, user]);
+
+    let isActive = true;
+
+    const fetchAccountData = async () => {
+      try {
+        await loadAccountData();
+
+        if (!isActive) {
+          return;
+        }
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        toast({
+          title: "Error",
+          description: authService.getErrorMessage(error, "Gagal memuat data akun."),
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchAccountData();
+
+    return () => {
+      isActive = false;
+    };
+  }, [toast, user?.id]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -159,12 +233,16 @@ export default function Account() {
         });
       }
 
-      await refreshUser();
       savedProfileDataRef.current = formData;
       if (profileImageInputRef.current) {
         profileImageInputRef.current.value = "";
       }
       setIsEditing(false);
+
+      await Promise.allSettled([
+        loadAccountData(),
+        refreshUser(),
+      ]);
 
       toast({
         title: "Berhasil",
@@ -263,6 +341,7 @@ export default function Account() {
 
   const initials = formData.ownerName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
