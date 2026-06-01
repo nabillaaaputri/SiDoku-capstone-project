@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Insights from "@/components/Insights";
 import SalesTrendChart from "@/components/SalesTrendChart";
+import SalesForecastChart from "@/components/SalesForecastChart";
 import SalesChart from "@/components/SalesChart";
 import { useBusinessContext } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/services/api";
+import { getAiForecastErrorMessage, getSalesForecast } from "@/services/aiForecast.service";
 import { getPreferredUserName } from "@/services/auth.service";
 import { formatRupiah } from "@/lib/utils";
 import { getJakartaDateInputValue } from "@/lib/timezone";
@@ -67,6 +69,12 @@ interface SalesTrendPoint {
   quantity: number;
 }
 
+interface SalesForecastPoint {
+  label: string;
+  predictedRevenue: number;
+  predictedQuantity: number;
+}
+
 function DashboardLoadingState() {
   return (
     <DashboardLayout>
@@ -125,7 +133,9 @@ export default function Dashboard() {
   const displayName = getPreferredUserName(user);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<DashboardTrendItem[]>([]);
+  const [forecastTrends, setForecastTrends] = useState<SalesForecastPoint[]>([]);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [forecastError, setForecastError] = useState<string | null>(null);
   const [trendTotals, setTrendTotals] = useState({
     totalIncome: 0,
     totalHpp: 0,
@@ -133,6 +143,14 @@ export default function Dashboard() {
     totalProfit: 0,
   });
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+  const [isLoadingForecast, setIsLoadingForecast] = useState(true);
+
+  const activeProducts = useMemo(() => products.filter((product) => product.archived !== true), [products]);
+  const activeProductIds = useMemo(() => new Set(activeProducts.map((product) => product.id)), [activeProducts]);
+  const forecastSourceProducts = useMemo(
+    () => activeProducts.filter((product) => salesRecords.some((record) => record.productId === product.id)),
+    [activeProducts, salesRecords],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -227,6 +245,122 @@ export default function Dashboard() {
     };
   }, [isAuthLoading, user?.id]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isAuthLoading || isBusinessLoading || !user?.id) {
+      setForecastTrends([]);
+      setForecastError(null);
+      setIsLoadingForecast(false);
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    if (forecastSourceProducts.length === 0) {
+      setForecastTrends([]);
+      setForecastError("Prediksi penjualan belum tersedia saat ini.");
+      setIsLoadingForecast(false);
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadForecast = async () => {
+      setIsLoadingForecast(true);
+      setForecastError(null);
+
+      const today = new Date();
+      const futurePoints = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + index + 1);
+        date.setHours(0, 0, 0, 0);
+
+        return {
+          date,
+          key: getJakartaDateInputValue(date),
+          label: new Intl.DateTimeFormat("id-ID", {
+            timeZone: "Asia/Jakarta",
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+          }).format(date),
+          predictedRevenue: 0,
+          predictedQuantity: 0,
+        };
+      });
+
+      const pointMap = new Map(futurePoints.map((point) => [point.key, point]));
+
+      try {
+        const forecastResults = await Promise.allSettled(
+          forecastSourceProducts.map(async (product) => {
+            const forecast = await getSalesForecast(product.id, {
+              daysAhead: 7,
+              historyDays: 60,
+            });
+
+            return { product, forecast };
+          }),
+        );
+
+        let successCount = 0;
+
+        for (const result of forecastResults) {
+          if (result.status !== "fulfilled") {
+            continue;
+          }
+
+          successCount += 1;
+          const { product, forecast } = result.value;
+
+          for (const prediction of forecast.predictions) {
+            const predictionDate = new Date(`${prediction.date}T00:00:00+07:00`);
+            const key = getJakartaDateInputValue(predictionDate);
+            const targetPoint = pointMap.get(key);
+
+            if (!targetPoint) {
+              continue;
+            }
+
+            const predictedQuantity = Number(prediction.predictedQty) || 0;
+            const predictedRevenue = predictedQuantity * (Number(product.sellPrice) || 0);
+
+            targetPoint.predictedQuantity += predictedQuantity;
+            targetPoint.predictedRevenue += predictedRevenue;
+          }
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setForecastTrends(futurePoints.map(({ key, date: _date, ...point }) => point));
+        setForecastError(successCount === 0 ? "Prediksi penjualan belum tersedia saat ini." : null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to load forecast data:", error);
+        setForecastTrends([]);
+        setForecastError(getAiForecastErrorMessage(error));
+      } finally {
+        if (isMounted) {
+          setIsLoadingForecast(false);
+        }
+      }
+    };
+
+    loadForecast();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [forecastSourceProducts, isAuthLoading, isBusinessLoading, user?.id]);
+
   const chartData = useMemo<ChartPoint[]>(() => {
     return trends.map((item) => ({
       label: item.day,
@@ -259,8 +393,6 @@ export default function Dashboard() {
     maximumFractionDigits: 2,
   }).format(financialSummary.roi);
 
-  const activeProducts = products.filter((product) => product.archived !== true);
-  const activeProductIds = new Set(activeProducts.map((product) => product.id));
   const lowStockProducts = activeProducts.filter((product) => product.stock <= product.minimumStock).slice(0, 3);
   const hasLowStock = lowStockProducts.length > 0;
   const isPageLoading = isAuthLoading;
@@ -627,6 +759,20 @@ export default function Dashboard() {
             </div>
           </div>
           <SalesTrendChart data={salesTrendData} isLoading={isBusinessSectionLoading} />
+        </section>
+
+        <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="section-heading">Prediksi Penjualan 7 Hari Ke Depan</h2>
+              <p className="mt-1 text-sm text-slate-500">Hasil forecasting penjualan menggunakan model AI berdasarkan riwayat transaksi.</p>
+            </div>
+          </div>
+          <SalesForecastChart
+            data={forecastTrends}
+            isLoading={isLoadingForecast}
+            error={forecastError}
+          />
         </section>
 
         <section className="section-shell p-4 space-y-3 sm:p-4.5 lg:p-5">
