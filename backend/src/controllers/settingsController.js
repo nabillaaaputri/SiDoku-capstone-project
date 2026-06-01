@@ -127,7 +127,7 @@ export const updateStoreAccount = async (req, res, next) => {
       storeDescription,
     } = req.body;
 
-    const updatedSettings = await settingsRepository.updateStoreAccountByUserId({
+    await settingsRepository.updateStoreAccountByUserId({
       userId: req.user.id,
       storeName,
       storeCategory,
@@ -140,11 +140,15 @@ export const updateStoreAccount = async (req, res, next) => {
       storeName,
     });
 
+    const latestSettings = await settingsRepository.getSettingsByUserId(
+      req.user.id,
+    );
+
     return response(
       res,
       200,
       'Store account updated successfully',
-      mapStoreAccountResponse(updatedSettings),
+      mapStoreAccountResponse(latestSettings),
     );
   } catch (error) {
     return next(error);
