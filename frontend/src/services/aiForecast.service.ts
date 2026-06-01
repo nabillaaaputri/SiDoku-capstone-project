@@ -21,7 +21,7 @@ interface BackendForecastResponse {
 
 export interface SalesForecastPoint {
   date: string;
-  predictedQty: number;
+  predictedQty: number | null;
 }
 
 export interface SalesForecastResult {
@@ -61,7 +61,10 @@ export const getSalesForecast = async (
     productName: forecast.product_name,
     predictions: (forecast.predictions || []).map((point) => ({
       date: point.date,
-      predictedQty: Number(point.predicted_qty) || 0,
+      predictedQty:
+        point.predicted_qty === null || point.predicted_qty === undefined
+          ? null
+          : Number(point.predicted_qty),
     })),
   };
 };

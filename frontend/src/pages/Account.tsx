@@ -20,45 +20,46 @@ interface ProfileData {
   profileImage: string;
 }
 
+const buildProfileData = (currentUser: ReturnType<typeof useAuth>["user"]): ProfileData => {
+  const displayName = getPreferredUserName(currentUser);
+
+  return {
+    ownerName: displayName,
+    email: currentUser?.email || "pemilik@sidoku.id",
+    phone: "+62 812 3456 7890",
+    shopName: currentUser?.storeName || displayName,
+    shopCategory: "Retail",
+    shopAddress: "Jl. Contoh No. 123, Jakarta",
+    shopDescription: "Toko online yang menjual berbagai produk berkualitas",
+    profileImage: currentUser?.profileImage || "",
+  };
+};
+
 export default function Account() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, refreshUser, logout } = useAuth();
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
+  const savedProfileDataRef = useRef<ProfileData>(buildProfileData(user));
   const [activeTab, setActiveTab] = useState<"profile" | "shop" | "security">(
     "profile"
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const displayName = getPreferredUserName(user);
-  const [formData, setFormData] = useState<ProfileData>({
-    ownerName: displayName,
-    email: user?.email || "pemilik@sidoku.id",
-    phone: "+62 812 3456 7890",
-    shopName: user?.storeName || displayName,
-    shopCategory: "Retail",
-    shopAddress: "Jl. Contoh No. 123, Jakarta",
-    shopDescription: "Toko online yang menjual berbagai produk berkualitas",
-    profileImage: user?.profileImage || "",
-  });
-  const [profileImagePreview, setProfileImagePreview] = useState(formData.profileImage);
+  const [formData, setFormData] = useState<ProfileData>(() => buildProfileData(user));
 
   // Update form data when user changes
   useEffect(() => {
     if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        ownerName: getPreferredUserName(user),
-        email: user.email || prev.email,
-        shopName: user.storeName || getPreferredUserName(user),
-        profileImage: user.profileImage || prev.profileImage,
-      }));
-    }
-  }, [user]);
+      const nextProfileData = buildProfileData(user);
+      savedProfileDataRef.current = nextProfileData;
 
-  useEffect(() => {
-    setProfileImagePreview(formData.profileImage);
-  }, [formData.profileImage]);
+      if (!isEditing) {
+        setFormData(nextProfileData);
+      }
+    }
+  }, [isEditing, user]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -83,6 +84,11 @@ export default function Account() {
   };
 
   const handleProfileImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEditing) {
+      event.target.value = "";
+      return;
+    }
+
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -117,9 +123,18 @@ export default function Account() {
       }
 
       setFormData((prev) => ({ ...prev, profileImage: result }));
-      setProfileImagePreview(result);
     };
     reader.readAsDataURL(file);
+  };
+
+  const resetProfileDraft = () => {
+    const savedProfileData = savedProfileDataRef.current;
+
+    setFormData(savedProfileData);
+
+    if (profileImageInputRef.current) {
+      profileImageInputRef.current.value = "";
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -145,6 +160,10 @@ export default function Account() {
       }
 
       await refreshUser();
+      savedProfileDataRef.current = formData;
+      if (profileImageInputRef.current) {
+        profileImageInputRef.current.value = "";
+      }
       setIsEditing(false);
 
       toast({
@@ -286,6 +305,9 @@ export default function Account() {
               <button
                 key={tab.key}
                 onClick={() => {
+                  if (isEditing) {
+                    resetProfileDraft();
+                  }
                   setActiveTab(tab.key);
                   setIsEditing(false);
                 }}
@@ -312,24 +334,17 @@ export default function Account() {
 
             {/* Profile Picture Section */}
             <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-              <button
-                type="button"
-                onClick={() => profileImageInputRef.current?.click()}
-                className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white shadow-md"
-              >
-                {profileImagePreview ? (
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white shadow-md">
+                {formData.profileImage ? (
                   <img
-                    src={profileImagePreview}
+                    src={formData.profileImage}
                     alt="Foto profil"
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   initials
                 )}
-                <span className="absolute inset-0 flex items-center justify-center bg-slate-900/0 text-xs font-semibold text-white opacity-0 transition group-hover:bg-slate-900/35 group-hover:opacity-100">
-                  Ubah
-                </span>
-              </button>
+              </div>
               <div className="space-y-1.5">
                 <p className="text-sm font-semibold text-slate-900">{formData.ownerName}</p>
                 <p className="text-xs text-slate-500">
@@ -431,7 +446,10 @@ export default function Account() {
                     {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                   </Button>
                   <Button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      resetProfileDraft();
+                      setIsEditing(false);
+                    }}
                     variant="outline"
                     className="h-11 rounded-xl border-slate-200 px-5 hover:bg-slate-50"
                   >
@@ -535,7 +553,10 @@ export default function Account() {
                     {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                   </Button>
                   <Button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      resetProfileDraft();
+                      setIsEditing(false);
+                    }}
                     variant="outline"
                     className="h-11 rounded-xl border-slate-200 px-5 hover:bg-slate-50"
                   >

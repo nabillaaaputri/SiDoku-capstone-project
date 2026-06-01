@@ -272,28 +272,6 @@ export default function Dashboard() {
       setIsLoadingForecast(true);
       setForecastError(null);
 
-      const today = new Date();
-      const futurePoints = Array.from({ length: 7 }, (_, index) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() + index + 1);
-        date.setHours(0, 0, 0, 0);
-
-        return {
-          date,
-          key: getJakartaDateInputValue(date),
-          label: new Intl.DateTimeFormat("id-ID", {
-            timeZone: "Asia/Jakarta",
-            weekday: "short",
-            day: "2-digit",
-            month: "2-digit",
-          }).format(date),
-          predictedRevenue: 0,
-          predictedQuantity: 0,
-        };
-      });
-
-      const pointMap = new Map(futurePoints.map((point) => [point.key, point]));
-
       try {
         const forecastResults = await Promise.allSettled(
           forecastSourceProducts.map(async (product) => {
@@ -306,39 +284,60 @@ export default function Dashboard() {
           }),
         );
 
-        let successCount = 0;
+        const validResults = forecastResults.filter((result): result is PromiseFulfilledResult<{ product: (typeof activeProducts)[number]; forecast: Awaited<ReturnType<typeof getSalesForecast>>; }> => result.status === "fulfilled").filter(({ value }) => {
+          const { forecast } = value;
 
-        for (const result of forecastResults) {
-          if (result.status !== "fulfilled") {
-            continue;
-          }
-
-          successCount += 1;
-          const { product, forecast } = result.value;
-
-          for (const prediction of forecast.predictions) {
-            const predictionDate = new Date(`${prediction.date}T00:00:00+07:00`);
-            const key = getJakartaDateInputValue(predictionDate);
-            const targetPoint = pointMap.get(key);
-
-            if (!targetPoint) {
-              continue;
-            }
-
-            const predictedQuantity = Number(prediction.predictedQty) || 0;
-            const predictedRevenue = predictedQuantity * (Number(product.sellPrice) || 0);
-
-            targetPoint.predictedQuantity += predictedQuantity;
-            targetPoint.predictedRevenue += predictedRevenue;
-          }
-        }
+          return (
+            forecast.predictions.length === 7 &&
+            forecast.predictions.every((prediction) => prediction.predictedQty !== null && Number.isFinite(prediction.predictedQty))
+          );
+        });
 
         if (!isMounted) {
           return;
         }
 
-        setForecastTrends(futurePoints.map(({ key, date: _date, ...point }) => point));
-        setForecastError(successCount === 0 ? "Prediksi penjualan belum tersedia saat ini." : null);
+        if (validResults.length === 0) {
+          setForecastTrends([]);
+          setForecastError("Prediksi penjualan belum tersedia saat ini.");
+          return;
+        }
+
+        const baseForecast = validResults[0].value.forecast;
+        const futurePoints = baseForecast.predictions.map((prediction) => {
+          const predictionDate = new Date(`${prediction.date}T00:00:00+07:00`);
+
+          return {
+            label: new Intl.DateTimeFormat("id-ID", {
+              timeZone: "Asia/Jakarta",
+              weekday: "short",
+              day: "2-digit",
+              month: "2-digit",
+            }).format(predictionDate),
+            predictedRevenue: 0,
+            predictedQuantity: 0,
+          };
+        });
+
+        for (const result of validResults) {
+          const { product, forecast } = result.value;
+
+          forecast.predictions.forEach((prediction, index) => {
+            const predictedQuantity = prediction.predictedQty;
+
+            if (predictedQuantity === null) {
+              return;
+            }
+
+            const predictedRevenue = predictedQuantity * (Number(product.sellPrice) || 0);
+
+            futurePoints[index].predictedQuantity += predictedQuantity;
+            futurePoints[index].predictedRevenue += predictedRevenue;
+          });
+        }
+
+        setForecastTrends(futurePoints);
+        setForecastError(null);
       } catch (error) {
         if (!isMounted) {
           return;
