@@ -18,9 +18,9 @@ Dashboard analitik berbasis Streamlit yang digunakan untuk eksplorasi data, visu
 https://sidoku-dashboard.streamlit.app
 
 ## 📖 Deskripsi Proyek
-SiDoku (Sistem Data Operasional dan Keuangan Usaha) merupakan aplikasi berbasis web yang dirancang untuk membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam mengelola operasional bisnis secara lebih terstruktur, efisien, dan berbasis data.
+SiDoku (Sistem Data Operasional dan Keuangan Usaha) merupakan aplikasi berbasis web yang dirancang untuk membantu pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) dalam mengelola operasional bisnis secara terintegrasi.
 
-Aplikasi ini dikembangkan sebagai Capstone Project Coding Camp 2026 dengan tujuan membantu pemilik usaha melakukan pencatatan produk, pengelolaan stok, pencatatan pengeluaran, pemantauan kondisi keuangan, serta memperoleh bantuan melalui teknologi Artificial Intelligence (AI).
+Aplikasi ini dikembangkan sebagai Capstone Project Coding Camp 2026 dengan tujuan membantu pemilik usaha melakukan pencatatan produk, pengelolaan stok, pencatatan pengeluaran, dan pemantauan kondisi keuangan usaha secara real-time.
 
 Melalui SiDoku, pelaku usaha dapat mengelola aktivitas operasional harian dalam satu platform terintegrasi sehingga proses pencatatan menjadi lebih mudah, akurat, dan terdokumentasi dengan baik.
 
@@ -69,6 +69,12 @@ SiDoku hadir sebagai solusi digital yang membantu pelaku usaha mengelola data op
 * Total pengeluaran.
 * Ringkasan kondisi keuangan usaha.
 * Informasi performa bisnis secara umum.
+
+### 📈 Rekap Penjualan
+* Laporan penjualan harian berdasarkan tanggal.
+* Detail produk yang terjual dengan kuantitas.
+* Total pendapatan per hari.
+* Riwayat penjualan yang terstruktur.
 
 ### 🤖 AI Assistant
 * Chatbot berbasis Groq API (model `llama-3.3-70b-versatile`).
@@ -171,12 +177,18 @@ Dashboard analitik berbasis Streamlit yang digunakan oleh tim Data Science untuk
 * Buka Dashboard.
 * Lihat informasi pemasukan, pengeluaran, dan kondisi usaha secara keseluruhan.
 
-### 7. Menggunakan AI Assistant
+### 7. Melihat Rekap Penjualan
+* Buka menu Rekap Penjualan.
+* Pilih tanggal untuk melihat laporan penjualan harian.
+* Lihat detail produk yang terjual, kuantitas, dan total pendapatan.
+* Sistem menampilkan ringkasan penjualan yang terstruktur.
+
+### 8. Menggunakan AI Assistant
 * Buka halaman Asisten SiDoku.
 * Ketik pertanyaan pada kolom chat.
 * AI akan memberikan respons sesuai konteks pertanyaan pengguna.
 
-### 8. Melihat Rekomendasi Restock
+### 9. Melihat Rekomendasi Restock
 * Buka Dashboard.
 * Sistem akan menampilkan rekomendasi restock berdasarkan hasil forecasting.
 
@@ -241,4 +253,3 @@ Capstone Project Coding Camp 2026
 
 ## 📄 Lisensi
 Proyek ini dikembangkan untuk kebutuhan pembelajaran dan Capstone Project Coding Camp 2026.
-
