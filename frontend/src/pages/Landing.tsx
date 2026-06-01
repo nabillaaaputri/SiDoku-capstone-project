@@ -238,7 +238,7 @@ export default function Landing() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { icon: PlusCircle, title: "Tambah Produk", desc: "Input daftar barang dagangan Anda" },
-                { icon: ClipboardList, title: "Catat Aktivitas", desc: "Catat stok masuk, keluar, pemasukan" },
+                { icon: ClipboardList, title: "Catat Aktivitas", desc: "Catat stok masuk, keluar, penegeluaran" },
                 { icon: LayoutDashboard, title: "Lihat Ringkasan", desc: "Pantau kondisi usaha otomatis" },
                 { icon: Sparkles, title: "Tanya Asisten AI", desc: "Dapatkan insight dan rekomendasi" }
               ].map((step, i) => (
