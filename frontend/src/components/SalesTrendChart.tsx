@@ -29,7 +29,7 @@ interface SalesTrendChartProps {
 
 const chartConfig = {
   revenue: {
-    label: "Penjualan",
+    label: "Omzet",
     color: "#2563eb",
   },
 } as const;
