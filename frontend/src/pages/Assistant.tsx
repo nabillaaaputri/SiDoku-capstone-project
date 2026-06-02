@@ -34,7 +34,8 @@ const QUICK_QUESTIONS = [
   "Cek keuntungan",
 ];
 
-const STORAGE_KEY = "sidoku_ai_chat_messages";
+// Fungsi pembuat laci penyimpanan unik berdasarkan potongan authToken user
+const getStorageKey = (userKey: string) => `sidoku_ai_chat_${userKey}`;
 
 const DEFAULT_MESSAGES: Message[] = [
   {
@@ -205,33 +206,47 @@ const renderAssistantMessage = (content: string) => {
   });
 };
 
-const loadStoredMessages = (): Message[] => {
-  if (typeof window === "undefined") return DEFAULT_MESSAGES;
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_MESSAGES;
-
-    const parsed = JSON.parse(raw) as Message[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_MESSAGES;
-
-    const validMessages = parsed.filter(
-      (message): message is Message =>
-        typeof message?.id === "string" &&
-        (message.role === "user" || message.role === "assistant") &&
-        typeof message.content === "string" &&
-        typeof message.timestamp === "number"
-    );
-
-    return validMessages.length > 0 ? validMessages : DEFAULT_MESSAGES;
-  } catch {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return DEFAULT_MESSAGES;
-  }
-};
-
 export default function Assistant() {
-  const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
+  // 1. Ambil token unik dari user yang aktif saat ini
+  const [currentUsername, setCurrentUsername] = useState(() => {
+    if (typeof window === "undefined") return "guest";
+    try {
+      const token = window.localStorage.getItem("authToken"); 
+      if (token) {
+        return token.substring(token.length - 15).replace(/[^a-zA-Z0-9]/g, "");
+      }
+    } catch {
+      return "guest";
+    }
+    return "guest";
+  });
+
+  const currentKey = getStorageKey(currentUsername);
+
+  // 2. Ambil data dari LocalStorage sejak awal pembuatan state agar langsung sinkron
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === "undefined" || currentUsername === "guest") return DEFAULT_MESSAGES;
+    try {
+      const raw = window.localStorage.getItem(getStorageKey(currentUsername));
+      if (!raw) return DEFAULT_MESSAGES;
+
+      const parsed = JSON.parse(raw) as Message[];
+      if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_MESSAGES;
+
+      const validMessages = parsed.filter(
+        (message): message is Message =>
+          typeof message?.id === "string" &&
+          (message.role === "user" || message.role === "assistant") &&
+          typeof message.content === "string" &&
+          typeof message.timestamp === "number"
+      );
+
+      return validMessages.length > 0 ? validMessages : DEFAULT_MESSAGES;
+    } catch {
+      return DEFAULT_MESSAGES;
+    }
+  });
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
@@ -247,13 +262,42 @@ export default function Assistant() {
     scrollToBottom();
   }, [messages]);
 
+  // 3. Sinkronisasi data chat secara dinamis saat mount/deteksi akun
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const token = window.localStorage.getItem("authToken");
+    if (token) {
+      const userKey = token.substring(token.length - 15).replace(/[^a-zA-Z0-9]/g, "");
+      setCurrentUsername(userKey);
+      
+      const raw = window.localStorage.getItem(getStorageKey(userKey));
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as Message[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+            return; 
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } else {
+      setCurrentUsername("guest");
+    }
+    setMessages(DEFAULT_MESSAGES);
+  }, []);
+
+  // 4. Menyimpan data otomatis ke laci LocalStorage akun aktif HANYA jika pesan bertambah
+  useEffect(() => {
+    if (currentUsername === "guest" || messages.length <= 1) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      window.localStorage.setItem(currentKey, JSON.stringify(messages));
     } catch {
       // ignore
     }
-  }, [messages]);
+  }, [messages, currentKey, currentUsername]);
 
   const generateMessageId = () =>
     `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -333,7 +377,7 @@ export default function Assistant() {
   const resetChat = () => {
     setMessages(DEFAULT_MESSAGES);
     try {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(currentKey); 
     } catch {
       // ignore
     }
