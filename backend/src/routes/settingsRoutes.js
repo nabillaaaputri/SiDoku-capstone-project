@@ -4,6 +4,7 @@ import {
   updateProfile,
   getStoreAccount,
   updateStoreAccount,
+  getStoreAccountDebug,
   updatePassword,
 } from '../controllers/settingsController.js';
 import authenticateToken from '../middlewares/auth.js';
@@ -26,6 +27,12 @@ settingsRouter.put(
 );
 
 settingsRouter.get('/store-account', authenticateToken, getStoreAccount);
+
+settingsRouter.get(
+  '/store-account/debug',
+  authenticateToken,
+  getStoreAccountDebug,
+);
 
 settingsRouter.put(
   '/store-account',

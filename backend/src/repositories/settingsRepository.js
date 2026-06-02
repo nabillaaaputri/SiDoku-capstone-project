@@ -9,6 +9,28 @@ export const getSettingsByUserId = async (userId) => {
   return result.rows[0];
 };
 
+export const getStoreAccountDebugByUserId = async (userId) => {
+  const result = await query(
+    `SELECT
+      u.id AS user_id,
+      u.email,
+      u.store_name AS users_store_name,
+      u.updated_at AS users_updated_at,
+      us.id AS settings_id,
+      us.store_name AS user_settings_store_name,
+      us.store_category,
+      us.store_address,
+      us.store_description,
+      us.updated_at AS user_settings_updated_at
+    FROM users u
+    LEFT JOIN user_settings us ON us.user_id = u.id
+    WHERE u.id = $1`,
+    [userId],
+  );
+
+  return result.rows[0];
+};
+
 export const addDefaultSettings = async ({
   id,
   userId,
