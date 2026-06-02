@@ -105,6 +105,16 @@ export const getStoreAccount = async (req, res, next) => {
   try {
     const settings = await getOrCreateSettings(req.user.id);
 
+    console.log(`[GET store-account] ${new Date().toISOString()}`);
+    console.log('[GET store-account] user:', req.user.id);
+    console.log('[GET store-account] result:', {
+      storeName: settings.store_name,
+      storeCategory: settings.store_category,
+      storeAddress: settings.store_address,
+      storeDescription: settings.store_description,
+      updatedAt: settings.updated_at,
+    });
+
     return response(
       res,
       200,
@@ -127,13 +137,26 @@ export const updateStoreAccount = async (req, res, next) => {
       storeDescription,
     } = req.body;
 
-    await settingsRepository.updateStoreAccountByUserId({
+    console.log(`[PUT store-account] ${new Date().toISOString()}`);
+    console.log('[PUT store-account] user:', req.user.id);
+    console.log('[PUT store-account] body:', {
+      storeName,
+      storeCategory,
+      storeAddress,
+      storeDescription,
+    });
+
+    const updatedSettings = await settingsRepository.updateStoreAccountByUserId({
       userId: req.user.id,
       storeName,
       storeCategory,
       storeAddress,
       storeDescription,
     });
+
+    if (!updatedSettings) {
+      return next(new NotFoundError('Data pengaturan toko tidak ditemukan.'));
+    }
 
     await userRepository.updateUserStoreNameById({
       userId: req.user.id,
@@ -144,11 +167,58 @@ export const updateStoreAccount = async (req, res, next) => {
       req.user.id,
     );
 
+    console.log('[PUT store-account] latest settings:', {
+      storeName: latestSettings.store_name,
+      storeCategory: latestSettings.store_category,
+      storeAddress: latestSettings.store_address,
+      storeDescription: latestSettings.store_description,
+      updatedAt: latestSettings.updated_at,
+    });
+
     return response(
       res,
       200,
       'Store account updated successfully',
       mapStoreAccountResponse(latestSettings),
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getStoreAccountDebug = async (req, res, next) => {
+  try {
+    const debugData = await settingsRepository.getStoreAccountDebugByUserId(
+      req.user.id,
+    );
+
+    if (!debugData) {
+      return next(new NotFoundError('Data akun tidak ditemukan.'));
+    }
+
+    console.log(`[GET store-account/debug] ${new Date().toISOString()}`);
+    console.log('[GET store-account/debug] result:', debugData);
+
+    return response(
+      res,
+      200,
+      'Store account debug retrieved successfully',
+      {
+        userId: debugData.user_id,
+        email: debugData.email,
+        usersTable: {
+          storeName: debugData.users_store_name,
+          updatedAt: debugData.users_updated_at,
+        },
+        userSettingsTable: {
+          id: debugData.settings_id,
+          storeName: debugData.user_settings_store_name,
+          storeCategory: debugData.store_category,
+          storeAddress: debugData.store_address,
+          storeDescription: debugData.store_description,
+          updatedAt: debugData.user_settings_updated_at,
+        },
+      },
     );
   } catch (error) {
     return next(error);
