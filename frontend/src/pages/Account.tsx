@@ -240,23 +240,25 @@ export default function Account() {
 }
 
       savedProfileDataRef.current = formData;
-      if (profileImageInputRef.current) {
-        profileImageInputRef.current.value = "";
-      }
-      setIsEditing(false);
+if (profileImageInputRef.current) {
+  profileImageInputRef.current.value = "";
+}
+setIsEditing(false);
 
-      if (activeTab === "profile") {
+      if (activeTab === "profile" || activeTab === "shop") {
   await refreshUser();
 }
 
+await new Promise((resolve) => setTimeout(resolve, 1500));
+
 await loadAccountData();
 
-      toast({
-        title: "Berhasil",
-        description: activeTab === "profile"
-          ? "Profil Anda telah diperbarui"
-          : "Data toko Anda telah diperbarui",
-      });
+toast({
+  title: "Berhasil",
+  description: activeTab === "profile"
+    ? "Profil Anda telah diperbarui"
+    : "Data toko Anda telah diperbarui",
+});
     } catch (error) {
       toast({
         title: "Error",

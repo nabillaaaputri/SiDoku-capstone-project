@@ -431,11 +431,14 @@ export const authService = {
         profile = profileResponse.data.data;
         storeAccount = storeAccountResponse.data.data;
 
-        try {
-          normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
-        } catch (syncError) {
-          console.error('Legacy settings sync failed:', syncError);
-        }
+        // try {
+        //   normalizedStoreName = await syncLegacySettingsFromFrontend(profile, storeAccount);
+        // } catch (syncError) {
+        //   console.error('Legacy settings sync failed:', syncError);
+        // }
+
+        normalizedStoreName = storeAccount?.storeName || '';
+
       } catch (settingsError) {
         if (isAuthHttpError(settingsError)) {
           clearStoredAuthTokens();
@@ -455,8 +458,8 @@ export const authService = {
       return {
         id: authMe.id || profile?.id || '',
         email: authMe.email || profile?.email || '',
-        name: normalizedStoreName || profile?.ownerName || storeAccount?.storeName || authMe.storeName || 'User',
-        storeName: normalizedStoreName || storeAccount?.storeName || authMe.storeName,
+        name: profile?.ownerName || normalizedStoreName || 'User',
+        storeName: normalizedStoreName || authMe.storeName,
         profileImage: profile?.profileImage,
       };
     } catch (error) {
