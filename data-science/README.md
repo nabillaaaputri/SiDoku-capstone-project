@@ -1,10 +1,10 @@
 # 📊 SiDoku Capstone Project
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge\&logo=pandas)
-![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=for-the-badge\&logo=scikit-learn)
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge\&logo=streamlit\&logoColor=white)
-![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge\&logo=jupyter\&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
 
 ---
 
@@ -22,6 +22,36 @@ Project ini berfokus pada:
 * A/B Testing
 
 Dataset yang digunakan merupakan dataset retail sales sintetis dengan data transaksi penjualan harian periode 2021–2023.
+
+---
+
+# 📄 Comprehensive Technical Report
+
+Sebagai bagian dari Capstone Project Data Science, proyek ini dilengkapi dengan laporan teknis komprehensif yang mendokumentasikan seluruh proses pengembangan solusi secara end-to-end, mulai dari identifikasi permasalahan bisnis hingga penyusunan dashboard analitik dan pengambilan insight bisnis.
+
+Laporan disusun untuk memberikan dokumentasi yang sistematis mengenai proses analisis data, metodologi yang digunakan, hasil evaluasi, serta rekomendasi yang dihasilkan berdasarkan temuan selama proyek berlangsung.
+
+## Report Coverage
+
+Laporan mencakup tahapan berikut:
+
+1. Problem Discovery
+2. Business Understanding
+3. Data Understanding
+4. Data Wrangling
+5. Exploratory Data Analysis (EDA)
+6. Data Preprocessing
+7. Explanatory Analysis
+8. Dashboard Development
+9. A/B Testing
+10. Business Insight & Recommendation
+11. Conclusion
+
+## 📄 Technical Report
+
+Laporan teknis komprehensif proyek dapat diakses melalui tautan berikut:
+
+🔗 https://docs.google.com/document/d/1hGr1Wr1lt4lNoxvjh0e4L_x6twEkYWjyuYtqEz-ozRY/edit?usp=sharing
 
 ---
 
@@ -57,19 +87,19 @@ Pada tahap ini dilakukan identifikasi permasalahan bisnis dan penyusunan pertany
 
 Dataset yang digunakan berasal dari Kaggle:
 
-https://www.kaggle.com/datasets/dhruvangtalukdar/store-item-demand-forecasting-dataset
+🔗 https://www.kaggle.com/datasets/dhruvangtalukdar/store-item-demand-forecasting-dataset
 
 ## Dataset Features
 
-| Feature | Description       |
-| ------- | ----------------- |
-| date    | tanggal transaksi |
-| item_id | identitas produk  |
-| sales   | jumlah penjualan  |
-| price   | harga produk      |
-| promo   | status promo      |
-| weekday | hari transaksi    |
-| month   | bulan transaksi   |
+| Feature | Description |
+|----------|------------|
+| date | tanggal transaksi |
+| item_id | identitas produk |
+| sales | jumlah penjualan |
+| price | harga produk |
+| promo | status promo |
+| weekday | hari transaksi |
+| month | bulan transaksi |
 
 ---
 
@@ -105,6 +135,9 @@ data-science/
 │   ├── 2_eda.ipynb
 │   ├── 3_preprocessing.ipynb
 │   └── 4_a_b_testing.ipynb
+│
+├── docs/
+│   └── Laporan_Komprehensif.pdf
 │
 └── README.md
 ```
@@ -314,6 +347,21 @@ Project menghasilkan:
 * Dashboard analitik interaktif menggunakan Streamlit
 * Analisis efektivitas promo menggunakan A/B Testing
 * Dataset siap digunakan untuk analisis lanjutan
+
+---
+
+# 📚 Documentation
+
+Dokumentasi proyek tersedia melalui:
+
+* README.md
+* Technical Report
+* Notebook Data Wrangling
+* Notebook Exploratory Data Analysis (EDA)
+* Notebook Data Preprocessing
+* Notebook A/B Testing
+
+Technical Report memuat dokumentasi lengkap proyek mulai dari Problem Discovery hingga Conclusion dan dapat diakses melalui tautan yang telah disediakan pada bagian Comprehensive Technical Report.
 
 ---
 
