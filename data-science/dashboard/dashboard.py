@@ -169,53 +169,53 @@ st.info(
 
 st.markdown("---")
 
-# sales trend
-st.subheader("📈 Sales Trend Over Time")
+# sales distribution per item
+st.subheader("📦 Distribusi Penjualan per Item")
 
-daily_sales = (
+item_sales = (
     filtered_df
-    .groupby('date')['sales']
+    .groupby('item_id')['sales']
     .sum()
+    .sort_values(ascending=True)
     .reset_index()
 )
 
-fig_sales = px.line(
-    daily_sales,
-    x='date',
-    y='sales',
+fig_item = px.bar(
+    item_sales,
+    x='sales',
+    y='item_id',
+    orientation='h',
     template='plotly_white',
-    markers=True
+    color='sales',
+    color_continuous_scale='Blues'
 )
 
-fig_sales.update_traces(
-    line_color='#2563eb'
+fig_item.update_layout(
+    xaxis_title="Total Products Sold",
+    yaxis_title="Item ID",
+    height=max(400, len(item_sales) * 22)
 )
 
-fig_sales.update_layout(
-    xaxis_title="Date",
-    yaxis_title="Total Products Sold"
-)
+st.plotly_chart(fig_item, use_container_width=True)
 
-st.plotly_chart(fig_sales, use_container_width=True)
+top_item_name = item_sales.iloc[-1]['item_id']
 
-peak_day = daily_sales.loc[
-    daily_sales['sales'].idxmax(),
-    'date'
-]
+top_item_sales = item_sales.iloc[-1]['sales']
 
-peak_sales = daily_sales['sales'].max()
+bottom_item_name = item_sales.iloc[0]['item_id']
 
-avg_daily_sales = daily_sales['sales'].mean()
+bottom_item_sales = item_sales.iloc[0]['sales']
 
 st.success(
     f"Selama periode "
     f"{start_date.strftime('%d %b %Y')} hingga "
     f"{end_date.strftime('%d %b %Y')}, "
-    f"rata-rata penjualan harian mencapai "
-    f"{avg_daily_sales:,.0f} produk. "
-    f"Puncak penjualan terjadi pada "
-    f"{peak_day.strftime('%d %B %Y')} "
-    f"dengan total {peak_sales:,.0f} produk terjual."
+    f"{top_item_name} menjadi item paling laku dengan total "
+    f"{top_item_sales:,.0f} produk terjual, "
+    f"sedangkan {bottom_item_name} paling sepi dengan "
+    f"{bottom_item_sales:,.0f} produk terjual. "
+    f"Distribusi ini menunjukkan item mana yang paling diminati "
+    f"pelanggan dan dapat menjadi dasar prioritas stok."
 )
 
 st.markdown("---")
